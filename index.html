@@ -697,8 +697,9 @@ let loginMode      = 'signin';
 let fbUnsubBalance = null;
 let fbUnsubHist    = null;
 let fbUnsubOrders  = null;
-let pendingDepReq  = null;
-let pendingWitReq  = null;
+// Maps of pending requests keyed by cbId — supports multiple concurrent requests.
+let pendingDepReq  = {}; // { [cbId]: { cbId, msgId, amt, hid } }
+let pendingWitReq  = {}; // { [cbId]: { cbId, msgId, amt, hid, addr, txId } }
 
 // ═══════════════════════════════════════════
 // EMAIL NOTIFICATIONS
@@ -862,7 +863,7 @@ window.onFirebaseLogout = function() {
   if (fbUnsubHist)    { fbUnsubHist();    fbUnsubHist    = null; }
   if (fbUnsubOrders)  { fbUnsubOrders();  fbUnsubOrders  = null; }
   currentUser = null; userUID = null; balance = 0; hist = []; orders = [];
-  pendingDepReq = null; pendingWitReq = null;
+  pendingDepReq = {}; pendingWitReq = {};
   document.getElementById('fbLoadingScreen').style.display = 'none';
   updateNavState(); renderOrders(); renderHist();
 };
@@ -951,16 +952,24 @@ async function fbRemoveOrder(id) {
 // ═══════════════════════════════════════════
 // PENDING DEP/WIT PERSISTENCE
 // ═══════════════════════════════════════════
+// Save ONE pending request entry, keyed by its cbId (does not overwrite siblings).
 async function fbSavePendingReq(type, data) {
-  const fuid = getFbUid(); if (!fuid) return;
-  await window._fb.set(window._fb.ref(window._fb.db, 'users/' + fuid + '/pendingReqs/' + type), data);
+  const fuid = getFbUid(); if (!fuid || !data || !data.cbId) return;
+  await window._fb.set(
+    window._fb.ref(window._fb.db, 'users/' + fuid + '/pendingReqs/' + type + '/' + data.cbId),
+    data
+  );
 }
 
-async function fbClearPendingReq(type) {
-  const fuid = getFbUid(); if (!fuid) return;
-  await window._fb.set(window._fb.ref(window._fb.db, 'users/' + fuid + '/pendingReqs/' + type), null);
-  if (type === 'dep') pendingDepReq = null;
-  if (type === 'wit') pendingWitReq = null;
+// Clear ONE pending entry by cbId.
+async function fbClearPendingReq(type, cbId) {
+  const fuid = getFbUid(); if (!fuid || !cbId) return;
+  await window._fb.set(
+    window._fb.ref(window._fb.db, 'users/' + fuid + '/pendingReqs/' + type + '/' + cbId),
+    null
+  );
+  if (type === 'dep') delete pendingDepReq[cbId];
+  if (type === 'wit') delete pendingWitReq[cbId];
 }
 
 async function restorePendingRequests(firebaseUid) {
@@ -968,14 +977,28 @@ async function restorePendingRequests(firebaseUid) {
     const { db, ref, get } = window._fb;
     const snap = await get(ref(db, 'users/' + firebaseUid + '/pendingReqs'));
     if (!snap.exists()) return;
-    const reqs = snap.val();
-    if (reqs.dep) {
-      pendingDepReq = reqs.dep;
-      showFloatingPending('dep', reqs.dep.amt, 'Checking Blockchain', 'Verifying ' + reqs.dep.amt + ' USDT deposit…', reqs.dep.hid);
+    const reqs = snap.val() || {};
+    pendingDepReq = {};
+    pendingWitReq = {};
+
+    // Each branch may be either the new map { cbId: req } or the legacy single object.
+    const normalize = (raw) => {
+      if (!raw) return {};
+      if (raw.cbId) return { [raw.cbId]: raw }; // legacy single record
+      return raw; // already keyed by cbId
+    };
+
+    const depMap = normalize(reqs.dep);
+    for (const k in depMap) {
+      const r = depMap[k]; if (!r || !r.cbId) continue;
+      pendingDepReq[r.cbId] = r;
+      showFloatingPending('dep', r.amt, 'Checking Blockchain', 'Verifying ' + r.amt + ' USDT deposit…', r.hid);
     }
-    if (reqs.wit) {
-      pendingWitReq = reqs.wit;
-      showFloatingPending('wit', reqs.wit.amt, 'Processing Withdrawal', 'Broadcasting ' + reqs.wit.amt + ' USDT…', reqs.wit.hid);
+    const witMap = normalize(reqs.wit);
+    for (const k in witMap) {
+      const r = witMap[k]; if (!r || !r.cbId) continue;
+      pendingWitReq[r.cbId] = r;
+      showFloatingPending('wit', r.amt, 'Processing Withdrawal', 'Broadcasting ' + r.amt + ' USDT…', r.hid);
     }
   } catch(e) { console.warn('restorePendingRequests:', e); }
 }
@@ -1188,34 +1211,23 @@ async function tgFetch(endpoint, body) {
   } catch(e){ return {ok:false}; }
 }
 
-// Main admin only (plain)
+// Single-admin mode — send each message exactly ONCE.
 async function tgSend(text) { return tgFetch('sendMessage',{chat_id:TG_CHAT,text,parse_mode:'Markdown'}); }
 
-// Log account only (plain)
-async function tgLog(text)  { return tgFetch('sendMessage',{chat_id:TG_CHAT_LOG,text,parse_mode:'Markdown'}); }
+// Aliases kept for backward compatibility — all route to the single admin (no duplicate).
+async function tgLog(text)      { return tgSend(text); }
+async function tgSendBoth(text) { return tgSend(text); }
 
-// Both accounts (plain text)
-async function tgSendBoth(text) { tgSend(text); tgLog(text); }
-
-// ── UPDATED: Approve/Reject buttons sent to BOTH chat IDs ──
+// Approve/Reject buttons — sent ONCE to the single admin.
 async function tgSendWithButtons(text, cbId) {
   const keyboard = { inline_keyboard: [[
     { text: '✅ APPROVE', callback_data: `approve_${cbId}` },
     { text: '❌ REJECT',  callback_data: `reject_${cbId}`  }
   ]]};
-
-  // Send to main admin
   const d = await tgFetch('sendMessage', {
     chat_id: TG_CHAT, text, parse_mode: 'Markdown',
     reply_markup: keyboard
   });
-
-  // Send to log account WITH SAME buttons
-  await tgFetch('sendMessage', {
-    chat_id: TG_CHAT_LOG, text, parse_mode: 'Markdown',
-    reply_markup: keyboard
-  });
-
   return d.ok ? d.result.message_id : null;
 }
 
@@ -1329,60 +1341,66 @@ async function masterPollTick() {
       const isAdminChat = cbChatId === String(TG_CHAT) || cbChatId === String(TG_CHAT_LOG);
       if(!isAdminChat) continue;
 
-      // ─── DEPOSIT approve/reject ───
-      if(pendingDepReq){
-        if(d===`approve_${pendingDepReq.cbId}`){
+      // ─── DEPOSIT approve/reject (match against ANY pending dep cbId) ───
+      let depMatch = null;
+      const depAction = d.startsWith('approve_') ? 'approve' : (d.startsWith('reject_') ? 'reject' : null);
+      if (depAction) {
+        const cbIdFromData = d.slice(depAction.length + 1);
+        if (pendingDepReq[cbIdFromData]) depMatch = pendingDepReq[cbIdFromData];
+      }
+      if (depMatch) {
+        const dep = depMatch;
+        if (depAction === 'approve') {
           await tgAnswerCb(cb.id,'✅ Approved!');
-          const dep = pendingDepReq;
           balance += dep.amt; updateBal();
           await fbUpdateHistStatus(dep.hid,'COMPLETED');
           if(dep.msgId) tgEdit(dep.msgId,`✅ *DEPOSIT APPROVED*\n\nUID: \`${userUID}\`\nAmount: *${dep.amt} USDT*\nNew Balance: *${balance.toFixed(2)} USDT*`).catch(()=>{});
-          await fbClearPendingReq('dep');
-          removeFloatingPending('dep');
+          await fbClearPendingReq('dep', dep.cbId);
+          if (Object.keys(pendingDepReq).length === 0) removeFloatingPending('dep');
           toast('success','💰 Deposit Approved!',dep.amt+' USDT credited.');
           emailDeposit(dep.amt, 'COMPLETED');
           tgLog(`✅ Deposit ${dep.amt} USDT approved for UID ${userUID}`);
-          continue;
-        }
-        if(d===`reject_${pendingDepReq.cbId}`){
+        } else {
           await tgAnswerCb(cb.id,'❌ Rejected!');
-          const dep = pendingDepReq;
           await fbUpdateHistStatus(dep.hid,'REJECTED');
           if(dep.msgId) tgEdit(dep.msgId,`❌ *DEPOSIT REJECTED*\n\nUID: \`${userUID}\`\nAmount: *${dep.amt} USDT*`).catch(()=>{});
-          await fbClearPendingReq('dep');
-          removeFloatingPending('dep');
+          await fbClearPendingReq('dep', dep.cbId);
+          if (Object.keys(pendingDepReq).length === 0) removeFloatingPending('dep');
           toast('error','Deposit Rejected','Transaction could not be verified.');
           emailDeposit(dep.amt, 'REJECTED');
-          continue;
         }
+        continue;
       }
 
-      // ─── WITHDRAWAL approve/reject ───
-      if(pendingWitReq){
-        if(d===`approve_${pendingWitReq.cbId}`){
+      // ─── WITHDRAWAL approve/reject (match against ANY pending wit cbId) ───
+      let witMatch = null;
+      const witAction = d.startsWith('approve_') ? 'approve' : (d.startsWith('reject_') ? 'reject' : null);
+      if (witAction) {
+        const cbIdFromData = d.slice(witAction.length + 1);
+        if (pendingWitReq[cbIdFromData]) witMatch = pendingWitReq[cbIdFromData];
+      }
+      if (witMatch) {
+        const wit = witMatch;
+        if (witAction === 'approve') {
           await tgAnswerCb(cb.id,'✅ Approved!');
-          const wit = pendingWitReq;
           await fbUpdateHistStatus(wit.hid,'COMPLETED');
           if(wit.msgId) tgEdit(wit.msgId,`✅ *WITHDRAWAL APPROVED*\n\nUID: \`${userUID}\`\nAmount: *${wit.amt} USDT*`).catch(()=>{});
-          await fbClearPendingReq('wit');
-          removeFloatingPending('wit');
+          await fbClearPendingReq('wit', wit.cbId);
+          if (Object.keys(pendingWitReq).length === 0) removeFloatingPending('wit');
           toast('success','Withdrawal Sent!',wit.amt+' USDT sent.');
           emailWithdraw(wit.amt, 'COMPLETED');
           tgLog(`✅ Withdrawal ${wit.amt} USDT approved for UID ${userUID}`);
-          continue;
-        }
-        if(d===`reject_${pendingWitReq.cbId}`){
+        } else {
           await tgAnswerCb(cb.id,'❌ Rejected!');
-          const wit = pendingWitReq;
           balance += wit.amt; updateBal();
           await fbUpdateHistStatus(wit.hid,'REJECTED');
           if(wit.msgId) tgEdit(wit.msgId,`❌ *WITHDRAWAL REJECTED*\n\nUID: \`${userUID}\`\n🔴 Funds returned`).catch(()=>{});
-          await fbClearPendingReq('wit');
-          removeFloatingPending('wit');
+          await fbClearPendingReq('wit', wit.cbId);
+          if (Object.keys(pendingWitReq).length === 0) removeFloatingPending('wit');
           toast('error','Withdrawal Rejected','Funds returned to your wallet.');
           emailWithdraw(wit.amt, 'REJECTED');
-          continue;
         }
+        continue;
       }
 
       // ─── TRADE ORDER approve/reject ───
@@ -1486,12 +1504,13 @@ async function confirmDeposit() {
   const txId=genTxId();
   const hid=await fbAddHist('DEPOSIT',amt,'PENDING',{network:depNet,address:DEP_ADDR,txid:txId});
   showFloatingPending('dep',amt,'Checking Blockchain','Verifying '+amt+' USDT deposit…',hid);
-  const cbId='dep_'+Date.now();
+  const cbId='dep_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
   const t=new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'});
   const msgText=`📥 *DEPOSIT REQUEST*\n\n👤 UID: \`${userUID}\`\n👤 User: *${currentUser?currentUser.name:'Guest'}*\n📧 Email: \`${currentUser?.email||'—'}\`\n💰 Amount: *${amt} USDT*\n🌐 Network: ${depNet}\n📍 Address: \`${DEP_ADDR}\`\n🔗 TxID: \`${txId}\`\n⏰ ${t} IST\n\n✅ APPROVE = credit USDT\n❌ REJECT = decline`;
   const msgId=await tgSendWithButtons(msgText,cbId);
-  pendingDepReq={cbId,msgId,amt,hid};
-  await fbSavePendingReq('dep',pendingDepReq);
+  const req={cbId,msgId,amt,hid};
+  pendingDepReq[cbId]=req;
+  await fbSavePendingReq('dep',req);
 }
 
 function resetDepOverlay(){
@@ -1513,12 +1532,13 @@ async function doWithdraw() {
   const txId=genTxId();
   const hid=await fbAddHist('WITHDRAW',amt,'PENDING',{network:witNet,address:addr,txid:txId,fee:'0.01'});
   showFloatingPending('wit',amt,'Processing Withdrawal','Broadcasting '+amt+' USDT to network…',hid);
-  const cbId='wit_'+Date.now();
+  const cbId='wit_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
   const t=new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'});
   const msgText=`💼 *WITHDRAWAL REQUEST*\n\n👤 UID: \`${userUID}\`\n👤 User: *${currentUser?currentUser.name:'Guest'}*\n📧 Email: \`${currentUser?.email||'—'}\`\n💰 Amount: *${amt} USDT*\n🌐 Network: ${witNet}\n📤 Address: \`${addr}\`\n🔗 TxID: \`${txId}\`\n⏰ ${t} IST\n\n✅ APPROVE = send funds\n❌ REJECT = refund`;
   const msgId=await tgSendWithButtons(msgText,cbId);
-  pendingWitReq={cbId,msgId,amt,hid,addr,txId};
-  await fbSavePendingReq('wit',pendingWitReq);
+  const req={cbId,msgId,amt,hid,addr,txId};
+  pendingWitReq[cbId]=req;
+  await fbSavePendingReq('wit',req);
 }
 
 // ═══════════════════════════════════════════
@@ -1872,8 +1892,7 @@ async function sendUserMsg(){
   const payload={chat_id:TG_CHAT,text:`💬 *USER MSG*\n\nUID: \`${userUID}\`\nUser: *${currentUser?currentUser.name:'Guest'}*\nOrder: \`#${o.id}\`\nMsg: "${txt}"\n⏰ ${t} IST`,parse_mode:'Markdown'};
   if(state&&state.tgMsgId) payload.reply_to_message_id=state.tgMsgId;
   tgFetch('sendMessage',payload).catch(()=>{});
-  // Also send copy to log chat
-  tgFetch('sendMessage',{...payload,chat_id:TG_CHAT_LOG}).catch(()=>{});
+  // Single-admin mode — no duplicate send to log chat.
 }
 
 function botMsg(sender,msg){ appendChatMsg('them',sender,msg); }
