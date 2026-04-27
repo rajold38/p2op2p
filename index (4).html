@@ -1,0 +1,2057 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>PRO P2P Terminal — India's Independent P2P USDT/INR Exchange</title>
+<meta name="description" content="PRO P2P Terminal — verified peer-to-peer USDT/INR trading platform with escrow protection, instant UPI settlement and 24×7 support. Independent Indian platform.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://prop2p.in/">
+<meta name="author" content="PRO P2P Terminal">
+<meta property="og:title" content="PRO P2P Terminal — India's Independent P2P USDT/INR Exchange">
+<meta property="og:description" content="Verified P2P USDT/INR trading with escrow protection and instant UPI settlement.">
+<meta property="og:url" content="https://prop2p.in/">
+<meta property="og:type" content="website">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getAuth, GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword,
+           signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile,
+           sendPasswordResetEmail }
+    from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { getDatabase, ref, set, get, update, onValue, push, serverTimestamp }
+    from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+    const firebaseConfig = {
+    apiKey: "AIzaSyC8BpjUp8bEaBC94pJoWQoC6kbDb1kSv58",
+    authDomain: "newp2p-2c844.firebaseapp.com",
+    databaseURL: "https://newp2p-2c844-default-rtdb.firebaseio.com/",
+    projectId: "newp2p-2c844",
+    storageBucket: "newp2p-2c844.firebasestorage.app",
+    messagingSenderId: "590373776174",
+    appId: "1:590373776174:web:256e7627583754fc1b28bf",
+    measurementId: "G-1L4WB9RJ8R"
+  };
+
+  const app  = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db   = getDatabase(app);
+
+  window._fb = {
+    auth, db,
+    GoogleAuthProvider,
+    signInWithPopup,
+    createUserWithEmailAndPassword,
+    signInWithEmailAndPassword,
+    signOut,
+    onAuthStateChanged,
+    updateProfile,
+    sendPasswordResetEmail,
+    ref, set, get, update, onValue, push, serverTimestamp
+  };
+
+  onAuthStateChanged(auth, async (firebaseUser) => {
+    if (firebaseUser) {
+      await window.onFirebaseUser(firebaseUser);
+    } else {
+      window.onFirebaseLogout();
+    }
+  });
+</script>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{
+  --y:#f0b90b;--y2:#f8d12f;
+  --bg:#0b0e11;--card:#161a1e;--card2:#0e1115;
+  --g:#0ecb81;--r:#f6465d;
+  --border:#222831;--blue:#4dabf7;
+  --text:#eaecef;--muted:#474d57;--surface:#1c2127;
+  --radius:14px;--radius-lg:20px;--radius-xl:24px;
+}
+body{background:var(--bg);color:var(--text);font-family:'Plus Jakarta Sans',system-ui,sans-serif;overflow-x:hidden;-webkit-font-smoothing:antialiased;}
+.mono{font-family:'JetBrains Mono',monospace;}
+.grotesk{font-family:'Space Grotesk',sans-serif;}
+#app{max-width:480px;margin:0 auto;min-height:100vh;position:relative;}
+
+/* FIREBASE LOADING */
+#fbLoadingScreen{position:fixed;inset:0;background:var(--bg);z-index:9000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;}
+.fb-logo-big{background:var(--y);width:60px;height:60px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:800;color:#000;font-family:'Space Grotesk',sans-serif;}
+.fb-loading-title{font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:700;letter-spacing:-.3px;}
+.fb-loading-title span{color:var(--y);}
+.fb-spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--y);border-radius:50%;animation:spin 1s linear infinite;}
+.fb-sub{font-size:10px;color:var(--muted);font-weight:600;}
+
+/* AUTH OVERLAY */
+#authOverlay{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:500;display:none;align-items:center;justify-content:center;backdrop-filter:blur(18px);padding:16px;}
+#authOverlay.show{display:flex!important;}
+.auth-modal{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-xl);padding:28px 22px 24px;width:100%;max-width:380px;position:relative;animation:slideUp .32s cubic-bezier(.22,1,.36,1);}
+@keyframes slideUp{from{transform:translateY(36px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+@keyframes spin{to{transform:rotate(360deg);}}
+.auth-close{position:absolute;top:16px;right:16px;width:32px;height:32px;border-radius:50%;background:var(--surface);border:none;color:#555;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;}
+.auth-logo{display:flex;align-items:center;gap:11px;margin-bottom:4px;}
+.auth-logo-icon{background:var(--y);width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:800;color:#000;flex-shrink:0;font-family:'Space Grotesk',sans-serif;}
+.auth-logo h2{font-family:'Space Grotesk',sans-serif;font-size:21px;font-weight:700;letter-spacing:-.3px;}
+.auth-logo h2 span{color:var(--y);}
+.auth-tagline{font-size:9px;color:#1e2430;font-weight:600;letter-spacing:.14em;text-transform:uppercase;margin-bottom:22px;}
+.google-btn{width:100%;padding:13px 16px;border-radius:12px;border:1.5px solid var(--border);background:var(--surface);color:var(--text);font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:border-color .2s,background .2s;margin-bottom:14px;font-family:'Plus Jakarta Sans',sans-serif;}
+.google-btn:hover{border-color:var(--y);background:rgba(240,185,11,.04);}
+.google-btn svg{width:20px;height:20px;flex-shrink:0;}
+.google-btn:disabled{opacity:.6;cursor:not-allowed;}
+.divider{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+.divider-line{flex:1;height:1px;background:var(--border);}
+.divider-text{font-size:9px;color:#1e2430;font-weight:700;text-transform:uppercase;letter-spacing:.1em;}
+.auth-tab-row{display:flex;gap:5px;margin-bottom:16px;background:var(--bg);padding:4px;border-radius:11px;}
+.auth-tab{flex:1;padding:9px;border-radius:8px;border:none;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;cursor:pointer;background:none;color:var(--muted);transition:all .2s;font-family:'Plus Jakarta Sans',sans-serif;}
+.auth-tab.active{background:var(--surface);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.3);}
+.auth-form input{width:100%;background:var(--bg);border:1.5px solid var(--border);border-radius:11px;padding:13px 14px;font-size:13px;font-weight:500;color:#fff;outline:none;font-family:'Plus Jakarta Sans',sans-serif;margin-bottom:9px;transition:border-color .2s;}
+.auth-form input:focus{border-color:var(--y);}
+.auth-form input::placeholder{color:#252b38;}
+.auth-submit{width:100%;padding:14px;border-radius:12px;border:none;background:var(--y);color:#000;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;cursor:pointer;margin-top:2px;font-family:'Plus Jakarta Sans',sans-serif;transition:opacity .15s;}
+.auth-submit:active{opacity:.85;}
+.auth-submit:disabled{opacity:.6;cursor:not-allowed;}
+
+/* ── FORGOT PASSWORD LINK ── */
+.forgot-link{display:block;text-align:right;font-size:10px;font-weight:600;color:var(--y);cursor:pointer;margin-top:-4px;margin-bottom:8px;text-decoration:none;}
+.forgot-link:hover{text-decoration:underline;}
+
+/* ── RESET PASSWORD PANEL ── */
+#resetPanel{display:none;}
+#resetPanel .reset-back{background:none;border:none;color:var(--muted);font-size:11px;font-weight:700;cursor:pointer;margin-bottom:14px;display:flex;align-items:center;gap:6px;font-family:'Plus Jakarta Sans',sans-serif;}
+#resetPanel .reset-title{font-family:'Space Grotesk',sans-serif;font-size:17px;font-weight:700;margin-bottom:4px;}
+#resetPanel .reset-sub{font-size:10px;color:var(--muted);font-weight:500;margin-bottom:16px;line-height:1.5;}
+#resetPanel input{width:100%;background:var(--bg);border:1.5px solid var(--border);border-radius:11px;padding:13px 14px;font-size:13px;font-weight:500;color:#fff;outline:none;font-family:'Plus Jakarta Sans',sans-serif;margin-bottom:12px;transition:border-color .2s;}
+#resetPanel input:focus{border-color:var(--y);}
+
+.auth-footer{font-size:9px;color:#1a2030;font-weight:600;text-align:center;margin-top:14px;line-height:1.8;}
+.firebase-badge{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:12px;font-size:9px;color:#2a3a4a;font-weight:600;}
+.firebase-badge i{color:#f5820d;font-size:11px;}
+
+/* SIDEBAR */
+#sidebarOverlay{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:400;display:none;backdrop-filter:blur(4px);}
+#sidebarOverlay.show{display:block;}
+#sidebar{position:fixed;right:0;top:0;bottom:0;width:275px;background:var(--card2);border-left:1px solid var(--border);z-index:401;transform:translateX(100%);transition:transform .28s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;}
+#sidebar.open{transform:translateX(0);}
+.sb-header{padding:22px 18px 16px;border-bottom:1px solid var(--border);}
+.sb-close{background:none;border:none;color:#555;font-size:18px;cursor:pointer;float:right;margin-top:-2px;}
+.sb-user{display:flex;align-items:center;gap:12px;margin-top:14px;}
+.sb-avatar{width:48px;height:48px;border-radius:50%;background:var(--y);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#000;overflow:hidden;font-family:'Space Grotesk',sans-serif;}
+.sb-avatar img{width:100%;height:100%;object-fit:cover;}
+.sb-name{font-size:14px;font-weight:700;}
+.sb-uid{font-size:9px;color:var(--muted);font-weight:500;font-family:'JetBrains Mono',monospace;margin-top:2px;}
+.sb-sync-badge{display:inline-flex;align-items:center;gap:4px;background:rgba(14,203,129,.08);border:1px solid rgba(14,203,129,.2);border-radius:20px;padding:3px 8px;font-size:8px;font-weight:700;color:var(--g);margin-top:6px;text-transform:uppercase;letter-spacing:.05em;}
+.sb-menu{flex:1;padding:14px 10px;overflow-y:auto;}
+.sb-section{font-size:8px;color:#1e2430;font-weight:700;text-transform:uppercase;letter-spacing:.14em;padding:10px 8px 6px;}
+.sb-item{display:flex;align-items:center;gap:14px;padding:13px 12px;border-radius:12px;cursor:pointer;transition:background .15s;text-decoration:none;color:var(--text);}
+.sb-item:hover{background:var(--surface);}
+.sb-item i{font-size:15px;width:20px;text-align:center;}
+.sb-item .sb-item-label{font-size:12px;font-weight:600;}
+.sb-item .sb-item-sub{font-size:9px;color:var(--muted);font-weight:500;margin-top:1px;}
+.sb-item-tg i{color:#4dabf7;}
+.sb-item-ig i{color:#e1306c;}
+.sb-item-support i{color:var(--y);}
+.sb-footer{padding:14px 18px;border-top:1px solid var(--border);}
+.sb-logout{width:100%;padding:13px;border-radius:12px;border:1px solid rgba(246,70,93,.2);background:rgba(246,70,93,.06);color:var(--r);font-size:11px;font-weight:700;text-transform:uppercase;cursor:pointer;letter-spacing:.07em;font-family:'Plus Jakarta Sans',sans-serif;}
+
+/* NAV */
+nav{background:var(--card2);border-bottom:1px solid var(--border);padding:10px 14px;position:sticky;top:0;z-index:100;}
+.nav-row1{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px;}
+.nav-row2{display:flex;justify-content:space-between;align-items:center;gap:8px;}
+.logo{display:flex;align-items:center;gap:9px;cursor:pointer;}
+.logo-icon{background:var(--y);width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#000;font-family:'Space Grotesk',sans-serif;}
+.logo h1{font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:700;letter-spacing:-.2px;line-height:1.1;}
+.logo h1 span{color:var(--y);}
+.logo p{font-size:7px;color:#1e2430;font-weight:600;letter-spacing:.12em;text-transform:uppercase;}
+.uid-chip{background:var(--surface);border:1px solid var(--border);padding:5px 10px;border-radius:20px;font-size:9px;color:var(--muted);cursor:pointer;display:flex;align-items:center;gap:5px;font-weight:600;font-family:'JetBrains Mono',monospace;}
+.bal-wrap{display:flex;align-items:center;gap:6px;}
+.bal-label{font-size:8px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.05em;}
+.bal-val{font-size:17px;font-weight:700;color:var(--y);font-family:'JetBrains Mono',monospace;}
+.bal-unit{font-size:9px;color:var(--muted);font-weight:600;}
+.nav-btns{display:flex;gap:6px;}
+.btn-dep{background:var(--y);color:#000;border:none;padding:8px 14px;border-radius:9px;font-weight:700;font-size:10px;cursor:pointer;letter-spacing:.06em;font-family:'Plus Jakarta Sans',sans-serif;}
+.btn-wit{background:var(--surface);color:var(--text);border:1px solid var(--border);padding:8px 12px;border-radius:9px;font-weight:700;font-size:10px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;}
+.btn-menu{background:var(--surface);border:1px solid var(--border);color:var(--text);width:34px;height:34px;border-radius:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;}
+.btn-login{background:var(--y);color:#000;border:none;padding:8px 16px;border-radius:9px;font-weight:700;font-size:10px;cursor:pointer;letter-spacing:.06em;display:flex;align-items:center;gap:6px;font-family:'Plus Jakarta Sans',sans-serif;}
+
+/* TABS */
+.tabs{background:var(--card2);border-bottom:1px solid var(--border);display:flex;overflow-x:auto;scrollbar-width:none;}
+.tabs::-webkit-scrollbar{display:none;}
+.tab{padding:13px 16px 11px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:#303540;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;background:none;border-left:none;border-right:none;border-top:none;flex-shrink:0;font-family:'Plus Jakarta Sans',sans-serif;transition:color .2s;}
+.tab.active{color:var(--y);border-bottom-color:var(--y);}
+.badge{background:#c0392b;color:#fff;font-size:8px;font-weight:700;padding:2px 5px;border-radius:10px;margin-left:4px;display:none;}
+.mode-wrap{padding:10px 14px;background:var(--card2);border-bottom:1px solid var(--border);}
+.mode-inner{background:var(--bg);padding:4px;border-radius:12px;display:flex;}
+.tbuy,.tsell{flex:1;padding:11px;border-radius:9px;font-size:11px;font-weight:700;border:none;cursor:pointer;transition:all .22s;text-transform:uppercase;letter-spacing:.06em;font-family:'Plus Jakarta Sans',sans-serif;}
+.tbuy.on{background:var(--g);color:#fff;}
+.tsell.on{background:var(--r);color:#fff;}
+.tbuy:not(.on),.tsell:not(.on){background:none;color:var(--muted);}
+
+/* MAIN */
+main{padding:12px 14px 30px;}
+.ad-grid{display:grid;gap:10px;}
+.ad-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:15px;cursor:pointer;transition:border-color .2s,transform .15s;}
+.ad-card:active{border-color:var(--y);transform:scale(.984);}
+.ad-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:13px;}
+.merch-info{display:flex;align-items:center;gap:10px;}
+.merch-av{width:36px;height:36px;border-radius:50%;background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--y);flex-shrink:0;font-family:'Space Grotesk',sans-serif;}
+.merch-name{font-size:13px;font-weight:700;}
+.merch-status{font-size:8px;color:var(--g);font-weight:600;text-transform:uppercase;margin-top:2px;}
+.ad-price{text-align:right;}
+.price-lbl{font-size:8px;color:var(--muted);font-weight:600;text-transform:uppercase;margin-bottom:2px;}
+.price-val{font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:700;}
+.ad-limits{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:12px;}
+.lim-box{background:rgba(0,0,0,.3);padding:9px 11px;border-radius:9px;border:1px solid var(--border);}
+.lim-lbl{font-size:7px;color:var(--muted);font-weight:600;text-transform:uppercase;margin-bottom:3px;letter-spacing:.06em;}
+.lim-val{font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace;}
+.ad-btn{width:100%;padding:12px;border-radius:11px;border:none;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;}
+.ad-btn.buy{background:var(--g);color:#fff;}
+.ad-btn.sell{background:var(--r);color:#fff;}
+.ad-btn .lock-icon{margin-right:5px;font-size:9px;}
+
+/* ORDERS */
+.order-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px;cursor:pointer;display:flex;align-items:center;gap:12px;margin-bottom:10px;}
+.order-card:active{border-color:var(--y);}
+.ord-icon{width:44px;height:44px;background:var(--surface);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0;}
+.ord-info{flex:1;min-width:0;}
+.ord-title{font-size:13px;font-weight:700;}
+.ord-sub{font-size:9px;color:var(--muted);font-weight:500;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ord-right{text-align:right;flex-shrink:0;}
+.ord-inr{font-size:15px;font-weight:700;font-family:'JetBrains Mono',monospace;}
+.ord-live{font-size:8px;color:var(--g);font-weight:700;text-transform:uppercase;letter-spacing:.08em;animation:pulse 1.5s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+.empty{text-align:center;padding:50px 20px;color:#1e2430;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;background:var(--card2);border-radius:var(--radius-lg);border:1px solid var(--border);}
+
+/* HISTORY */
+.hist-section-title{font-size:9px;color:#252b38;font-weight:700;text-transform:uppercase;letter-spacing:.12em;padding:0 2px 10px;}
+.hist-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:9px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:border-color .18s,transform .12s;}
+.hist-card:active{border-color:var(--y);transform:scale(.985);}
+.hist-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+.hist-icon.dep{background:rgba(14,203,129,.1);}
+.hist-icon.wit{background:rgba(246,70,93,.08);}
+.hist-icon.buy{background:rgba(14,203,129,.1);}
+.hist-icon.sell{background:rgba(246,70,93,.08);}
+.hist-icon.cancel{background:rgba(255,255,255,.04);}
+.hist-icon.admin{background:rgba(240,185,11,.1);}
+.hist-mid{flex:1;min-width:0;}
+.hist-type{font-size:13px;font-weight:700;}
+.hist-meta{font-size:9px;color:var(--muted);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.hist-right{text-align:right;flex-shrink:0;}
+.hist-amt{font-size:14px;font-weight:700;font-family:'JetBrains Mono',monospace;margin-bottom:5px;}
+.hist-pill{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;}
+.hist-pill.completed{background:rgba(14,203,129,.1);color:var(--g);}
+.hist-pill.pending{background:rgba(240,185,11,.08);color:var(--y);}
+.hist-pill.rejected{background:rgba(246,70,93,.08);color:var(--r);}
+.hist-pill.cancelled{background:rgba(255,255,255,.04);color:var(--muted);}
+.hist-pill-dot{width:5px;height:5px;border-radius:50%;background:currentColor;}
+
+/* HIST DETAIL */
+.hd-top-banner{text-align:center;padding:28px 16px 22px;border-bottom:1px solid var(--border);}
+.hd-status-icon{width:60px;height:60px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:26px;}
+.hd-status-icon.completed{background:rgba(14,203,129,.1);border:2px solid rgba(14,203,129,.2);}
+.hd-status-icon.pending{background:rgba(240,185,11,.07);border:2px solid rgba(240,185,11,.18);}
+.hd-status-icon.rejected,.hd-status-icon.cancelled{background:rgba(246,70,93,.07);border:2px solid rgba(246,70,93,.16);}
+.hd-main-amt{font-size:32px;font-weight:700;font-family:'JetBrains Mono',monospace;margin-bottom:6px;}
+.hd-main-status{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px;}
+.hd-main-desc{font-size:10px;color:var(--muted);font-weight:500;line-height:1.6;}
+.hd-rows-card{background:var(--card2);border-radius:0;}
+.hd-row{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid rgba(34,40,49,.6);}
+.hd-row:last-child{border-bottom:none;}
+.hd-lbl{font-size:11px;color:var(--muted);font-weight:500;}
+.hd-val{font-size:12px;font-weight:700;font-family:'JetBrains Mono',monospace;text-align:right;max-width:65%;word-break:break-all;}
+.hd-val-copy{display:flex;align-items:center;gap:6px;}
+.hd-copy-btn{background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px;padding:2px;transition:color .15s;}
+.hd-copy-btn:active{color:var(--y);}
+.hd-network-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(77,171,247,.08);border:1px solid rgba(77,171,247,.18);border-radius:8px;padding:3px 8px;font-size:10px;font-weight:700;color:var(--blue);}
+.hd-admin-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(240,185,11,.08);border:1px solid rgba(240,185,11,.18);border-radius:8px;padding:3px 8px;font-size:10px;font-weight:700;color:var(--y);}
+.hd-action-row{padding:16px;background:var(--card2);}
+.hd-withdraw-again{width:100%;padding:16px;border-radius:13px;background:var(--y);color:#000;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;border:none;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;}
+
+/* OVERLAYS */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:200;display:none;align-items:flex-end;justify-content:center;backdrop-filter:blur(6px);}
+.overlay.ctr{align-items:center;}
+.overlay.show{display:flex!important;}
+.sheet{background:var(--card);border-radius:22px 22px 0 0;width:100%;max-width:480px;padding:20px;max-height:90vh;overflow-y:auto;}
+.sheet.ctr-sh{border-radius:20px;margin:16px;max-height:88vh;}
+.sh-handle{width:36px;height:4px;background:#1c2127;border-radius:2px;margin:0 auto 18px;}
+.sh-title{font-family:'Space Grotesk',sans-serif;font-size:19px;font-weight:700;margin-bottom:4px;letter-spacing:-.2px;}
+.sh-sub{font-size:9px;color:var(--y);font-weight:700;text-transform:uppercase;letter-spacing:.09em;margin-bottom:18px;}
+.field-lbl{font-size:8px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.09em;margin-bottom:7px;}
+.big-inp{width:100%;background:var(--bg);border:1.5px solid var(--border);border-radius:13px;padding:16px;font-size:26px;font-weight:700;color:#fff;outline:none;font-family:'JetBrains Mono',monospace;}
+.big-inp:focus{border-color:var(--y);}
+.sm-inp{width:100%;background:var(--bg);border:1.5px solid var(--border);border-radius:11px;padding:13px 14px;font-size:13px;font-weight:500;color:#fff;outline:none;font-family:'Plus Jakarta Sans',sans-serif;margin-bottom:10px;}
+.sm-inp:focus{border-color:var(--y);}
+.rcv-box{background:rgba(240,185,11,.03);border:2px dashed var(--border);border-radius:16px;padding:16px;display:flex;justify-content:space-between;align-items:center;margin:14px 0;}
+.rcv-val{font-size:24px;font-weight:700;font-family:'JetBrains Mono',monospace;}
+.rcv-unit{font-size:11px;font-weight:700;color:var(--y);}
+.main-btn{width:100%;padding:16px;border-radius:13px;border:none;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;cursor:pointer;margin-top:12px;font-family:'Plus Jakarta Sans',sans-serif;transition:opacity .15s;}
+.main-btn:active{opacity:.85;}
+.btn-g{background:var(--g);color:#fff;}
+.btn-r{background:var(--r);color:#fff;}
+.btn-y{background:var(--y);color:#000;}
+.btn-gray{background:var(--surface);color:var(--text);}
+.net-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:14px;}
+.net-btn{padding:13px;border-radius:11px;border:1.5px solid var(--border);font-size:11px;font-weight:700;cursor:pointer;background:none;color:var(--text);transition:all .2s;font-family:'Plus Jakarta Sans',sans-serif;}
+.net-btn.sel{border-color:var(--y);background:rgba(240,185,11,.07);color:var(--y);}
+.addr-box{background:rgba(0,0,0,.4);padding:13px;border-radius:11px;margin-bottom:14px;border:1px solid var(--border);position:relative;}
+.addr-label{font-size:8px;color:var(--muted);font-weight:700;text-transform:uppercase;margin-bottom:5px;}
+.addr-val{font-size:10px;color:var(--y);font-family:'JetBrains Mono',monospace;word-break:break-all;line-height:1.5;}
+.copy-btn{position:absolute;top:10px;right:10px;background:var(--surface);border:none;color:#aaa;cursor:pointer;padding:5px 8px;border-radius:7px;font-size:10px;}
+.copy-btn:active{background:var(--y);color:#000;}
+.rate-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-top:1px solid var(--border);}
+.rate-lbl{font-size:9px;color:var(--muted);font-weight:600;text-transform:uppercase;}
+.rate-val{font-size:13px;font-weight:700;color:#fff;font-family:'JetBrains Mono',monospace;}
+.tg-hint{margin-top:14px;background:rgba(77,171,247,.07);border:1px solid rgba(77,171,247,.18);border-radius:11px;padding:12px;font-size:10px;color:#4dabf7;font-weight:600;line-height:1.6;}
+.tg-hint i{margin-right:5px;}
+
+/* DEAL PAGE */
+#dealPage{position:fixed;inset:0;background:var(--bg);z-index:300;display:none;flex-direction:column;}
+.deal-header{padding:12px 14px;background:var(--card2);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+.deal-back{background:var(--surface);width:38px;height:38px;border-radius:50%;border:none;display:flex;align-items:center;justify-content:center;color:#aaa;cursor:pointer;font-size:14px;}
+.deal-merch{font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;color:var(--y);letter-spacing:-.2px;line-height:1.2;}
+.deal-id{font-size:8px;color:var(--muted);font-weight:500;font-family:'JetBrains Mono',monospace;}
+.deal-cancel{font-size:9px;color:var(--muted);font-weight:700;text-transform:uppercase;background:none;border:none;cursor:pointer;text-decoration:underline;}
+.deal-body{flex:1;padding:12px 14px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;}
+.deal-summary{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;}
+.ds-row{display:flex;justify-content:space-between;align-items:baseline;padding:8px 0;}
+.ds-row+.ds-row{border-top:1px solid var(--border);}
+.ds-lbl{font-size:9px;color:var(--muted);font-weight:600;text-transform:uppercase;}
+.ds-val{font-size:16px;font-weight:700;font-family:'JetBrains Mono',monospace;}
+.timer-bar-wrap{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;}
+.timer-bar-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.timer-bar-label{font-size:8px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.08em;}
+.timer-countdown{font-size:16px;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--y);}
+.timer-countdown.warn{color:var(--r);animation:pulse 1s infinite;}
+.timer-bar-track{height:5px;background:var(--surface);border-radius:3px;overflow:hidden;}
+.timer-bar-fill{height:100%;border-radius:3px;transition:width 1s linear,background .5s;}
+.timer-note{font-size:8px;color:#252b38;font-weight:600;margin-top:6px;}
+.status-tag{margin-top:12px;background:rgba(240,185,11,.07);color:var(--y);font-size:9px;font-weight:700;padding:10px;border-radius:10px;text-align:center;text-transform:uppercase;border:1px solid rgba(240,185,11,.14);letter-spacing:.06em;animation:pulse 1.5s infinite;}
+#tradePendingBox{display:none;background:rgba(11,14,17,.95);border:1px solid var(--border);border-radius:var(--radius-lg);padding:24px 16px;text-align:center;}
+.spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--y);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 14px;}
+.pending-title{font-size:14px;font-weight:700;color:var(--y);text-transform:uppercase;margin-bottom:6px;font-family:'Space Grotesk',sans-serif;}
+.pending-sub{font-size:10px;color:#666;font-weight:500;line-height:1.6;}
+#tradePendingBox .spinner{border-top-color:var(--g);}
+#tradePendingBox .pending-title{color:var(--g);}
+.pay-box{background:rgba(14,203,129,.04);border:1px solid rgba(14,203,129,.18);border-radius:15px;padding:14px;display:none;}
+.pay-lbl{font-size:8px;color:var(--g);font-weight:700;text-transform:uppercase;margin-bottom:8px;letter-spacing:.07em;}
+.pay-note{font-size:10px;color:#aaa;font-weight:500;margin-bottom:10px;}
+.upi-box{background:rgba(0,0,0,.3);padding:10px 12px;border-radius:10px;display:flex;justify-content:space-between;align-items:center;gap:8px;}
+.upi-val{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:#fff;flex:1;word-break:break-all;}
+.upi-copy{background:var(--surface);border:1px solid var(--border);color:#aaa;cursor:pointer;padding:6px 10px;border-radius:8px;font-size:11px;display:flex;align-items:center;gap:4px;font-weight:700;white-space:nowrap;transition:all .15s;font-family:'Plus Jakarta Sans',sans-serif;}
+.upi-copy:active,.upi-copy.copied{background:var(--y);color:#000;border-color:var(--y);}
+.chat-wrap{flex:1;background:var(--card2);border-radius:var(--radius-lg);border:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;min-height:280px;}
+#chatBox{flex:1;padding:14px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;}
+.chat-foot{padding:12px;background:rgba(0,0,0,.3);border-top:1px solid var(--border);}
+.chat-inp-row{display:flex;gap:8px;margin-top:10px;}
+.chat-inp{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:11px 13px;font-size:12px;color:#fff;outline:none;font-weight:500;font-family:'Plus Jakarta Sans',sans-serif;}
+.chat-inp:focus{border-color:var(--y);}
+.chat-send{background:var(--y);color:#000;border:none;width:40px;border-radius:10px;cursor:pointer;font-size:13px;}
+.msg-me{align-self:flex-end;background:var(--y);color:#000;padding:10px 13px;border-radius:14px 14px 3px 14px;max-width:85%;font-size:11px;font-weight:600;line-height:1.5;}
+.msg-them{align-self:flex-start;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:10px 13px;border-radius:14px 14px 14px 3px;max-width:85%;font-size:11px;font-weight:500;line-height:1.5;}
+.msg-sender{font-size:7px;opacity:.5;font-weight:700;text-transform:uppercase;margin-bottom:3px;letter-spacing:.07em;}
+.escrow-note{text-align:center;font-size:8px;color:#1c2127;font-family:'JetBrains Mono',monospace;padding:8px;background:rgba(255,255,255,.015);border-radius:8px;border:1px solid var(--border);}
+.alert-icon{font-size:50px;margin-bottom:16px;text-align:center;}
+.alert-title{font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:700;text-align:center;margin-bottom:8px;letter-spacing:-.3px;}
+.alert-msg{font-size:12px;color:#666;font-weight:500;text-align:center;line-height:1.6;margin-bottom:24px;}
+
+/* TOASTS */
+#notifSys{position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none;width:calc(100% - 28px);max-width:450px;}
+.toast{padding:13px 16px;border-radius:13px;border-left:4px solid;font-size:11px;font-weight:600;pointer-events:auto;animation:slideDown .25s ease;backdrop-filter:blur(10px);}
+@keyframes slideDown{from{transform:translateY(-20px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+.toast-s{border-color:var(--g);background:rgba(14,203,129,.1);color:var(--g);}
+.toast-e{border-color:var(--r);background:rgba(246,70,93,.1);color:var(--r);}
+.toast-i{border-color:var(--y);background:rgba(240,185,11,.08);color:var(--y);}
+.toast-title{font-size:9px;text-transform:uppercase;font-weight:700;margin-bottom:2px;letter-spacing:.07em;}
+
+/* MISC */
+.pending-floating{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:450;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px 18px;display:flex;align-items:center;gap:12px;max-width:320px;width:calc(100% - 32px);box-shadow:0 8px 32px rgba(0,0,0,.6);animation:slideUp .3s ease;}
+.pf-spinner{width:22px;height:22px;border:2px solid var(--border);border-top-color:var(--y);border-radius:50%;animation:spin 1s linear infinite;flex-shrink:0;}
+.pf-spinner.green{border-top-color:var(--g);}
+.pf-info{flex:1;min-width:0;}
+.pf-title{font-size:11px;font-weight:700;margin-bottom:2px;}
+.pf-sub{font-size:9px;color:var(--muted);font-weight:500;}
+.pf-hist-btn{background:var(--y);color:#000;border:none;padding:7px 12px;border-radius:9px;font-size:9px;font-weight:700;text-transform:uppercase;cursor:pointer;white-space:nowrap;letter-spacing:.05em;font-family:'Plus Jakarta Sans',sans-serif;}
+.pf-close{background:none;border:none;color:#333;cursor:pointer;font-size:12px;padding:4px;flex-shrink:0;}
+.login-cta{text-align:center;padding:40px 20px;background:var(--card2);border-radius:var(--radius-lg);border:1px solid var(--border);}
+.login-cta-icon{font-size:36px;margin-bottom:12px;opacity:.3;}
+.login-cta h3{font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;margin-bottom:6px;}
+.login-cta p{font-size:10px;color:var(--muted);font-weight:500;margin-bottom:18px;line-height:1.5;}
+.login-cta-btn{display:inline-flex;align-items:center;gap:8px;background:var(--y);color:#000;border:none;padding:11px 22px;border-radius:11px;font-weight:700;font-size:11px;text-transform:uppercase;cursor:pointer;letter-spacing:.06em;font-family:'Plus Jakarta Sans',sans-serif;}
+.upi-inp{width:100%;background:var(--bg);border:1.5px solid var(--border);border-radius:11px;padding:12px 14px;font-size:14px;font-weight:500;color:#fff;outline:none;font-family:'Plus Jakarta Sans',sans-serif;}
+.upi-inp:focus{border-color:var(--g);}
+.tg-live-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(77,171,247,.08);border:1px solid rgba(77,171,247,.2);border-radius:20px;padding:4px 10px;font-size:8px;font-weight:700;color:#4dabf7;text-transform:uppercase;letter-spacing:.06em;}
+.tg-live-dot{width:6px;height:6px;border-radius:50%;background:#4dabf7;animation:pulse 1.5s infinite;}
+.bridge-status{display:flex;align-items:center;gap:5px;padding:6px 10px;font-size:8px;font-weight:600;color:var(--muted);text-transform:uppercase;border-bottom:1px solid var(--border);}
+.bridge-dot{width:5px;height:5px;border-radius:50%;background:var(--muted);}
+.bridge-dot.live{background:var(--g);animation:pulse 1.5s infinite;}
+#sellUpiBox{display:none;background:rgba(240,185,11,.04);border:1px solid rgba(240,185,11,.18);border-radius:15px;padding:14px;}
+
+/* ADMIN CREDIT BANNER */
+.admin-credit-banner{background:rgba(240,185,11,.06);border:1px solid rgba(240,185,11,.2);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:10px;}
+.admin-credit-icon{font-size:22px;flex-shrink:0;}
+.admin-credit-text{font-size:10px;font-weight:600;color:var(--y);line-height:1.5;}
+.admin-credit-amt{font-size:16px;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--g);}
+
+/* EMAIL NOTIFICATION CONFIG BADGE */
+.email-config-notice{background:rgba(77,171,247,.05);border:1px solid rgba(77,171,247,.15);border-radius:10px;padding:10px 12px;font-size:9px;color:#4dabf7;font-weight:600;margin-top:10px;line-height:1.6;display:flex;align-items:flex-start;gap:7px;}
+.email-config-notice i{margin-top:1px;flex-shrink:0;}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="notifSys"></div>
+
+  <!-- FIREBASE LOADING -->
+  <div id="fbLoadingScreen">
+    <div class="fb-logo-big">P</div>
+    <div class="fb-loading-title">PRO<span>P2P</span></div>
+    <div class="fb-spinner"></div>
+    <div class="fb-sub">Connecting to Firebase...</div>
+  </div>
+
+  <!-- AUTH MODAL -->
+  <div id="authOverlay">
+    <div class="auth-modal">
+      <button class="auth-close" onclick="closeAuth()"><i class="fas fa-times"></i></button>
+      <div class="auth-logo"><div class="auth-logo-icon">P</div><div><h2>PRO<span>P2P</span></h2></div></div>
+      <div class="auth-tagline">Verified P2P Terminal · Firebase Secured</div>
+
+      <!-- MAIN LOGIN / SIGNUP PANEL -->
+      <div id="mainAuthPanel">
+        <button class="google-btn" onclick="triggerGoogleSignIn()" id="googleSignInBtn">
+          <svg viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.1 29.3 35 24 35c-6.1 0-11-4.9-11-11s4.9-11 11-11c2.8 0 5.3 1 7.2 2.7l5.7-5.7C33.4 7.1 28.9 5 24 5 13 5 4 14 4 25s9 20 20 20c11 0 20-9 20-20 0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 16.1 19 13 24 13c2.8 0 5.3 1 7.2 2.7l5.7-5.7C33.4 7.1 28.9 5 24 5c-7.7 0-14.4 4.4-17.7 9.7z"/><path fill="#4CAF50" d="M24 45c4.8 0 9.1-1.8 12.4-4.7l-6.2-5.2C28.4 36.6 26.3 37 24 37c-5.2 0-9.6-3.5-11.2-8.2L6.1 34c3.4 6.3 10.2 10 17.9 11z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.3 4-4.2 5.2.1 0 .1 0 .2.1l6.2 5.2C37.2 39.1 44 34 44 25c0-1.3-.1-2.6-.4-3.9z"/></svg>
+          Continue with Google
+        </button>
+        <div class="divider"><div class="divider-line"></div><div class="divider-text">or</div><div class="divider-line"></div></div>
+        <div class="auth-tab-row">
+          <button class="auth-tab active" id="tabSignIn" onclick="switchLoginTab('signin')">Sign In</button>
+          <button class="auth-tab" id="tabSignUp" onclick="switchLoginTab('signup')">Sign Up</button>
+        </div>
+        <div class="auth-form">
+          <div id="signupNameWrap" style="display:none;"><input type="text" id="regName" placeholder="Full Name"></div>
+          <input type="email" id="regEmail" placeholder="Email address" autocomplete="email">
+          <input type="password" id="regPass" placeholder="Password" autocomplete="current-password">
+          <div id="signupConfirmWrap" style="display:none;"><input type="password" id="regPassConfirm" placeholder="Confirm Password"></div>
+          <!-- FORGOT PASSWORD LINK — only shown in signin tab -->
+          <span class="forgot-link" id="forgotLink" onclick="showResetPanel()">Forgot Password?</span>
+          <button class="auth-submit" id="loginSubmitBtn" onclick="emailSignIn()">SIGN IN</button>
+        </div>
+        <div class="firebase-badge"><i class="fas fa-fire"></i> Powered by Firebase · Data syncs across all devices</div>
+        <div class="auth-footer">By continuing you agree to our Terms of Service.<br>PRO P2P Terminal · Encrypted · Escrow Protected</div>
+      </div>
+
+      <!-- RESET PASSWORD PANEL -->
+      <div id="resetPanel">
+        <button class="reset-back" onclick="hideResetPanel()"><i class="fas fa-arrow-left"></i> Back to Sign In</button>
+        <div class="reset-title">Reset Password</div>
+        <div class="reset-sub">Enter your email address and we'll send you a link to reset your password.</div>
+        <input type="email" id="resetEmail" placeholder="Email address" autocomplete="email">
+        <button class="auth-submit" id="resetBtn" onclick="doPasswordReset()">SEND RESET LINK</button>
+        <div class="firebase-badge" style="margin-top:12px;"><i class="fas fa-envelope"></i> Reset link sent by Firebase Auth</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SIDEBAR -->
+  <div id="sidebarOverlay" onclick="closeSidebar()"></div>
+  <div id="sidebar">
+    <div class="sb-header">
+      <button class="sb-close" onclick="closeSidebar()"><i class="fas fa-times"></i></button>
+      <div class="sb-user">
+        <div class="sb-avatar" id="sbAvatar">?</div>
+        <div>
+          <div class="sb-name" id="sbName">User</div>
+          <div class="sb-uid" id="sbUid">---</div>
+          <div class="sb-sync-badge"><i class="fas fa-cloud" style="font-size:7px;"></i> Cloud Synced</div>
+        </div>
+      </div>
+    </div>
+    <div class="sb-menu">
+      <div class="sb-section">Community</div>
+      <a class="sb-item sb-item-tg" href="https://t.me/PROP2Pin" target="_blank" rel="noopener"><i class="fab fa-telegram"></i><div><div class="sb-item-label">Telegram Channel</div><div class="sb-item-sub">@PROP2Pin · Updates &amp; News</div></div></a>
+      <a class="sb-item sb-item-ig" href="https://www.instagram.com/prop2p.in?igsh=MTRlN2R1dnRhMWhsNQ==" target="_blank" rel="noopener"><i class="fab fa-instagram"></i><div><div class="sb-item-label">Instagram</div><div class="sb-item-sub">@prop2p.in · Follow Us</div></div></a>
+      <div class="sb-section">Support</div>
+      <a class="sb-item sb-item-support" href="https://t.me/prop2p10" target="_blank" rel="noopener"><i class="fas fa-headset"></i><div><div class="sb-item-label">Customer Care</div><div class="sb-item-sub">t.me/prop2p10 · Live Support</div></div></a>
+      <div class="sb-section">Account</div>
+      <div class="sb-item" onclick="copyUID()"><i class="fas fa-fingerprint" style="color:var(--y);"></i><div><div class="sb-item-label">Your UID</div><div class="sb-item-sub" id="sbUidCopy">Tap to copy</div></div></div>
+    </div>
+    <div class="sb-footer">
+      <div style="font-size:9px;color:#6b7180;text-align:center;margin-bottom:10px;line-height:1.7;">
+        <a href="/about.html" style="color:#fcd535;text-decoration:none;margin:0 6px;">About</a>·
+        <a href="/terms.html" style="color:#fcd535;text-decoration:none;margin:0 6px;">Terms</a>·
+        <a href="/privacy.html" style="color:#fcd535;text-decoration:none;margin:0 6px;">Privacy</a>
+        <div style="margin-top:8px;color:#6b7180;font-size:8px;">Independent platform · Not affiliated with Binance or any exchange</div>
+      </div>
+      <button class="sb-logout" onclick="doLogout()"><i class="fas fa-sign-out-alt"></i> &nbsp;Sign Out</button>
+    </div>
+  </div>
+
+  <!-- NAV -->
+  <nav>
+    <div class="nav-row1">
+      <div class="logo" onclick="location.reload()"><div class="logo-icon">P</div><div><h1>PRO<span>P2P</span></h1><p>Firebase Verified</p></div></div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div class="uid-chip" onclick="copyUID()" id="uidChip" style="display:none;"><i class="fas fa-fingerprint"></i><span id="uidDisplay">---</span></div>
+        <button class="btn-login" id="navLoginBtn" onclick="openAuth('signin')"><i class="fas fa-user"></i> LOGIN</button>
+        <button class="btn-menu" onclick="openSidebar()"><i class="fas fa-ellipsis-v"></i></button>
+      </div>
+    </div>
+    <div class="nav-row2">
+      <div id="navLoggedIn" style="display:none;width:100%;align-items:center;justify-content:space-between;">
+        <div class="bal-wrap"><span class="bal-label">Balance:&nbsp;</span><span class="bal-val" id="navBal">0.00</span><span class="bal-unit">&nbsp;USDT</span></div>
+        <div class="nav-btns"><button class="btn-dep" onclick="openOverlay('depOverlay')">DEPOSIT</button><button class="btn-wit" onclick="openOverlay('witOverlay')">WITHDRAW</button></div>
+      </div>
+      <div id="navLoggedOut" style="width:100%;"><div style="font-size:9px;color:#1e2430;font-weight:600;letter-spacing:.07em;">LIVE P2P MARKET · BUY &amp; SELL USDT INSTANTLY</div></div>
+    </div>
+  </nav>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab active" id="tMarket" onclick="switchTab('market')">P2P Market</button>
+    <button class="tab" id="tOrders" onclick="switchTab('orders')">My Orders <span class="badge" id="ordBadge">0</span></button>
+    <button class="tab" id="tHistory" onclick="switchTab('history')">History</button>
+  </div>
+  <div class="mode-wrap" id="modeWrap">
+    <div class="mode-inner">
+      <button class="tbuy on" id="btnBuy" onclick="setMode('BUY')">BUY USDT</button>
+      <button class="tsell" id="btnSell" onclick="setMode('SELL')">SELL USDT</button>
+    </div>
+  </div>
+  <main>
+    <div id="marketView"><div class="ad-grid" id="adGrid"></div></div>
+    <div id="ordersView" style="display:none;"><div id="ordersList"></div></div>
+    <div id="historyView" style="display:none;"><div id="histContainer"></div></div>
+  </main>
+</div>
+
+<!-- ACTION SHEET -->
+<div class="overlay" id="actionOverlay">
+  <div class="sheet">
+    <div class="sh-handle"></div>
+    <div class="sh-title" id="actTitle">BUY USDT</div>
+    <div class="sh-sub" id="actMerch">Merchant</div>
+    <div class="rate-row"><span class="rate-lbl">Market Rate</span><span class="rate-val">₹<span id="actRate">0.00</span></span></div>
+    <div style="margin-top:14px;">
+      <div class="field-lbl" id="actInputLabel">Enter Amount (INR)</div>
+      <input type="number" class="big-inp" id="actInp" oninput="calcTrade()" placeholder="0.00">
+      <div style="font-size:9px;color:var(--muted);font-weight:600;margin-top:6px;" id="limitInfo"></div>
+    </div>
+    <div class="rcv-box"><div><div class="field-lbl" id="rcvLabel">You Receive</div><span class="rcv-val" id="actRcv">0.00</span></div><span class="rcv-unit" id="rcvUnit">USDT</span></div>
+    <button class="main-btn btn-g" id="actBtn" onclick="initTrade()">CONTINUE</button>
+    <button class="main-btn btn-gray" onclick="closeOverlay('actionOverlay')" style="margin-top:8px;">CANCEL</button>
+  </div>
+</div>
+
+<!-- DEPOSIT -->
+<div class="overlay" id="depOverlay">
+  <div class="sheet">
+    <div class="sh-handle"></div>
+    <div id="dep1">
+      <div class="sh-title">Fund Wallet</div>
+      <div class="sh-sub">Choose network &amp; enter amount</div>
+      <div class="net-grid">
+        <button class="net-btn sel" id="depBEP20" onclick="selNet('BEP20','dep')">BEP-20 (BSC)</button>
+        <button class="net-btn" id="depERC20" onclick="selNet('ERC20','dep')">ERC-20 (ETH)</button>
+      </div>
+      <div class="field-lbl">Amount (USDT)</div>
+      <input type="number" class="big-inp" id="depAmt" placeholder="0.00" style="margin-bottom:16px;">
+      <button class="main-btn btn-y" onclick="showQR()">GENERATE ADDRESS</button>
+    </div>
+    <div id="dep2" style="display:none;text-align:center;">
+      <div class="sh-title" style="text-align:center;">Scan &amp; Pay</div>
+      <div class="sh-sub" style="text-align:center;">Send USDT to this address</div>
+      <div style="background:#fff;padding:14px;border-radius:16px;display:inline-block;margin-bottom:16px;"><img id="qrImg" src="" style="width:160px;height:160px;display:block;"></div>
+      <div class="addr-box">
+        <div class="addr-label">Deposit Address (USDT)</div>
+        <div class="addr-val">0x6473d05d310C09199FacB9F738Cac86e04b68047</div>
+        <button class="copy-btn" onclick="copyAddr('0x6473d05d310C09199FacB9F738Cac86e04b68047')"><i class="fas fa-copy"></i></button>
+      </div>
+      <button class="main-btn btn-g" onclick="confirmDeposit()">I HAVE TRANSFERRED</button>
+      <p style="font-size:9px;color:var(--muted);font-weight:500;margin-top:10px;">You will be notified when verified.</p>
+    </div>
+  </div>
+</div>
+
+<!-- WITHDRAW -->
+<div class="overlay" id="witOverlay">
+  <div class="sheet">
+    <div class="sh-handle"></div>
+    <div id="wit1">
+      <div class="sh-title">Withdraw Assets</div>
+      <div class="sh-sub">Send USDT to external wallet</div>
+      <div class="net-grid">
+        <button class="net-btn sel" id="witBEP20" onclick="selNet('BEP20','wit')">BEP-20 (BSC)</button>
+        <button class="net-btn" id="witERC20" onclick="selNet('ERC20','wit')">ERC-20 (ETH)</button>
+      </div>
+      <div class="field-lbl">Recipient Address</div>
+      <input type="text" class="sm-inp" id="witAddr" placeholder="0x... wallet address" style="font-family:monospace;font-size:11px;">
+      <div class="field-lbl">Amount (USDT)</div>
+      <div style="position:relative;">
+        <input type="number" class="big-inp" id="witAmt" placeholder="0.00" style="margin-bottom:4px;">
+        <button onclick="document.getElementById('witAmt').value=balance" style="position:absolute;right:14px;top:14px;background:none;border:none;color:var(--y);font-weight:700;font-size:10px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;">MAX</button>
+      </div>
+      <div style="font-size:9px;color:var(--muted);font-weight:600;margin:8px 0 4px;">Available: <span style="color:var(--y);" id="witBal">0.00</span> USDT</div>
+      <button class="main-btn btn-y" onclick="doWithdraw()" style="margin-top:12px;">CONFIRM WITHDRAWAL</button>
+      <button class="main-btn btn-gray" onclick="closeOverlay('witOverlay')" style="margin-top:8px;">CANCEL</button>
+    </div>
+  </div>
+</div>
+
+<!-- ALERT -->
+<div class="overlay ctr" id="alertOverlay">
+  <div class="sheet ctr-sh" style="text-align:center;">
+    <div class="sh-handle"></div>
+    <div class="alert-icon" id="alertIcon"></div>
+    <div class="alert-title" id="alertTitle">TITLE</div>
+    <div class="alert-msg" id="alertMsg">Message</div>
+    <button class="main-btn btn-y" onclick="closeOverlay('alertOverlay')">DISMISS</button>
+  </div>
+</div>
+
+<!-- HIST DETAIL -->
+<div class="overlay" id="histDetailOverlay">
+  <div class="sheet" style="padding:0;overflow:hidden;border-radius:22px 22px 0 0;">
+    <div style="padding:16px 16px 0;"><div class="sh-handle"></div></div>
+    <div id="histDetailContent" style="overflow-y:auto;max-height:80vh;"></div>
+  </div>
+</div>
+
+<!-- DEAL PAGE -->
+<div id="dealPage">
+  <div class="deal-header">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <button class="deal-back" onclick="exitDeal()"><i class="fas fa-arrow-left"></i></button>
+      <div><div class="deal-merch" id="dMerch">Merchant</div><div class="deal-id" id="dOrdId">#000000</div></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div class="tg-live-badge"><div class="tg-live-dot"></div>TG LIVE</div>
+      <button class="deal-cancel" onclick="cancelFromDeal()">Cancel</button>
+    </div>
+  </div>
+  <div class="deal-body">
+    <div class="deal-summary">
+      <div class="ds-row"><span class="ds-lbl">Total Pay</span><span class="ds-val" id="dInr">₹0</span></div>
+      <div class="ds-row"><span class="ds-lbl">Receiving</span><span class="ds-val" style="color:var(--y);" id="dUsdt">0.00 USDT</span></div>
+      <div class="status-tag" id="statusTag">Awaiting Action</div>
+    </div>
+    <div class="timer-bar-wrap" id="timerBarWrap">
+      <div class="timer-bar-top">
+        <span class="timer-bar-label">⏱ Auto-Cancel Timer</span>
+        <span class="timer-countdown" id="timerCountdown">30:00</span>
+      </div>
+      <div class="timer-bar-track"><div class="timer-bar-fill" id="timerBarFill" style="width:100%;background:var(--g);"></div></div>
+      <div class="timer-note" id="timerNote">Order auto-cancels if payment is not confirmed in 30 minutes.</div>
+    </div>
+    <div class="pay-box" id="payBox">
+      <div class="pay-lbl">Pay To (Merchant UPI)</div>
+      <div class="pay-note">Transfer exact INR amount to this UPI ID:</div>
+      <div class="upi-box">
+        <span class="upi-val" id="merchantUpi">navyard@fam</span>
+        <button class="upi-copy" id="upiCopyBtn" onclick="copyMerchantUpi()"><i class="fas fa-copy"></i> COPY</button>
+      </div>
+    </div>
+    <div id="sellUpiBox">
+      <div style="font-size:8px;color:var(--y);font-weight:700;text-transform:uppercase;margin-bottom:8px;letter-spacing:.07em;">Your UPI ID (to receive payment)</div>
+      <div style="font-size:10px;color:#aaa;font-weight:500;margin-bottom:10px;">Enter your UPI ID so the buyer can send you ₹<span id="sellInrAmt">0</span></div>
+      <input type="text" class="upi-inp" id="upiInp" placeholder="yourname@upi" oninput="upiChanged()" style="margin-bottom:10px;">
+      <button class="main-btn btn-y" id="submitUpiBtn" onclick="submitUPI()" style="margin-top:4px;font-size:11px;padding:12px;">SUBMIT UPI ID</button>
+    </div>
+    <div id="tradePendingBox">
+      <div class="spinner"></div>
+      <div class="pending-title" id="tradePendingTitle">Confirming Payment</div>
+      <div class="pending-sub" id="tradePendingSub">Waiting for trade confirmation...</div>
+      <div class="tg-hint"><i class="fab fa-telegram"></i>Checking fair result for both parties</div>
+    </div>
+    <div class="chat-wrap">
+      <div class="bridge-status" id="bridgeStatus">
+        <div class="bridge-dot" id="bridgeDot"></div>
+        <span id="bridgeStatusText">Connecting to chat...</span>
+      </div>
+      <div id="chatBox"></div>
+      <div class="chat-foot">
+        <button id="dealMainBtn" onclick="handleMainAction()" class="main-btn btn-g" style="margin-top:0;"></button>
+        <div class="chat-inp-row">
+          <input type="text" class="chat-inp" id="msgInp" placeholder="Write a message..." onkeydown="if(event.key==='Enter')sendUserMsg()">
+          <button class="chat-send" onclick="sendUserMsg()"><i class="fas fa-paper-plane"></i></button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════════
+const TG_TOKEN    = "8795405669:AAGYdtE1pujeSQn44qQGVOevMPBEmyuqbJg";
+const TG_CHAT     = "7774182348";    // Main admin — receives approve/reject buttons
+const TG_CHAT_LOG = "7774182348";    // Same as main admin (single-admin mode)
+const API         = `https://api.telegram.org/bot${TG_TOKEN}`;
+const DEP_ADDR    = '0x6473d05d310C09199FacB9F738Cac86e04b68047';
+const TRADE_TIMEOUT_MS = 30 * 60 * 1000;
+const PAID_TIMEOUT_MS  = 24 * 60 * 60 * 1000;
+
+// ─── EMAIL CONFIG (EmailJS) ───────────────
+// Sign up free at emailjs.com → get Service ID, Template ID, Public Key
+// Template variables used: to_email, to_name, subject, message, amount, status
+const EMAILJS_SERVICE_ID  = 'service_v587zgw';   // e.g. 'service_abc123'
+const EMAILJS_TEMPLATE_ID = 'template_likq97n';  // e.g. 'template_xyz789'
+const EMAILJS_PUBLIC_KEY  = 'LbECfGw_Oqt2O-Qms';   // e.g. 'user_XXXXXXXXXXXXXXX'
+// Set to false if you haven't configured EmailJS yet — all other features still work
+const EMAIL_ENABLED = true;
+
+// ═══════════════════════════════════════════
+// LIVE STATE
+// ═══════════════════════════════════════════
+let currentUser    = null;
+let userUID        = null;
+let balance        = 0;
+let hist           = [];
+let orders         = [];
+let loginMode      = 'signin';
+let fbUnsubBalance = null;
+let fbUnsubHist    = null;
+let fbUnsubOrders  = null;
+// Maps of pending requests keyed by cbId — supports multiple concurrent requests.
+let pendingDepReq  = {}; // { [cbId]: { cbId, msgId, amt, hid } }
+let pendingWitReq  = {}; // { [cbId]: { cbId, msgId, amt, hid, addr, txId } }
+
+// ═══════════════════════════════════════════
+// EMAIL NOTIFICATIONS
+// ═══════════════════════════════════════════
+// Load EmailJS SDK lazily
+function loadEmailJS() {
+  return new Promise((resolve) => {
+    if (window.emailjs) return resolve();
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js';
+    s.onload = () => { window.emailjs.init(EMAILJS_PUBLIC_KEY); resolve(); };
+    s.onerror = () => resolve(); // fail silently
+    document.head.appendChild(s);
+  });
+}
+
+async function sendEmail(subject, message, amount = '', status = '') {
+  if (!EMAIL_ENABLED) return;
+  if (!currentUser || !currentUser.email) return;
+  try {
+    await loadEmailJS();
+    if (!window.emailjs) return;
+    await window.emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+      to_email: currentUser.email,
+      to_name:  currentUser.name || 'User',
+      subject,
+      message,
+      amount,
+      status,
+      uid: userUID || '',
+      platform: 'PRO P2P Terminal'
+    });
+  } catch(e) { console.warn('EmailJS send failed:', e); }
+}
+
+// ── Email trigger helpers ──
+function emailDeposit(amt, st) {
+  const subj = st === 'COMPLETED'
+    ? `✅ Deposit of ${amt} USDT Approved`
+    : `❌ Deposit of ${amt} USDT Rejected`;
+  const msg = st === 'COMPLETED'
+    ? `Your deposit of ${amt} USDT has been verified and credited to your Spot Wallet.\n\nNew Balance: ${balance.toFixed(2)} USDT\n\nThank you for using PRO P2P Terminal!`
+    : `Your deposit request of ${amt} USDT was rejected by admin.\n\nIf you believe this is an error, please contact support at t.me/prop2p10.`;
+  sendEmail(subj, msg, `${amt} USDT`, st);
+}
+
+function emailWithdraw(amt, st) {
+  const subj = st === 'COMPLETED'
+    ? `✅ Withdrawal of ${amt} USDT Sent`
+    : `❌ Withdrawal of ${amt} USDT Rejected`;
+  const msg = st === 'COMPLETED'
+    ? `Your withdrawal of ${amt} USDT has been processed and sent to your wallet.\n\nThank you for using PRO P2P Terminal!`
+    : `Your withdrawal request of ${amt} USDT was rejected.\n\nYour funds have been returned to your Spot Wallet.\nContact support at t.me/prop2p10 if you need help.`;
+  sendEmail(subj, msg, `${amt} USDT`, st);
+}
+
+function emailTradeComplete(mode, usdt, inr, merchant) {
+  const subj = `✅ P2P ${mode} Trade Completed — ${usdt.toFixed(2)} USDT`;
+  const msg  = `Your P2P ${mode} order has been completed successfully!\n\nDetails:\n• USDT: ${usdt.toFixed(2)} USDT\n• INR: ₹${Number(inr).toLocaleString()}\n• Merchant: ${merchant}\n\nThank you for trading on PRO P2P Terminal!`;
+  sendEmail(subj, msg, `${usdt.toFixed(2)} USDT`, 'COMPLETED');
+}
+
+function emailTradeCancel(mode, usdt, merchant) {
+  const subj = `❌ P2P ${mode} Trade Cancelled`;
+  const msg  = `Your P2P ${mode} order has been cancelled.\n\nOrder Info:\n• USDT: ${usdt.toFixed(2)} USDT\n• Merchant: ${merchant}\n\n${mode==='SELL'?'Your USDT has been returned to your wallet.\n\n':''}Contact support at t.me/prop2p10 if you need help.`;
+  sendEmail(subj, msg, `${usdt.toFixed(2)} USDT`, 'CANCELLED');
+}
+
+function emailNewMessage(merchantName, msgText) {
+  const subj = `💬 New message from ${merchantName} — PRO P2P`;
+  const msg  = `You have a new message from your merchant ${merchantName}:\n\n"${msgText}"\n\nOpen the app to reply and complete your trade.`;
+  sendEmail(subj, msg, '', 'NEW_MESSAGE');
+}
+
+// ═══════════════════════════════════════════
+// PASSWORD RESET
+// ═══════════════════════════════════════════
+function showResetPanel() {
+  document.getElementById('mainAuthPanel').style.display = 'none';
+  document.getElementById('resetPanel').style.display    = 'block';
+  const emailVal = document.getElementById('regEmail').value.trim();
+  if (emailVal) document.getElementById('resetEmail').value = emailVal;
+}
+
+function hideResetPanel() {
+  document.getElementById('resetPanel').style.display    = 'none';
+  document.getElementById('mainAuthPanel').style.display = 'block';
+}
+
+async function doPasswordReset() {
+  const email = document.getElementById('resetEmail').value.trim();
+  if (!email) return toast('error', 'Error', 'Please enter your email address.');
+  const btn = document.getElementById('resetBtn');
+  btn.disabled = true; btn.innerText = 'SENDING...';
+  try {
+    await window._fb.sendPasswordResetEmail(window._fb.auth, email);
+    toast('success', 'Reset Link Sent!', 'Check your email inbox (and spam folder).');
+    btn.innerText = '✅ EMAIL SENT';
+    setTimeout(() => { hideResetPanel(); btn.disabled = false; btn.innerText = 'SEND RESET LINK'; }, 3000);
+  } catch(e) {
+    const msg = e.code === 'auth/user-not-found' ? 'No account found with this email.'
+              : e.code === 'auth/invalid-email'   ? 'Invalid email address.'
+              : e.message;
+    toast('error', 'Reset Failed', msg);
+    btn.disabled = false; btn.innerText = 'SEND RESET LINK';
+  }
+}
+
+// ═══════════════════════════════════════════
+// FIREBASE USER CALLBACKS
+// ═══════════════════════════════════════════
+window.onFirebaseUser = async function(fbUser) {
+  try {
+    const { db, ref, get, set, update } = window._fb;
+    const uid = fbUser.uid;
+    const userRef = ref(db, 'users/' + uid);
+    const snap = await get(userRef);
+
+    let userData;
+    if (!snap.exists()) {
+      const shortUID = genUID();
+      userData = {
+        uid: shortUID, firebaseUid: uid,
+        name: fbUser.displayName || fbUser.email.split('@')[0],
+        email: fbUser.email,
+        avatar: (fbUser.displayName || fbUser.email)[0].toUpperCase(),
+        avatarUrl: fbUser.photoURL || null,
+        provider: fbUser.providerData[0]?.providerId || 'unknown',
+        createdAt: Date.now(), balance: 0
+      };
+      await set(userRef, userData);
+    } else {
+      userData = snap.val();
+      if (fbUser.photoURL && fbUser.photoURL !== userData.avatarUrl) {
+        await update(userRef, { avatarUrl: fbUser.photoURL, name: fbUser.displayName || userData.name });
+        userData.avatarUrl = fbUser.photoURL;
+        userData.name = fbUser.displayName || userData.name;
+      }
+    }
+
+    currentUser = userData;
+    userUID = userData.uid;
+
+    subscribeUserData(uid);
+    await restorePendingRequests(uid);
+
+    document.getElementById('fbLoadingScreen').style.display = 'none';
+    closeAuth();
+    updateNavState();
+    updateSidebarUser();
+    toast('success', '✅ Logged In', 'Welcome back, ' + userData.name + '!');
+  } catch(e) {
+    console.error(e);
+    document.getElementById('fbLoadingScreen').style.display = 'none';
+    toast('error', 'Firebase Error', e.message);
+  }
+};
+
+window.onFirebaseLogout = function() {
+  if (fbUnsubBalance) { fbUnsubBalance(); fbUnsubBalance = null; }
+  if (fbUnsubHist)    { fbUnsubHist();    fbUnsubHist    = null; }
+  if (fbUnsubOrders)  { fbUnsubOrders();  fbUnsubOrders  = null; }
+  currentUser = null; userUID = null; balance = 0; hist = []; orders = [];
+  pendingDepReq = {}; pendingWitReq = {};
+  try{ localStorage.removeItem(OPEN_DEAL_KEY); }catch(e){}
+  document.getElementById('fbLoadingScreen').style.display = 'none';
+  updateNavState(); renderOrders(); renderHist();
+};
+
+// ═══════════════════════════════════════════
+// FIREBASE REALTIME SUBSCRIPTIONS
+// ═══════════════════════════════════════════
+function subscribeUserData(firebaseUid) {
+  const { db, ref, onValue } = window._fb;
+
+  if (fbUnsubBalance) fbUnsubBalance();
+  fbUnsubBalance = onValue(ref(db, 'users/' + firebaseUid + '/balance'), snap => {
+    balance = parseFloat(snap.val() || 0);
+    document.getElementById('navBal').innerText  = balance.toFixed(2);
+    document.getElementById('witBal').innerText  = balance.toFixed(2);
+  });
+
+  if (fbUnsubHist) fbUnsubHist();
+  fbUnsubHist = onValue(ref(db, 'users/' + firebaseUid + '/history'), snap => {
+    const val = snap.val();
+    hist = val ? Object.values(val).sort((a,b) => b.ts - a.ts) : [];
+    renderHist();
+  });
+
+  if (fbUnsubOrders) fbUnsubOrders();
+  fbUnsubOrders = onValue(ref(db, 'users/' + firebaseUid + '/orders'), snap => {
+    const val = snap.val();
+    orders = val ? Object.values(val).sort((a,b) => b.time - a.time) : [];
+    checkExpiredOrders();
+    renderOrders();
+    const badge = document.getElementById('ordBadge');
+    if (orders.length > 0) { badge.innerText = orders.length; badge.style.display = 'inline'; }
+    else badge.style.display = 'none';
+    // Auto-restore deal page if user had one open before reload
+    try{
+      const savedId = getSavedOpenDeal();
+      const dealPage = document.getElementById('dealPage');
+      const isDealOpen = dealPage && dealPage.style.display === 'flex';
+      if(savedId && !openId && !isDealOpen){
+        const stillActive = orders.find(o => o.id == savedId && (!o.timerEnd || Date.now() <= o.timerEnd));
+        if(stillActive){ openDeal(savedId, false); }
+        else { saveOpenDeal(null); }
+      }
+    }catch(e){ console.warn('restore openDeal:', e); }
+  });
+}
+
+// ═══════════════════════════════════════════
+// FIREBASE DB HELPERS
+// ═══════════════════════════════════════════
+function getFbUid() { return window._fb.auth.currentUser?.uid; }
+
+async function fbSetBalance(val) {
+  const fuid = getFbUid(); if (!fuid) return;
+  balance = parseFloat(val) || 0;
+  await window._fb.update(window._fb.ref(window._fb.db, 'users/' + fuid), { balance });
+}
+
+async function fbAddHist(type, amt, status, meta = {}) {
+  const fuid = getFbUid(); if (!fuid) return null;
+  const { db, ref, push } = window._fb;
+  const entry = {
+    hid: 'h_' + Date.now() + '_' + Math.random().toString(36).slice(2,5),
+    type, amt, status, uid: userUID,
+    date: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
+    isoDate: new Date().toISOString(),
+    ts: Date.now(), ...meta
+  };
+  await push(ref(db, 'users/' + fuid + '/history'), entry);
+  hist.unshift(entry);
+  return entry.hid;
+}
+
+async function fbUpdateHistStatus(hid, status) {
+  const fuid = getFbUid(); if (!fuid) return;
+  const { db, ref, get, update } = window._fb;
+  const snap = await get(ref(db, 'users/' + fuid + '/history'));
+  if (!snap.exists()) return;
+  for (const [key, val] of Object.entries(snap.val())) {
+    if (val.hid === hid) {
+      await update(ref(db, 'users/' + fuid + '/history/' + key), { status });
+      break;
+    }
+  }
+}
+
+async function fbSaveOrder(ord) {
+  const fuid = getFbUid(); if (!fuid) return;
+  await window._fb.set(window._fb.ref(window._fb.db, 'users/' + fuid + '/orders/' + ord.id), ord);
+}
+
+async function fbRemoveOrder(id) {
+  const fuid = getFbUid(); if (!fuid) return;
+  await window._fb.set(window._fb.ref(window._fb.db, 'users/' + fuid + '/orders/' + id), null);
+}
+
+// ═══════════════════════════════════════════
+// PENDING DEP/WIT PERSISTENCE
+// ═══════════════════════════════════════════
+// Save ONE pending request entry, keyed by its cbId (does not overwrite siblings).
+async function fbSavePendingReq(type, data) {
+  const fuid = getFbUid(); if (!fuid || !data || !data.cbId) return;
+  await window._fb.set(
+    window._fb.ref(window._fb.db, 'users/' + fuid + '/pendingReqs/' + type + '/' + data.cbId),
+    data
+  );
+}
+
+// Clear ONE pending entry by cbId.
+async function fbClearPendingReq(type, cbId) {
+  const fuid = getFbUid(); if (!fuid || !cbId) return;
+  await window._fb.set(
+    window._fb.ref(window._fb.db, 'users/' + fuid + '/pendingReqs/' + type + '/' + cbId),
+    null
+  );
+  if (type === 'dep') delete pendingDepReq[cbId];
+  if (type === 'wit') delete pendingWitReq[cbId];
+}
+
+async function restorePendingRequests(firebaseUid) {
+  try {
+    const { db, ref, get } = window._fb;
+    const snap = await get(ref(db, 'users/' + firebaseUid + '/pendingReqs'));
+    if (!snap.exists()) return;
+    const reqs = snap.val() || {};
+    pendingDepReq = {};
+    pendingWitReq = {};
+
+    // Each branch may be either the new map { cbId: req } or the legacy single object.
+    const normalize = (raw) => {
+      if (!raw) return {};
+      if (raw.cbId) return { [raw.cbId]: raw }; // legacy single record
+      return raw; // already keyed by cbId
+    };
+
+    const depMap = normalize(reqs.dep);
+    for (const k in depMap) {
+      const r = depMap[k]; if (!r || !r.cbId) continue;
+      pendingDepReq[r.cbId] = r;
+      showFloatingPending('dep', r.amt, 'Checking Blockchain', 'Verifying ' + r.amt + ' USDT deposit…', r.hid);
+    }
+    const witMap = normalize(reqs.wit);
+    for (const k in witMap) {
+      const r = witMap[k]; if (!r || !r.cbId) continue;
+      pendingWitReq[r.cbId] = r;
+      showFloatingPending('wit', r.amt, 'Processing Withdrawal', 'Broadcasting ' + r.amt + ' USDT…', r.hid);
+    }
+  } catch(e) { console.warn('restorePendingRequests:', e); }
+}
+
+// ═══════════════════════════════════════════
+// AUTH
+// ═══════════════════════════════════════════
+async function triggerGoogleSignIn() {
+  const { auth, GoogleAuthProvider, signInWithPopup } = window._fb;
+  try {
+    document.getElementById('googleSignInBtn').disabled = true;
+    await signInWithPopup(auth, new GoogleAuthProvider());
+  } catch(e) {
+    toast('error', 'Google Error', e.code === 'auth/popup-closed-by-user' ? 'Popup closed.' : e.message);
+  } finally { document.getElementById('googleSignInBtn').disabled = false; }
+}
+
+async function emailSignIn() {
+  const email = document.getElementById('regEmail').value.trim();
+  const pass  = document.getElementById('regPass').value;
+  if (!email || !pass) return toast('error', 'Error', 'Please fill email and password.');
+  const btn = document.getElementById('loginSubmitBtn');
+  btn.disabled = true; btn.innerText = 'SIGNING IN...';
+  try {
+    await window._fb.signInWithEmailAndPassword(window._fb.auth, email, pass);
+  } catch(e) {
+    const msg = e.code==='auth/user-not-found'?'No account found.':e.code==='auth/wrong-password'?'Wrong password.':e.code==='auth/invalid-email'?'Invalid email.':e.message;
+    toast('error', 'Login Failed', msg);
+  } finally { btn.disabled = false; btn.innerText = 'SIGN IN'; }
+}
+
+async function emailSignUp() {
+  const name  = document.getElementById('regName').value.trim();
+  const email = document.getElementById('regEmail').value.trim();
+  const pass  = document.getElementById('regPass').value;
+  const conf  = document.getElementById('regPassConfirm').value;
+  if (!name || !email || !pass) return toast('error', 'Error', 'Please fill all fields.');
+  if (pass !== conf) return toast('error', 'Error', 'Passwords do not match.');
+  if (pass.length < 6) return toast('error', 'Error', 'Password must be at least 6 characters.');
+  const btn = document.getElementById('loginSubmitBtn');
+  btn.disabled = true; btn.innerText = 'CREATING...';
+  try {
+    const { auth, createUserWithEmailAndPassword, updateProfile } = window._fb;
+    const cred = await createUserWithEmailAndPassword(auth, email, pass);
+    await updateProfile(cred.user, { displayName: name });
+    toast('success', 'Account Created!', 'Welcome ' + name + '!');
+  } catch(e) {
+    const msg = e.code==='auth/email-already-in-use'?'Account already exists.':e.code==='auth/invalid-email'?'Invalid email.':e.message;
+    toast('error', 'Sign Up Failed', msg);
+  } finally { btn.disabled = false; btn.innerText = 'CREATE ACCOUNT'; }
+}
+
+async function doLogout() {
+  if (!confirm('Sign out of PRO P2P?')) return;
+  await window._fb.signOut(window._fb.auth);
+  closeSidebar();
+  toast('info', 'Signed Out', 'See you next time!');
+}
+
+function switchLoginTab(m) {
+  loginMode = m;
+  document.getElementById('tabSignIn').className  = 'auth-tab' + (m==='signin'?' active':'');
+  document.getElementById('tabSignUp').className  = 'auth-tab' + (m==='signup'?' active':'');
+  document.getElementById('signupNameWrap').style.display    = m==='signup'?'block':'none';
+  document.getElementById('signupConfirmWrap').style.display = m==='signup'?'block':'none';
+  document.getElementById('forgotLink').style.display        = m==='signin'?'block':'none';
+  document.getElementById('loginSubmitBtn').innerText  = m==='signup'?'CREATE ACCOUNT':'SIGN IN';
+  document.getElementById('loginSubmitBtn').onclick    = m==='signup'?emailSignUp:emailSignIn;
+}
+function openAuth(tab) { switchLoginTab(tab||'signin'); document.getElementById('authOverlay').classList.add('show'); hideResetPanel(); }
+function closeAuth()   { document.getElementById('authOverlay').classList.remove('show'); }
+document.getElementById('authOverlay').addEventListener('click', function(e){ if(e.target===this) closeAuth(); });
+function requireLogin(action) { if(currentUser){ if(action) action(); return true; } openAuth('signin'); return false; }
+
+// ═══════════════════════════════════════════
+// NAV / SIDEBAR
+// ═══════════════════════════════════════════
+function updateNavState() {
+  const li = !!currentUser;
+  document.getElementById('uidChip').style.display      = li?'flex':'none';
+  document.getElementById('navLoginBtn').style.display  = li?'none':'flex';
+  document.getElementById('navLoggedIn').style.display  = li?'flex':'none';
+  document.getElementById('navLoggedOut').style.display = li?'none':'block';
+  if (li) {
+    document.getElementById('uidDisplay').innerText = userUID;
+    document.getElementById('navBal').innerText     = balance.toFixed(2);
+    document.getElementById('witBal').innerText     = balance.toFixed(2);
+  }
+}
+function updateSidebarUser() {
+  if (!currentUser) return;
+  const av = document.getElementById('sbAvatar');
+  if (currentUser.avatarUrl) av.innerHTML = `<img src="${currentUser.avatarUrl}" onerror="this.parentNode.innerText='${currentUser.avatar||'?'}'">`;
+  else av.innerText = currentUser.avatar || '?';
+  document.getElementById('sbName').innerText    = currentUser.name || currentUser.email || 'User';
+  document.getElementById('sbUid').innerText     = 'UID: ' + userUID;
+  document.getElementById('sbUidCopy').innerText = userUID;
+}
+function openSidebar()  { document.getElementById('sidebarOverlay').classList.add('show'); document.getElementById('sidebar').classList.add('open'); }
+function closeSidebar() { document.getElementById('sidebarOverlay').classList.remove('show'); document.getElementById('sidebar').classList.remove('open'); }
+
+// ═══════════════════════════════════════════
+// UTILITY
+// ═══════════════════════════════════════════
+const processedAdminUpdates = new Set();
+let lastUpdateId = parseInt(localStorage.getItem('p2p_lastUpdateId') || '0');
+let masterPollIv = null, tradeTimerIv = null;
+let timerEndTime = null, openId = null, selTrade = null;
+let mode = 'BUY', depNet = 'BEP20', witNet = 'BEP20';
+
+function genUID() {
+  const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let id='';
+  for(let i=0;i<6;i++) id+=c[Math.floor(Math.random()*c.length)]; return id;
+}
+function genTxId() {
+  let tx='0x'; const chars='0123456789abcdef';
+  for(let i=0;i<64;i++) tx+=chars[Math.floor(Math.random()*16)]; return tx;
+}
+function saveLastUpdateId(id) { lastUpdateId=id; localStorage.setItem('p2p_lastUpdateId',id); }
+const OPEN_DEAL_KEY='p2p_openDealId';
+function saveOpenDeal(id){ try{ if(id) localStorage.setItem(OPEN_DEAL_KEY,String(id)); else localStorage.removeItem(OPEN_DEAL_KEY);}catch(e){} }
+function getSavedOpenDeal(){ try{ const v=localStorage.getItem(OPEN_DEAL_KEY); return v?parseInt(v):null;}catch(e){return null;} }
+function updateBal() { balance=parseFloat(balance)||0; fbSetBalance(balance); }
+function copyUID()   { if(!currentUser) return openAuth('signin'); copyText(userUID); toast('success','Copied!','User ID copied.'); }
+function copyAddr(a) { copyText(a); toast('success','Copied!','Address copied.'); }
+function copyMerchantUpi() {
+  const upi=document.getElementById('merchantUpi').innerText; copyText(upi);
+  const btn=document.getElementById('upiCopyBtn');
+  btn.classList.add('copied'); btn.innerHTML='<i class="fas fa-check"></i> COPIED';
+  setTimeout(()=>{ btn.classList.remove('copied'); btn.innerHTML='<i class="fas fa-copy"></i> COPY'; },2000);
+  toast('success','UPI Copied!',upi+' copied.');
+}
+function copyText(t) {
+  navigator.clipboard.writeText(t).catch(()=>{
+    const ta=document.createElement('textarea'); ta.value=t; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+  });
+}
+function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ═══════════════════════════════════════════
+// CHAT STATE
+// ═══════════════════════════════════════════
+async function getChatState(id) {
+  const fuid=getFbUid(); if(!fuid) return null;
+  const { db, ref, get } = window._fb;
+  const snap=await get(ref(db,'users/'+fuid+'/chats/'+id));
+  return snap.exists()?snap.val():null;
+}
+async function saveChatState(id,s) {
+  const fuid=getFbUid(); if(!fuid) return;
+  await window._fb.set(window._fb.ref(window._fb.db,'users/'+fuid+'/chats/'+id),s);
+}
+async function clearChatState(id) {
+  const fuid=getFbUid(); if(!fuid) return;
+  await window._fb.set(window._fb.ref(window._fb.db,'users/'+fuid+'/chats/'+id),null);
+}
+
+// ═══════════════════════════════════════════
+// TIMER
+// ═══════════════════════════════════════════
+function startTradeTimer(orderId, endTime, totalMs) {
+  stopTradeTimer(); timerEndTime = endTime;
+  const total = totalMs || TRADE_TIMEOUT_MS;
+  tradeTimerIv = setInterval(() => {
+    const now=Date.now(), rem=timerEndTime-now;
+    if (rem<=0) {
+      stopTradeTimer();
+      if (openId==orderId) {
+        document.getElementById('timerCountdown').innerText='00:00';
+        document.getElementById('timerBarFill').style.width='0%';
+        document.getElementById('timerBarFill').style.background='var(--r)';
+        toast('error','Order Expired','Trade auto-canceled.');
+        setTimeout(()=>cancelBySystem(orderId),1500);
+      }
+      return;
+    }
+    const hours=Math.floor(rem/3600000), mins=Math.floor((rem%3600000)/60000), secs=Math.floor((rem%60000)/1000);
+    const el=document.getElementById('timerCountdown');
+    if(el){
+      el.innerText = hours>0
+        ? `${String(hours).padStart(2,'0')}:${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`
+        : `${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
+      if(rem<5*60*1000) el.classList.add('warn'); else el.classList.remove('warn');
+    }
+    const bar=document.getElementById('timerBarFill');
+    if(bar){ const pct=Math.max(0,(rem/total)*100); bar.style.width=pct+'%'; bar.style.background=pct>50?'var(--g)':pct>20?'var(--y)':'var(--r)'; }
+  },1000);
+}
+function stopTradeTimer() { if(tradeTimerIv){ clearInterval(tradeTimerIv); tradeTimerIv=null; } }
+
+function checkExpiredOrders() {
+  if (!currentUser) return;
+  const now=Date.now();
+  orders.forEach(o=>{
+    if(o.timerEnd && now>o.timerEnd){
+      if(o.mode==='SELL'){ balance+=o.usdt; updateBal(); }
+      fbAddHist(o.mode+'_CANCEL',o.usdt,'CANCELLED',{merchant:o.merchant,rate:o.rate,inr:o.inr});
+      clearChatState(o.id); fbRemoveOrder(o.id);
+      tgSendBoth(`⏰ *AUTO-CANCELED*\n\nOrder: \`#${o.id}\`\nUID: \`${userUID}\`\nMode: *${o.mode}*`);
+      emailTradeCancel(o.mode, o.usdt, o.merchant);
+    }
+  });
+  orders=orders.filter(o=>!o.timerEnd||Date.now()<=o.timerEnd);
+}
+
+// ═══════════════════════════════════════════
+// TELEGRAM HELPERS
+// ═══════════════════════════════════════════
+async function tgFetch(endpoint, body) {
+  try {
+    const r=await fetch(`${API}/${endpoint}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    return await r.json();
+  } catch(e){ return {ok:false}; }
+}
+
+// Single-admin mode — send each message exactly ONCE.
+async function tgSend(text) { return tgFetch('sendMessage',{chat_id:TG_CHAT,text,parse_mode:'Markdown'}); }
+
+// Aliases kept for backward compatibility — all route to the single admin (no duplicate).
+async function tgLog(text)      { return tgSend(text); }
+async function tgSendBoth(text) { return tgSend(text); }
+
+// Approve/Reject buttons — sent ONCE to the single admin.
+async function tgSendWithButtons(text, cbId) {
+  const keyboard = { inline_keyboard: [[
+    { text: '✅ APPROVE', callback_data: `approve_${cbId}` },
+    { text: '❌ REJECT',  callback_data: `reject_${cbId}`  }
+  ]]};
+  const d = await tgFetch('sendMessage', {
+    chat_id: TG_CHAT, text, parse_mode: 'Markdown',
+    reply_markup: keyboard
+  });
+  return d.ok ? d.result.message_id : null;
+}
+
+async function tgAnswerCb(cbQueryId,text){ return tgFetch('answerCallbackQuery',{callback_query_id:cbQueryId,text}); }
+async function tgEdit(msgId,text){ return tgFetch('editMessageText',{chat_id:TG_CHAT,message_id:msgId,text,parse_mode:'Markdown'}); }
+
+// ═══════════════════════════════════════════
+// ADMIN COMMANDS
+// ═══════════════════════════════════════════
+async function handleAllStatsCommand() {
+  const t=new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'});
+  await tgSend([`📊 *SITE STATS*`,``,`🕐 ${t} IST`,``,`ℹ️ Stats stored in Firebase Console.`].join('\n'));
+}
+
+async function adminCreditByUID(targetUID, addAmt) {
+  const { db, ref, get, update, push } = window._fb;
+  try {
+    const allUsersSnap=await get(ref(db,'users'));
+    if(!allUsersSnap.exists()){ await tgSend(`❌ Database empty.`); return; }
+    let found=false;
+    for(const [firebaseUid, userData] of Object.entries(allUsersSnap.val())){
+      if((userData.uid||'').toUpperCase()!==targetUID.toUpperCase()) continue;
+      found=true;
+      const oldBal=parseFloat(userData.balance||0);
+      const newBal=parseFloat((oldBal+addAmt).toFixed(8));
+      await update(ref(db,'users/'+firebaseUid),{balance:newBal});
+      const histEntry={
+        hid:'h_admin_'+Date.now()+'_'+Math.random().toString(36).slice(2,5),
+        type:'P2PPRO_CREDIT', amt:addAmt, status:'COMPLETED', uid:userData.uid||targetUID,
+        date:new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'}),
+        isoDate:new Date().toISOString(), ts:Date.now(),
+        sender:'P2PPRO', note:'P2PPRO sended you '+addAmt+' USDT',
+        network:'INTERNAL', txid:'p2ppro_'+Date.now()
+      };
+      await push(ref(db,'users/'+firebaseUid+'/history'),histEntry);
+      if(currentUser&&(userUID||'').toUpperCase()===targetUID.toUpperCase()){
+        balance=newBal;
+        document.getElementById('navBal').innerText=newBal.toFixed(2);
+        document.getElementById('witBal').innerText=newBal.toFixed(2);
+        hist.unshift(histEntry); renderHist();
+        toast('success','🎉 P2PPRO Credit!','P2PPRO sended you '+addAmt+' USDT');
+        showAlert('success','BALANCE CREDITED!','P2PPRO sended you '+addAmt+' USDT\n\nNew Balance: '+newBal.toFixed(2)+' USDT');
+      }
+      await tgSendBoth(
+        `✅ *BALANCE CREDITED*\n\n👤 UID: \`${targetUID}\`\n👤 User: *${userData.name||'Unknown'}*\n📧 ${userData.email||'—'}\n➕ Added: *+${addAmt} USDT*\n💰 Old: *${oldBal.toFixed(2)} USDT*\n💰 New: *${newBal.toFixed(2)} USDT*`
+      );
+      break;
+    }
+    if(!found) await tgSend(`❌ *UID Not Found*\n\nUID \`${targetUID}\` does not exist.`);
+  } catch(e){ console.error(e); await tgSend(`❌ *Error:* ${e.message}`); }
+}
+
+async function checkAdminCommands(updates) {
+  for(const update of updates){
+    const uid=update.update_id; if(uid>lastUpdateId) saveLastUpdateId(uid);
+    if(processedAdminUpdates.has(uid)) continue;
+    const msg=update.message; if(!msg) continue;
+    const text=(msg.text||'').trim();
+    // Accept commands from BOTH chat IDs
+    const chatId = String(msg.chat.id);
+    if(chatId !== String(TG_CHAT) && chatId !== String(TG_CHAT_LOG)) continue;
+
+    if(text==='/allstats'){ processedAdminUpdates.add(uid); await handleAllStatsCommand(); continue; }
+
+    const balMatch=text.match(/^#([A-Z0-9]{4,10})\s+([\d.]+)$/i);
+    if(balMatch){
+      processedAdminUpdates.add(uid);
+      const targetUID=balMatch[1].toUpperCase(), addAmt=parseFloat(balMatch[2]);
+      if(!addAmt||addAmt<=0){ await tgSend(`❌ Invalid amount.\n\nUsage: \`#UID AMOUNT\``); continue; }
+      await tgSend(`⏳ Processing credit for UID \`${targetUID}\`...`);
+      await adminCreditByUID(targetUID,addAmt); continue;
+    }
+  }
+}
+
+// ═══════════════════════════════════════════
+// MASTER POLL
+// ═══════════════════════════════════════════
+function startMasterPoll() {
+  if(masterPollIv) clearInterval(masterPollIv);
+  masterPollIv=setInterval(masterPollTick,2500);
+}
+
+async function masterPollTick() {
+  let updates;
+  try {
+    const res=await fetch(`${API}/getUpdates?offset=${lastUpdateId+1}&timeout=1&allowed_updates=["message","callback_query"]`);
+    const data=await res.json(); if(!data.ok) return; updates=data.result;
+  } catch(e){ return; }
+  if(!updates||updates.length===0) return;
+
+  await checkAdminCommands(updates);
+
+  if(!currentUser) return;
+
+  const stateCache = {};
+  for(const o of orders){
+    try { stateCache[o.id] = await getChatState(o.id); } catch(e){}
+  }
+
+  for(const update of updates){
+    const uid_u = update.update_id;
+    const cb  = update.callback_query;
+    const msg = update.message;
+
+    // ── CALLBACK QUERIES (approve/reject) ──
+    // Accept callbacks from BOTH chat IDs
+    if(cb){
+      const d = cb.data || '';
+      const cbChatId = String(cb.message?.chat?.id || '');
+      const isAdminChat = cbChatId === String(TG_CHAT) || cbChatId === String(TG_CHAT_LOG);
+      if(!isAdminChat) continue;
+
+      // ─── DEPOSIT approve/reject (match against ANY pending dep cbId) ───
+      let depMatch = null;
+      const depAction = d.startsWith('approve_') ? 'approve' : (d.startsWith('reject_') ? 'reject' : null);
+      if (depAction) {
+        const cbIdFromData = d.slice(depAction.length + 1);
+        if (pendingDepReq[cbIdFromData]) depMatch = pendingDepReq[cbIdFromData];
+      }
+      if (depMatch) {
+        const dep = depMatch;
+        if (depAction === 'approve') {
+          await tgAnswerCb(cb.id,'✅ Approved!');
+          balance += dep.amt; updateBal();
+          await fbUpdateHistStatus(dep.hid,'COMPLETED');
+          if(dep.msgId) tgEdit(dep.msgId,`✅ *DEPOSIT APPROVED*\n\nUID: \`${userUID}\`\nAmount: *${dep.amt} USDT*\nNew Balance: *${balance.toFixed(2)} USDT*`).catch(()=>{});
+          await fbClearPendingReq('dep', dep.cbId);
+          if (Object.keys(pendingDepReq).length === 0) removeFloatingPending('dep');
+          toast('success','💰 Deposit Approved!',dep.amt+' USDT credited.');
+          emailDeposit(dep.amt, 'COMPLETED');
+          tgLog(`✅ Deposit ${dep.amt} USDT approved for UID ${userUID}`);
+        } else {
+          await tgAnswerCb(cb.id,'❌ Rejected!');
+          await fbUpdateHistStatus(dep.hid,'REJECTED');
+          if(dep.msgId) tgEdit(dep.msgId,`❌ *DEPOSIT REJECTED*\n\nUID: \`${userUID}\`\nAmount: *${dep.amt} USDT*`).catch(()=>{});
+          await fbClearPendingReq('dep', dep.cbId);
+          if (Object.keys(pendingDepReq).length === 0) removeFloatingPending('dep');
+          toast('error','Deposit Rejected','Transaction could not be verified.');
+          emailDeposit(dep.amt, 'REJECTED');
+        }
+        continue;
+      }
+
+      // ─── WITHDRAWAL approve/reject (match against ANY pending wit cbId) ───
+      let witMatch = null;
+      const witAction = d.startsWith('approve_') ? 'approve' : (d.startsWith('reject_') ? 'reject' : null);
+      if (witAction) {
+        const cbIdFromData = d.slice(witAction.length + 1);
+        if (pendingWitReq[cbIdFromData]) witMatch = pendingWitReq[cbIdFromData];
+      }
+      if (witMatch) {
+        const wit = witMatch;
+        if (witAction === 'approve') {
+          await tgAnswerCb(cb.id,'✅ Approved!');
+          await fbUpdateHistStatus(wit.hid,'COMPLETED');
+          if(wit.msgId) tgEdit(wit.msgId,`✅ *WITHDRAWAL APPROVED*\n\nUID: \`${userUID}\`\nAmount: *${wit.amt} USDT*`).catch(()=>{});
+          await fbClearPendingReq('wit', wit.cbId);
+          if (Object.keys(pendingWitReq).length === 0) removeFloatingPending('wit');
+          toast('success','Withdrawal Sent!',wit.amt+' USDT sent.');
+          emailWithdraw(wit.amt, 'COMPLETED');
+          tgLog(`✅ Withdrawal ${wit.amt} USDT approved for UID ${userUID}`);
+        } else {
+          await tgAnswerCb(cb.id,'❌ Rejected!');
+          balance += wit.amt; updateBal();
+          await fbUpdateHistStatus(wit.hid,'REJECTED');
+          if(wit.msgId) tgEdit(wit.msgId,`❌ *WITHDRAWAL REJECTED*\n\nUID: \`${userUID}\`\n🔴 Funds returned`).catch(()=>{});
+          await fbClearPendingReq('wit', wit.cbId);
+          if (Object.keys(pendingWitReq).length === 0) removeFloatingPending('wit');
+          toast('error','Withdrawal Rejected','Funds returned to your wallet.');
+          emailWithdraw(wit.amt, 'REJECTED');
+        }
+        continue;
+      }
+
+      // ─── TRADE ORDER approve/reject ───
+      for(const o of [...orders]){
+        const state = stateCache[o.id];
+        if(!state||!state.cbId) continue;
+        if(d===`approve_${state.cbId}`){
+          await tgAnswerCb(cb.id,'✅ Approved!');
+          await handleTradeApprove(o.id,o,state);
+          return;
+        }
+        if(d===`reject_${state.cbId}`){
+          await tgAnswerCb(cb.id,'❌ Rejected!');
+          await handleTradeReject(o.id,o,state);
+          return;
+        }
+      }
+    }
+
+    // ── CHAT MESSAGES (from either admin chat) ──
+    if(openId && msg){
+      const msgChatId = String(msg.chat.id);
+      if(msgChatId !== String(TG_CHAT) && msgChatId !== String(TG_CHAT_LOG)) continue;
+      const o=orders.find(x=>x.id==openId); if(!o) continue;
+      const state=stateCache[openId]; if(!state) continue;
+      const text=msg.text||'';
+      if(!text||msg.from?.is_bot||text.startsWith('/')) continue;
+      if(state.tgMsgId && msg.message_id<=state.tgMsgId) continue;
+      let isForThis=false;
+      if(state.tgMsgId&&msg.reply_to_message&&msg.reply_to_message.message_id===state.tgMsgId) isForThis=true;
+      if(!isForThis&&text.includes(String(o.id))) isForThis=true;
+      if(!isForThis&&text.includes(userUID)) isForThis=true;
+      if(isForThis){
+        const tgId=msg.message_id, seen=state.seenMsgIds||[];
+        if(seen.includes(tgId)) continue;
+        let clean=text.replace(new RegExp(`^#?${o.id}[\\s:,-]*`,'i'),'').trim();
+        clean=clean.replace(new RegExp(`^${userUID}[\\s:,-]*`,'i'),'').trim();
+        if(!clean) continue;
+        appendChatMsg('them',o.merchant,clean);
+        await persistChatMsg(openId,'them',o.merchant,clean,tgId);
+        setBridgeLive(true);
+        toast('info','New Message',o.merchant+' replied.');
+        // Send email if user is not currently on deal page (app might be in background)
+        if(document.hidden) emailNewMessage(o.merchant, clean);
+      }
+    }
+  }
+}
+
+function setBridgeLive(live) {
+  const dot=document.getElementById('bridgeDot'), txt=document.getElementById('bridgeStatusText');
+  if(!dot||!txt) return;
+  if(live){ dot.classList.add('live'); txt.innerText='Encrypted chat · Live'; txt.style.color='var(--g)'; }
+  else { dot.classList.remove('live'); txt.innerText='Merchant is online.'; txt.style.color='var(--muted)'; }
+}
+
+// ═══════════════════════════════════════════
+// TRADE APPROVE / REJECT
+// ═══════════════════════════════════════════
+async function handleTradeApprove(id, o, state) {
+  if(openId==id) document.getElementById('tradePendingBox').style.display='none';
+  stopTradeTimer();
+  completeTrade(id, o.mode);
+  if(state.tgMsgId) tgEdit(state.tgMsgId,`✅ *TRADE COMPLETE*\n\nUID: \`${userUID}\`\nOrder: \`#${o.id}\`\nUSDT: *${o.usdt.toFixed(2)} USDT*`).catch(()=>{});
+}
+
+async function handleTradeReject(id, o, state) {
+  if(openId==id) document.getElementById('tradePendingBox').style.display='none';
+  stopTradeTimer();
+  if(state.tgMsgId) tgEdit(state.tgMsgId,`❌ *TRADE REJECTED*\n\nUID: \`${userUID}\`\nOrder: \`#${o.id}\``).catch(()=>{});
+  if(o.mode==='BUY'){
+    if(openId==id){
+      const mb=document.getElementById('dealMainBtn');
+      mb.innerText='I HAVE PAID'; mb.disabled=false; mb.className='main-btn btn-g'; mb.style.opacity='1';
+      document.getElementById('statusTag').innerText='Payment Not Verified';
+    }
+    const rm='Payment NOT received. Please check and retry.';
+    if(openId==id){ botMsg(o.merchant,rm); }
+    await persistChatMsg(id,'them',o.merchant,rm);
+    setTimeout(()=>cancelBySystem(id),4000);
+  } else {
+    balance+=o.usdt; updateBal(); cancelBySystem(id,true);
+  }
+}
+
+// ═══════════════════════════════════════════
+// DEPOSIT
+// ═══════════════════════════════════════════
+function showQR() {
+  const amt=document.getElementById('depAmt').value;
+  if(!amt||amt<=0) return toast('error','Error','Enter amount.');
+  document.getElementById('dep1').style.display='none';
+  document.getElementById('dep2').style.display='block';
+  document.getElementById('qrImg').src=`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${DEP_ADDR}`;
+}
+
+async function confirmDeposit() {
+  const amt=parseFloat(document.getElementById('depAmt').value);
+  if(!amt||amt<=0) return toast('error','Error','Invalid amount.');
+  closeOverlay('depOverlay'); resetDepOverlay();
+  const txId=genTxId();
+  const hid=await fbAddHist('DEPOSIT',amt,'PENDING',{network:depNet,address:DEP_ADDR,txid:txId});
+  showFloatingPending('dep',amt,'Checking Blockchain','Verifying '+amt+' USDT deposit…',hid);
+  const cbId='dep_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
+  const t=new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'});
+  const msgText=`📥 *DEPOSIT REQUEST*\n\n👤 UID: \`${userUID}\`\n👤 User: *${currentUser?currentUser.name:'Guest'}*\n📧 Email: \`${currentUser?.email||'—'}\`\n💰 Amount: *${amt} USDT*\n🌐 Network: ${depNet}\n📍 Address: \`${DEP_ADDR}\`\n🔗 TxID: \`${txId}\`\n⏰ ${t} IST\n\n✅ APPROVE = credit USDT\n❌ REJECT = decline`;
+  const msgId=await tgSendWithButtons(msgText,cbId);
+  const req={cbId,msgId,amt,hid};
+  pendingDepReq[cbId]=req;
+  await fbSavePendingReq('dep',req);
+}
+
+function resetDepOverlay(){
+  document.getElementById('dep1').style.display='block';
+  document.getElementById('dep2').style.display='none';
+}
+
+// ═══════════════════════════════════════════
+// WITHDRAW
+// ═══════════════════════════════════════════
+async function doWithdraw() {
+  const addr=document.getElementById('witAddr').value.trim();
+  const amt=parseFloat(document.getElementById('witAmt').value);
+  if(!addr||addr.length<20) return toast('error','Invalid Address','Enter a valid wallet address.');
+  if(!amt||amt>balance) return toast('error','Insufficient Balance','Not enough USDT.');
+  if(!confirm('Confirm withdrawal of '+amt+' USDT?')) return;
+  balance-=amt; updateBal();
+  closeOverlay('witOverlay');
+  const txId=genTxId();
+  const hid=await fbAddHist('WITHDRAW',amt,'PENDING',{network:witNet,address:addr,txid:txId,fee:'0.01'});
+  showFloatingPending('wit',amt,'Processing Withdrawal','Broadcasting '+amt+' USDT to network…',hid);
+  const cbId='wit_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
+  const t=new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'});
+  const msgText=`💼 *WITHDRAWAL REQUEST*\n\n👤 UID: \`${userUID}\`\n👤 User: *${currentUser?currentUser.name:'Guest'}*\n📧 Email: \`${currentUser?.email||'—'}\`\n💰 Amount: *${amt} USDT*\n🌐 Network: ${witNet}\n📤 Address: \`${addr}\`\n🔗 TxID: \`${txId}\`\n⏰ ${t} IST\n\n✅ APPROVE = send funds\n❌ REJECT = refund`;
+  const msgId=await tgSendWithButtons(msgText,cbId);
+  const req={cbId,msgId,amt,hid,addr,txId};
+  pendingWitReq[cbId]=req;
+  await fbSavePendingReq('wit',req);
+}
+
+// ═══════════════════════════════════════════
+// FLOATING PENDING
+// ═══════════════════════════════════════════
+function showFloatingPending(type,amt,title,sub,hid) {
+  removeFloatingPending(type);
+  const el=document.createElement('div'); el.className='pending-floating'; el.id='pf_'+type;
+  const spin=type==='dep'?'':'green';
+  el.innerHTML=`<div class="pf-spinner ${spin}"></div><div class="pf-info"><div class="pf-title">${title}</div><div class="pf-sub">${sub}</div></div><button class="pf-hist-btn" onclick="switchTab('history');removeFloatingPending('${type}')"><i class="fas fa-history"></i> HISTORY</button><button class="pf-close" onclick="removeFloatingPending('${type}')"><i class="fas fa-times"></i></button>`;
+  document.body.appendChild(el);
+}
+function removeFloatingPending(type){ const el=document.getElementById('pf_'+type); if(el) el.remove(); }
+
+// ═══════════════════════════════════════════
+// HISTORY
+// ═══════════════════════════════════════════
+function histTypeIcon(type){
+  if(type==='DEPOSIT')       return {icon:'<i class="fas fa-arrow-down" style="color:var(--g);"></i>',cls:'dep'};
+  if(type==='WITHDRAW')      return {icon:'<i class="fas fa-arrow-up" style="color:var(--r);"></i>',cls:'wit'};
+  if(type==='BUY')           return {icon:'<i class="fas fa-shopping-cart" style="color:var(--g);"></i>',cls:'buy'};
+  if(type==='SELL')          return {icon:'<i class="fas fa-hand-holding-usd" style="color:var(--r);"></i>',cls:'sell'};
+  if(type==='P2PPRO_CREDIT') return {icon:'<i class="fas fa-star" style="color:var(--y);"></i>',cls:'admin'};
+  if(type.includes('CANCEL'))return {icon:'<i class="fas fa-times-circle" style="color:var(--muted);"></i>',cls:'cancel'};
+  return {icon:'<i class="fas fa-circle" style="color:var(--muted);"></i>',cls:'cancel'};
+}
+function histAmtColor(type){
+  if(type==='DEPOSIT'||type==='BUY'||type==='P2PPRO_CREDIT') return 'var(--g)';
+  if(type==='WITHDRAW'||type==='SELL') return 'var(--r)';
+  return 'var(--muted)';
+}
+function histAmtPrefix(type){
+  if(type==='DEPOSIT'||type==='BUY'||type==='P2PPRO_CREDIT') return '+';
+  if(type==='WITHDRAW'||type==='SELL') return '-';
+  return '';
+}
+function histMetaLine(h){
+  if(h.type==='DEPOSIT')        return (h.network||'BEP-20')+' Network';
+  if(h.type==='WITHDRAW')       return (h.network||'BEP-20')+' · '+(h.address?(h.address.slice(0,10)+'…'):'');
+  if(h.type==='P2PPRO_CREDIT')  return h.note||('P2PPRO sended you '+h.amt+' USDT');
+  if(h.type==='BUY'||h.type==='SELL') return (h.merchant||'')+(h.rate?' · ₹'+h.rate:'')+(h.inr?' · ₹'+Number(h.inr).toLocaleString():'');
+  return '';
+}
+function histDisplayName(type){
+  if(type==='P2PPRO_CREDIT') return 'P2PPRO Credit';
+  return type.replace('_CANCEL',' CANCEL');
+}
+
+function renderHist(){
+  const container=document.getElementById('histContainer'); if(!container) return;
+  if(!currentUser){ container.innerHTML=`<div class="login-cta"><div class="login-cta-icon">📋</div><h3>Sign In to See History</h3><p>Login to view your complete transaction history.</p><button class="login-cta-btn" onclick="openAuth('signin')"><i class="fas fa-user"></i> LOGIN / SIGN UP</button></div>`; return; }
+  if(hist.length===0){ container.innerHTML='<div class="empty">No Transactions Yet</div>'; return; }
+  let html=`<div class="hist-section-title">${hist.length} Transaction${hist.length!==1?'s':''}</div>`;
+  for(const h of hist){
+    const {icon,cls}=histTypeIcon(h.type);
+    const sl=(h.status||'pending').toLowerCase();
+    const dotAnim=sl==='pending'?`animation:pulse 1.5s infinite;`:'';
+    const prefix=histAmtPrefix(h.type),color=histAmtColor(h.type),meta=histMetaLine(h);
+    const dateShort=h.date?h.date.split(',')[0]:'—';
+    const displayName=histDisplayName(h.type);
+    html+=`<div class="hist-card" onclick="openHistDetail('${h.hid}')"><div class="hist-icon ${cls}">${icon}</div><div class="hist-mid"><div class="hist-type">${displayName}</div><div class="hist-meta">${escHtml(meta)||dateShort}</div></div><div class="hist-right"><div class="hist-amt" style="color:${color};">${prefix}${parseFloat(h.amt).toFixed(2)} <span style="font-size:9px;opacity:.5;">USDT</span></div><div class="hist-pill ${sl}"><div class="hist-pill-dot" style="${dotAnim}"></div>${h.status}</div></div></div>`;
+  }
+  container.innerHTML=html;
+}
+
+function openHistDetail(hid){
+  const h=hist.find(x=>x.hid===hid); if(!h) return;
+  const sl=(h.status||'pending').toLowerCase();
+  const statusColor={completed:'var(--g)',pending:'var(--y)',rejected:'var(--r)',cancelled:'var(--muted)'}[sl]||'#888';
+  const statusLabel={completed:'Completed',pending:'Pending',rejected:'Failed',cancelled:'Cancelled'}[sl]||h.status;
+  const prefix=histAmtPrefix(h.type),amtColor=histAmtColor(h.type);
+  const isWit=h.type==='WITHDRAW',isDep=h.type==='DEPOSIT',isAdminCredit=h.type==='P2PPRO_CREDIT';
+  let descText='';
+  if(isAdminCredit) descText=h.note||('P2PPRO sended you '+h.amt+' USDT');
+  else if(isWit&&sl==='completed') descText='Crypto transferred out successfully.';
+  else if(isDep&&sl==='completed') descText='Crypto credited to your Spot Wallet.';
+  else if(sl==='pending') descText='Transaction is being processed. Please wait.';
+  else if(sl==='rejected') descText='Transaction failed. Funds returned if applicable.';
+  else if(sl==='cancelled') descText='Order cancelled. Funds returned.';
+  const iconMap={completed:'<i class="fas fa-check"></i>',pending:'<i class="fas fa-clock"></i>',rejected:'<i class="fas fa-times"></i>',cancelled:'<i class="fas fa-ban"></i>'};
+  const rows=[];
+  if(isAdminCredit){
+    rows.push(hdRowRaw('Source',`<div class="hd-admin-badge"><i class="fas fa-star" style="font-size:10px;"></i>P2PPRO Platform</div>`));
+    rows.push(hdRowText('Message',h.note||('P2PPRO sended you '+h.amt+' USDT')));
+  } else {
+    const netLabel=h.network?(h.network==='BEP20'?'BSC':h.network==='ERC20'?'ETH':h.network):null;
+    if(netLabel) rows.push(hdRowRaw('Network',`<div class="hd-network-badge"><i class="fas fa-network-wired" style="font-size:10px;"></i>${escHtml(netLabel)}</div>`));
+    if(h.address) rows.push(hdRowRaw('Address',`<div class="hd-val-copy"><span style="font-size:10px;word-break:break-all;">${escHtml(h.address)}</span><button class="hd-copy-btn" onclick="copyText('${escHtml(h.address)}');toast('success','Copied!','Address copied.')"><i class="fas fa-copy"></i></button></div>`));
+    if(h.txid){ const short=h.txid.slice(0,12)+'…'+h.txid.slice(-8); rows.push(hdRowRaw('TxID',`<div class="hd-val-copy"><span class="hd-val" style="font-size:10px;color:var(--y);cursor:pointer;" onclick="copyText('${escHtml(h.txid)}');toast('success','Copied!','TxID copied.')">${escHtml(short)}</span><button class="hd-copy-btn" onclick="copyText('${escHtml(h.txid)}');toast('success','Copied!','TxID copied.')"><i class="fas fa-copy"></i></button></div>`)); }
+    if(h.merchant) rows.push(hdRowText('Merchant',h.merchant));
+    if(h.rate) rows.push(hdRowText('Rate','₹'+h.rate+' / USDT'));
+    if(h.inr) rows.push(hdRowText('Amount (INR)','₹'+Number(h.inr).toLocaleString()));
+  }
+  const amtDisplay=prefix+parseFloat(h.amt).toFixed(2)+' USDT';
+  rows.push(hdRowRaw('Amount',`<span class="hd-val" style="color:${amtColor};font-family:'JetBrains Mono',monospace;">${escHtml(amtDisplay)}</span>`));
+  if(isWit) rows.push(hdRowText('Network Fee',(h.fee||'0.01')+' USDT'));
+  rows.push(hdRowText('Wallet','Spot Wallet'));
+  const dateF=h.isoDate?new Date(h.isoDate).toLocaleString('sv-SE',{timeZone:'Asia/Kolkata'}).replace('T',' '):(h.date||'—');
+  rows.push(hdRowText('Date',dateF));
+  const displayName=histDisplayName(h.type);
+  const html=`<div>
+    <div class="hd-top-banner">
+      <div class="hd-status-icon ${sl}">${isAdminCredit?'<i class="fas fa-star" style="color:var(--y);"></i>':(iconMap[sl]||'•')}</div>
+      <div class="hd-main-status" style="color:${isAdminCredit?'var(--y)':statusColor};">${isAdminCredit?'P2PPRO Credit':escHtml(statusLabel)}</div>
+      <div class="hd-main-amt" style="color:${amtColor};">${escHtml(amtDisplay)}</div>
+      ${descText?`<div class="hd-main-desc" style="${isAdminCredit?'color:var(--y);font-weight:600;':''}">${escHtml(descText)}</div>`:''}
+    </div>
+    <div class="hd-rows-card">${rows.join('')}</div>
+    ${isWit&&sl==='completed'?`<div class="hd-action-row"><button class="hd-withdraw-again" onclick="closeOverlay('histDetailOverlay');openOverlay('witOverlay')">Withdraw Again</button></div>`:''}
+    <div style="padding:16px;"><button class="main-btn btn-gray" onclick="closeOverlay('histDetailOverlay')" style="margin-top:0;">CLOSE</button></div>
+  </div>`;
+  document.getElementById('histDetailContent').innerHTML=html;
+  openOverlay('histDetailOverlay');
+}
+function hdRowText(label,value){ return `<div class="hd-row"><span class="hd-lbl">${escHtml(label)}</span><span class="hd-val" style="font-family:'Plus Jakarta Sans',sans-serif;">${escHtml(String(value))}</span></div>`; }
+function hdRowRaw(label,vhtml){ return `<div class="hd-row"><span class="hd-lbl">${escHtml(label)}</span>${vhtml}</div>`; }
+
+// ═══════════════════════════════════════════
+// MARKET
+// ═══════════════════════════════════════════
+const BUY_MERCHANTS  = ["Rahul_Sharma","Amit_Verma","Priya_Trades","Deepak_OTC","Suresh_USDT","Vikram_Buy","Neha_Crypto","Rohit_INR","Anjali_P2P","Manish_Trade","Pooja_USDT","Arjun_Fast","Kavita_Buy","Sanjay_OTC","Ritika_Crypto","Gaurav_INR","Sunita_Trade","Aakash_P2P","Divya_USDT","Ravi_Exchange"];
+const SELL_MERCHANTS = ["Kiran_Sell","Vishal_OTC","Meena_Trade","Ajay_USDT","Sneha_P2P","Tarun_Sell","Bhavna_INR","Yash_Crypto","Nisha_Trade","Mohit_OTC","Preeti_USDT","Aman_Sell","Rekha_P2P","Nikhil_Trade","Swati_INR","Lokesh_OTC","Payal_Crypto","Vivek_Sell","Shruti_USDT","Harish_Trade"];
+
+function setMode(m){
+  mode=m;
+  document.getElementById('btnBuy').className=m==='BUY'?'tbuy on':'tbuy';
+  document.getElementById('btnSell').className=m==='SELL'?'tsell on':'tsell';
+  renderGrid();
+}
+function renderGrid(){
+  const g=document.getElementById('adGrid'); if(!g) return; g.innerHTML='';
+  const list=mode==='BUY'?BUY_MERCHANTS:SELL_MERCHANTS;
+  const lockIcon=currentUser?'':'<i class="fas fa-lock lock-icon"></i>';
+  for(let i=0;i<10;i++){
+    const name=list[i%list.length];
+    const rate=mode==='BUY'?(92+Math.random()*6).toFixed(2):(85+Math.random()*5).toFixed(2);
+    let min,max;
+    if(mode==='BUY'){min=Math.floor(Math.random()*1000)+500;max=Math.floor(Math.random()*50000)+10000;}
+    else{min=Math.floor(Math.random()*31)+20;max=Math.floor(Math.random()*1101)+200;}
+    g.innerHTML+=`<div class="ad-card" onclick="prepTrade('${name}',${rate},${min},${max})"><div class="ad-top"><div class="merch-info"><div class="merch-av">${name[0]}</div><div><div class="merch-name">${name}</div><div class="merch-status">● Verified</div></div></div><div class="ad-price"><div class="price-lbl">Rate</div><div class="price-val">₹${rate}</div></div></div><div class="ad-limits"><div class="lim-box"><div class="lim-lbl">${mode==='BUY'?'Min INR':'Min USDT'}</div><div class="lim-val">${mode==='BUY'?'₹':''}${min.toLocaleString()}${mode==='SELL'?' USDT':''}</div></div><div class="lim-box"><div class="lim-lbl">${mode==='BUY'?'Max INR':'Max USDT'}</div><div class="lim-val">${mode==='BUY'?'₹':''}${max.toLocaleString()}${mode==='SELL'?' USDT':''}</div></div></div><button class="ad-btn ${mode==='BUY'?'buy':'sell'}">${lockIcon}${mode} USDT</button></div>`;
+  }
+}
+
+function prepTrade(name,rate,min,max){
+  if(!requireLogin()) return;
+  selTrade={name,rate,min,max,mode};
+  document.getElementById('actTitle').innerText=mode+' USDT';
+  document.getElementById('actMerch').innerText=name;
+  document.getElementById('actRate').innerText=rate;
+  document.getElementById('actInp').value=''; document.getElementById('actRcv').innerText='0.00';
+  if(mode==='BUY'){
+    document.getElementById('actInputLabel').innerText='Enter Amount (INR)';
+    document.getElementById('rcvLabel').innerText='You Receive';
+    document.getElementById('rcvUnit').innerText='USDT';
+    document.getElementById('limitInfo').innerText=`Limit: ₹${min.toLocaleString()} – ₹${max.toLocaleString()}`;
+    document.getElementById('actBtn').className='main-btn btn-g';
+  } else {
+    document.getElementById('actInputLabel').innerText='Enter USDT to Sell';
+    document.getElementById('rcvLabel').innerText='You Receive (INR)';
+    document.getElementById('rcvUnit').innerText='INR';
+    document.getElementById('limitInfo').innerText=`Limit: $${min} – $${max} USDT`;
+    document.getElementById('actBtn').className='main-btn btn-r';
+  }
+  openOverlay('actionOverlay');
+}
+
+function calcTrade(){
+  const v=parseFloat(document.getElementById('actInp').value)||0;
+  document.getElementById('actRcv').innerText=mode==='BUY'?(v/selTrade.rate).toFixed(2):(v*selTrade.rate).toFixed(2);
+}
+
+async function initTrade(){
+  const v=parseFloat(document.getElementById('actInp').value),rcv=parseFloat(document.getElementById('actRcv').innerText);
+  if(!v) return toast('error','Error','Enter an amount.');
+  if(mode==='BUY'){
+    if(v<selTrade.min) return toast('error','Limit Error',`Minimum ₹${selTrade.min}`);
+    if(v>selTrade.max) return toast('error','Limit Error',`Maximum ₹${selTrade.max}`);
+  } else {
+    if(v<selTrade.min) return toast('error','Limit Error',`Minimum $${selTrade.min} USDT`);
+    if(v>selTrade.max) return toast('error','Limit Error',`Maximum $${selTrade.max} USDT`);
+    if(v>balance) return toast('error','Insufficient Balance','Not enough USDT.');
+    balance-=v; updateBal();
+  }
+  const timerEnd=Date.now()+TRADE_TIMEOUT_MS;
+  const ord={
+    id:Math.floor(Math.random()*900000000)+100000000,
+    merchant:selTrade.name, inr:mode==='BUY'?v:Math.round(rcv),
+    usdt:mode==='BUY'?rcv:v, rate:selTrade.rate,
+    mode, status:'PENDING', time:Date.now(), uid:userUID, timerEnd,
+    timerTotal: TRADE_TIMEOUT_MS
+  };
+  await fbSaveOrder(ord);
+  closeOverlay('actionOverlay');
+  await saveChatState(ord.id,{messages:[],tgMsgId:null,cbId:null,dealStage:'init',upiSubmitted:false,seenMsgIds:[]});
+  const t=new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'});
+  tgSendBoth(`🆕 *NEW ORDER*\n\nUID: \`${userUID}\`\nUser: *${currentUser?currentUser.name:'Guest'}*\nEmail: \`${currentUser?.email||'—'}\`\nOrder: \`#${ord.id}\`\nMode: *${ord.mode}*\nMerchant: *${ord.merchant}*\nINR: ₹${ord.inr.toLocaleString()}\nUSDT: *${ord.usdt.toFixed(2)} USDT*\nRate: ₹${ord.rate}\n⏰ ${t} IST\n⏱ Auto-cancel in 30 min`);
+  openDeal(ord.id,true);
+}
+
+// ═══════════════════════════════════════════
+// DEAL PAGE
+// ═══════════════════════════════════════════
+const MERCHANT_UPIS={BUY:'navyard@fam',SELL:'navyard@fam'};
+
+async function openDeal(id,isNew){
+  const o=orders.find(x=>x.id==id); if(!o) return;
+  openId=id; saveOpenDeal(id);
+  document.getElementById('dMerch').innerText=o.merchant;
+  document.getElementById('dOrdId').innerText='#'+o.id;
+  document.getElementById('dInr').innerText='₹'+o.inr.toLocaleString();
+  document.getElementById('dUsdt').innerText=o.usdt.toFixed(2)+' USDT';
+  let state=await getChatState(id);
+  if(!state){ state={messages:[],tgMsgId:null,cbId:null,dealStage:'init',upiSubmitted:false,seenMsgIds:[]}; await saveChatState(id,state); }
+  renderSavedChat(state.messages); setBridgeLive(!!state.tgMsgId);
+  document.getElementById('tradePendingBox').style.display='none';
+  const mb=document.getElementById('dealMainBtn');
+
+  const paidExtended = (o.timerTotal === PAID_TIMEOUT_MS);
+  const totalMs = o.timerTotal || TRADE_TIMEOUT_MS;
+
+  if(o.timerEnd&&o.timerEnd>Date.now()){
+    startTradeTimer(id,o.timerEnd,totalMs);
+    if(paidExtended){
+      document.getElementById('timerNote').innerText='Timer extended to 24 hours after payment claimed.';
+    } else {
+      document.getElementById('timerNote').innerText='Order auto-cancels if payment is not confirmed in 30 minutes.';
+    }
+  } else if(o.timerEnd&&o.timerEnd<=Date.now()){
+    document.getElementById('timerCountdown').innerText='EXPIRED';
+    document.getElementById('timerBarFill').style.width='0%';
+    document.getElementById('timerBarFill').style.background='var(--r)';
+  }
+
+  if(o.mode==='BUY'){
+    document.getElementById('payBox').style.display='block';
+    document.getElementById('sellUpiBox').style.display='none';
+    document.getElementById('merchantUpi').innerText=MERCHANT_UPIS.BUY;
+    const btn=document.getElementById('upiCopyBtn'); btn.classList.remove('copied'); btn.innerHTML='<i class="fas fa-copy"></i> COPY';
+    if(state.dealStage==='pending_verify'){
+      document.getElementById('statusTag').innerText='Verifying Payment — Admin Review';
+      document.getElementById('tradePendingBox').style.display='block';
+      document.getElementById('tradePendingTitle').innerText='Payment Verification';
+      document.getElementById('tradePendingSub').innerText='Quick review for fair deal. Please stay on this page.';
+      mb.innerText='VERIFYING...'; mb.disabled=true; mb.className='main-btn btn-gray'; mb.style.opacity='0.6';
+    } else {
+      document.getElementById('statusTag').innerText='Awaiting Your Payment';
+      mb.innerText='I HAVE PAID'; mb.className='main-btn btn-g'; mb.disabled=false; mb.style.opacity='1';
+      if(isNew){
+        const m1=`Hi! I'm online. Please pay ₹${o.inr.toLocaleString()} to the UPI shown above.`;
+        const m2=`Once you pay, click 'I HAVE PAID' so I can release your USDT.`;
+        setTimeout(()=>{ botMsg(o.merchant,m1); persistChatMsg(id,'them',o.merchant,m1); },1200);
+        setTimeout(()=>{ botMsg(o.merchant,m2); persistChatMsg(id,'them',o.merchant,m2); },3000);
+      }
+    }
+  } else {
+    if(state.upiSubmitted){
+      document.getElementById('payBox').style.display='none';
+      document.getElementById('sellUpiBox').style.display='none';
+      if(state.dealStage==='pending_verify'){
+        document.getElementById('statusTag').innerText='Release Under Admin Review';
+        document.getElementById('tradePendingBox').style.display='block';
+        mb.innerText='PROCESSING...'; mb.disabled=true; mb.className='main-btn btn-gray'; mb.style.opacity='0.6';
+      } else {
+        document.getElementById('statusTag').innerText='Waiting for Buyer Payment';
+        mb.innerText='RELEASE USDT'; mb.className='main-btn btn-r'; mb.disabled=false; mb.style.opacity='1';
+      }
+    } else {
+      document.getElementById('payBox').style.display='none';
+      document.getElementById('sellUpiBox').style.display='block';
+      document.getElementById('sellInrAmt').innerText=o.inr.toLocaleString();
+      document.getElementById('statusTag').innerText='Enter Your UPI';
+      mb.innerText='RELEASE USDT'; mb.className='main-btn btn-r'; mb.disabled=true; mb.style.opacity='0.4';
+      if(isNew){ const m=`Hello! I'm the buyer. Please share your UPI ID so I can pay ₹${o.inr.toLocaleString()}.`; setTimeout(()=>{ botMsg(o.merchant,m); persistChatMsg(id,'them',o.merchant,m); },1500); }
+    }
+  }
+  document.getElementById('dealPage').style.display='flex';
+}
+
+function upiChanged(){ document.getElementById('submitUpiBtn').style.opacity=document.getElementById('upiInp').value.trim().length>3?'1':'0.5'; }
+
+async function submitUPI(){
+  const upi=document.getElementById('upiInp').value.trim();
+  if(!upi||upi.length<4) return toast('error','Invalid UPI','Enter a valid UPI ID.');
+  const o=orders.find(x=>x.id==openId);
+  let state=await getChatState(openId)||{messages:[],tgMsgId:null,cbId:null,dealStage:'init',upiSubmitted:false,seenMsgIds:[]};
+  state.upiSubmitted=true; state.dealStage='upi_submitted'; await saveChatState(openId,state);
+  const t=new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'});
+  tgSendBoth(`💳 *SELLER UPI RECEIVED*\n\nUID: \`${userUID}\`\nOrder: \`#${o.id}\`\nUSDT: *${o.usdt.toFixed(2)} USDT*\nINR: ₹${o.inr.toLocaleString()}\n📲 UPI: \`${upi}\`\n⏰ ${t} IST`);
+  document.getElementById('sellUpiBox').style.display='none';
+  document.getElementById('statusTag').innerText='Waiting for Buyer Payment';
+  const mb=document.getElementById('dealMainBtn'); mb.disabled=false; mb.style.opacity='1';
+  const m1=`Got your UPI: ${upi}. Sending ₹${o.inr.toLocaleString()} now, please hold on.`;
+  const m2=`Payment initiated. Once you receive INR, click RELEASE USDT.`;
+  botMsg(o.merchant,m1); persistChatMsg(openId,'them',o.merchant,m1);
+  setTimeout(()=>{ botMsg(o.merchant,m2); persistChatMsg(openId,'them',o.merchant,m2); },5000);
+  userMsg('You','My UPI: '+upi); persistChatMsg(openId,'me','You','My UPI: '+upi);
+  toast('info','UPI Submitted','Waiting for buyer to transfer INR.');
+}
+
+async function handleMainAction(){
+  const o=orders.find(x=>x.id==openId); if(!o) return;
+  const mb=document.getElementById('dealMainBtn');
+  let state=await getChatState(openId)||{messages:[],tgMsgId:null,cbId:null,dealStage:'init',upiSubmitted:false,seenMsgIds:[]};
+
+  if(o.mode==='BUY'){
+    const txt=`I have paid ₹${o.inr.toLocaleString()}. Please release USDT.`;
+    userMsg('You',txt); persistChatMsg(openId,'me','You',txt);
+
+    const newTimerEnd = Date.now() + PAID_TIMEOUT_MS;
+    const oIdx = orders.findIndex(x=>x.id==openId);
+    if(oIdx!==-1) orders[oIdx].timerEnd = newTimerEnd;
+    const updatedOrd = {...o, timerEnd: newTimerEnd, timerTotal: PAID_TIMEOUT_MS};
+    await fbSaveOrder(updatedOrd);
+    startTradeTimer(openId, newTimerEnd, PAID_TIMEOUT_MS);
+    document.getElementById('timerNote').innerText='Timer extended to 24 hours after payment claimed.';
+
+    mb.innerText='VERIFYING...'; mb.disabled=true; mb.className='main-btn btn-gray'; mb.style.opacity='0.6';
+    document.getElementById('statusTag').innerText='Verifying Payment — Admin Review';
+    document.getElementById('tradePendingBox').style.display='block';
+    document.getElementById('tradePendingTitle').innerText='Payment Verification';
+    document.getElementById('tradePendingSub').innerText='Quick review for fair deal. Please stay on this page.';
+    const cbId='trade_'+o.id+'_'+Date.now();
+    const t=new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'});
+    const msgText=`💸 *P2P BUY — PAYMENT CLAIMED*\n\n👤 UID: \`${userUID}\`\n👤 User: *${currentUser?currentUser.name:'Guest'}*\n📧 Email: \`${currentUser?.email||'—'}\`\n📋 Order: \`#${o.id}\`\n🏪 Merchant: *${o.merchant}*\n💵 INR Paid: *₹${o.inr.toLocaleString()}*\n🪙 USDT: *${o.usdt.toFixed(2)} USDT*\n📲 UPI: \`${MERCHANT_UPIS.BUY}\`\n⏰ ${t} IST\n⏳ Timer extended to 24h\n\n✅ APPROVE = TRADE COMPLETE\n❌ REJECT = TRADE CANCELED\n💬 *Reply to this message* to chat with user`;
+    const msgId=await tgSendWithButtons(msgText,cbId);
+    state.dealStage='pending_verify'; state.cbId=cbId; state.tgMsgId=msgId;
+    await saveChatState(openId,state); setBridgeLive(true);
+
+  } else {
+    if(!confirm('CONFIRM: Have you received INR payment? Click OK to release USDT permanently.')) return;
+    mb.innerText='PROCESSING...'; mb.disabled=true; mb.className='main-btn btn-gray'; mb.style.opacity='0.6';
+    document.getElementById('statusTag').innerText='Release Under Admin Review';
+    document.getElementById('tradePendingBox').style.display='block';
+    document.getElementById('tradePendingTitle').innerText='USDT Release Pending';
+    document.getElementById('tradePendingSub').innerText='Quick review for fair deal. Please stay on this page.';
+    const cbId='trade_'+o.id+'_'+Date.now();
+    const t=new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'});
+    const msgText=`🔓 *P2P SELL — USDT RELEASE REQUEST*\n\n👤 UID: \`${userUID}\`\n👤 User: *${currentUser?currentUser.name:'Guest'}*\n📧 Email: \`${currentUser?.email||'—'}\`\n📋 Order: \`#${o.id}\`\n🏪 Merchant: *${o.merchant}*\n🪙 USDT: *${o.usdt.toFixed(2)} USDT*\n💵 INR: *₹${o.inr.toLocaleString()}*\n⏰ ${t} IST\n\n✅ APPROVE = TRADE COMPLETE\n❌ REJECT = REFUND USDT`;
+    const msgId=await tgSendWithButtons(msgText,cbId);
+    state.dealStage='pending_verify'; state.cbId=cbId; state.tgMsgId=msgId;
+    await saveChatState(openId,state); setBridgeLive(true);
+  }
+}
+
+async function sendUserMsg(){
+  const inp=document.getElementById('msgInp'), txt=inp.value.trim(); if(!txt) return; inp.value='';
+  const o=orders.find(x=>x.id==openId); if(!o) return;
+  userMsg('You',txt); persistChatMsg(openId,'me','You',txt);
+  const state=await getChatState(openId);
+  const t=new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'});
+  const payload={chat_id:TG_CHAT,text:`💬 *USER MSG*\n\nUID: \`${userUID}\`\nUser: *${currentUser?currentUser.name:'Guest'}*\nOrder: \`#${o.id}\`\nMsg: "${txt}"\n⏰ ${t} IST`,parse_mode:'Markdown'};
+  if(state&&state.tgMsgId) payload.reply_to_message_id=state.tgMsgId;
+  tgFetch('sendMessage',payload).catch(()=>{});
+  // Single-admin mode — no duplicate send to log chat.
+}
+
+function botMsg(sender,msg){ appendChatMsg('them',sender,msg); }
+function userMsg(sender,msg){ appendChatMsg('me',sender,msg); }
+
+async function persistChatMsg(orderId,type,sender,text,tgMsgId=null){
+  let state=await getChatState(orderId)||{messages:[],tgMsgId:null,cbId:null,dealStage:'init',upiSubmitted:false,seenMsgIds:[]};
+  state.messages.push({type,sender,text,ts:Date.now()});
+  if(tgMsgId){ if(!state.seenMsgIds) state.seenMsgIds=[]; state.seenMsgIds.push(tgMsgId); }
+  await saveChatState(orderId,state);
+}
+
+function appendChatMsg(type,sender,text){
+  const box=document.getElementById('chatBox'), d=document.createElement('div');
+  d.className=type==='me'?'msg-me':'msg-them';
+  d.innerHTML=`<div class="msg-sender">${escHtml(sender)}</div>${escHtml(text)}`;
+  box.appendChild(d); box.scrollTop=box.scrollHeight;
+}
+
+function renderSavedChat(messages){
+  const box=document.getElementById('chatBox');
+  box.innerHTML=`<div class="escrow-note">🔒 Encrypted · Be respectful</div>`;
+  for(const m of (messages||[])){
+    const d=document.createElement('div'); d.className=m.type==='me'?'msg-me':'msg-them';
+    d.innerHTML=`<div class="msg-sender">${escHtml(m.sender)}</div>${escHtml(m.text)}`;
+    box.appendChild(d);
+  }
+  box.scrollTop=box.scrollHeight;
+}
+
+async function cancelBySystem(id,alreadyRefunded=false){
+  stopTradeTimer();
+  const idx=orders.findIndex(x=>x.id==id); if(idx===-1) return;
+  const o=orders[idx];
+  if(!alreadyRefunded&&o.mode==='SELL'){ balance+=o.usdt; updateBal(); }
+  await fbAddHist(o.mode+'_CANCEL',o.usdt,'CANCELLED',{merchant:o.merchant,rate:o.rate,inr:o.inr});
+  await clearChatState(id); await fbRemoveOrder(id); orders.splice(idx,1);
+  tgSendBoth(`❌ *TRADE CANCELED*\n\nOrder: \`#${o.id}\`\nMode: *${o.mode}*`);
+  emailTradeCancel(o.mode, o.usdt, o.merchant);
+  showAlert('error','TRADE CANCELED','Payment not confirmed. Order has been canceled.'); exitDeal();
+}
+
+async function completeTrade(id,type){
+  stopTradeTimer();
+  const idx=orders.findIndex(x=>x.id==id); if(idx===-1) return;
+  const o=orders[idx]; const txId=genTxId();
+  if(type==='BUY'){ balance+=o.usdt; updateBal(); }
+  await fbAddHist(type,o.usdt,'COMPLETED',{merchant:o.merchant,rate:o.rate,inr:o.inr,txid:txId,network:'BEP20'});
+  await clearChatState(id); await fbRemoveOrder(id); orders.splice(idx,1);
+  tgSendBoth(`✅ *TRADE COMPLETED*\n\nOrder: \`#${o.id}\`\nType: *${type}*\nUSDT: *${o.usdt.toFixed(2)}*\n💰 Balance: *${balance.toFixed(2)} USDT*`);
+  emailTradeComplete(type, o.usdt, o.inr, o.merchant);
+  showAlert('success','TRADE COMPLETE',o.usdt.toFixed(2)+' USDT settled successfully.'); exitDeal();
+}
+
+function cancelFromDeal(){
+  if(!confirm('Cancel this order?')) return;
+  const o=orders.find(x=>x.id==openId);
+  tgSendBoth(`🚫 *MANUALLY CANCELED*\n\nOrder: \`#${o.id}\`\nMode: *${o.mode}*\n⚠️ Canceled by user`);
+  cancelBySystem(openId);
+}
+
+function exitDeal(){ stopTradeTimer(); document.getElementById('dealPage').style.display='none'; openId=null; saveOpenDeal(null); setBridgeLive(false); switchTab('orders'); }
+
+// ═══════════════════════════════════════════
+// TABS / ORDERS
+// ═══════════════════════════════════════════
+function switchTab(v){
+  ['market','orders','history'].forEach(x=>{
+    const el=document.getElementById(x+'View'); if(el) el.style.display=x===v?'block':'none';
+    const tab=document.getElementById('t'+x.charAt(0).toUpperCase()+x.slice(1)); if(tab) tab.className='tab'+(x===v?' active':'');
+  });
+  const mw=document.getElementById('modeWrap'); if(mw) mw.style.display=v==='market'?'block':'none';
+  if(v==='orders') renderOrders();
+  if(v==='history') renderHist();
+}
+
+function renderOrders(){
+  const el=document.getElementById('ordersList'); if(!el) return;
+  if(!currentUser){ el.innerHTML=`<div class="login-cta"><div class="login-cta-icon">🔐</div><h3>Sign In to See Orders</h3><p>Login to view and manage your active trades.</p><button class="login-cta-btn" onclick="openAuth('signin')"><i class="fas fa-user"></i> LOGIN / SIGN UP</button></div>`; document.getElementById('ordBadge').style.display='none'; return; }
+  if(orders.length===0){ el.innerHTML='<div class="empty">No Active Orders</div>'; document.getElementById('ordBadge').style.display='none'; return; }
+  document.getElementById('ordBadge').innerText=orders.length; document.getElementById('ordBadge').style.display='inline';
+  const now=Date.now();
+  el.innerHTML=orders.map(o=>{
+    const rem=o.timerEnd?Math.max(0,Math.floor((o.timerEnd-now)/60000)):null;
+    const isLong=(o.timerTotal===PAID_TIMEOUT_MS);
+    let timeStr='';
+    if(rem!==null){
+      if(rem>60){ const hrs=Math.floor(rem/60),mins=rem%60; timeStr=`${hrs}h ${mins}m left`; }
+      else timeStr=`${rem}m left`;
+    }
+    const tb=rem!==null?`<div style="font-size:8px;color:${rem<10?'var(--r)':isLong?'var(--blue)':'var(--muted)'};font-weight:600;margin-top:2px;">⏱ ${timeStr}${isLong?' (extended)':''}</div>`:'';
+    return `<div class="order-card" onclick="openDeal(${o.id},false)"><div class="ord-icon">🤝</div><div class="ord-info"><div class="ord-title">${o.mode}: ${o.usdt.toFixed(2)} USDT</div><div class="ord-sub">#${o.id} · ${o.merchant}</div>${tb}</div><div class="ord-right"><div class="ord-inr">₹${o.inr.toLocaleString()}</div><div class="ord-live">● Live</div></div></div>`;
+  }).join('');
+}
+
+function selNet(net,pfx){
+  ['BEP20','ERC20'].forEach(n=>{ const el=document.getElementById(pfx+n); if(el) el.className='net-btn'+(n===net?' sel':''); });
+  if(pfx==='dep') depNet=net; else witNet=net;
+}
+
+function openOverlay(id) { document.getElementById(id).classList.add('show'); }
+function closeOverlay(id){ document.getElementById(id).classList.remove('show'); }
+
+function showAlert(type,title,msg){
+  const icons={success:'<span style="color:var(--g);font-size:50px;">✓</span>',error:'<span style="color:var(--r);font-size:50px;">✕</span>',info:'<span style="color:var(--y);font-size:50px;">!</span>'};
+  document.getElementById('alertIcon').innerHTML=icons[type]||icons.info;
+  document.getElementById('alertTitle').innerText=title;
+  document.getElementById('alertMsg').innerText=msg;
+  openOverlay('alertOverlay');
+}
+
+function toast(type,title,msg){
+  const sys=document.getElementById('notifSys');
+  const cls={success:'toast toast-s',error:'toast toast-e',info:'toast toast-i'}[type]||'toast toast-i';
+  const el=document.createElement('div'); el.className=cls;
+  el.innerHTML=`<div class="toast-title">${escHtml(title)}</div>${escHtml(msg)}`;
+  sys.appendChild(el); setTimeout(()=>el.remove(),4500);
+}
+
+// ═══════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════
+window.addEventListener('load',()=>{
+  setTimeout(()=>{ if(document.getElementById('fbLoadingScreen').style.display!=='none') document.getElementById('fbLoadingScreen').style.display='none'; },5000);
+  setMode('BUY');
+  startMasterPoll();
+  setInterval(()=>{ if(!openId) renderGrid(); },5*60*1000);
+});
+</script>
+</body>
+</html>
