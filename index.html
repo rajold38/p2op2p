@@ -1705,10 +1705,10 @@ function renderGrid(){
   const lockIcon=currentUser?'':'<i class="fas fa-lock lock-icon"></i>';
   for(let i=0;i<10;i++){
     const name=list[i%list.length];
-    const rate=mode==='BUY'?(92+Math.random()*6).toFixed(2):(85+Math.random()*5).toFixed(2);
+    const rate=mode==='BUY'?(93+Math.random()*6).toFixed(2):(92+Math.random()*5).toFixed(2);
     let min,max;
     if(mode==='BUY'){min=Math.floor(Math.random()*1000)+500;max=Math.floor(Math.random()*50000)+10000;}
-    else{min=Math.floor(Math.random()*31)+20;max=Math.floor(Math.random()*1101)+200;}
+    else{min=Math.floor(Math.random()*31)+10;max=Math.floor(Math.random()*1101)+200;}
     g.innerHTML+=`<div class="ad-card" onclick="prepTrade('${name}',${rate},${min},${max})"><div class="ad-top"><div class="merch-info"><div class="merch-av">${name[0]}</div><div><div class="merch-name">${name}</div><div class="merch-status">● Verified</div></div></div><div class="ad-price"><div class="price-lbl">Rate</div><div class="price-val">₹${rate}</div></div></div><div class="ad-limits"><div class="lim-box"><div class="lim-lbl">${mode==='BUY'?'Min INR':'Min USDT'}</div><div class="lim-val">${mode==='BUY'?'₹':''}${min.toLocaleString()}${mode==='SELL'?' USDT':''}</div></div><div class="lim-box"><div class="lim-lbl">${mode==='BUY'?'Max INR':'Max USDT'}</div><div class="lim-val">${mode==='BUY'?'₹':''}${max.toLocaleString()}${mode==='SELL'?' USDT':''}</div></div></div><button class="ad-btn ${mode==='BUY'?'buy':'sell'}">${lockIcon}${mode} USDT</button></div>`;
   }
 }
