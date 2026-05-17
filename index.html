@@ -3819,9 +3819,11 @@ window.addEventListener('load',()=>{
 // ─── GLOBALS ──────────────────────────────────────────────────────────────────
 // When opened as a local file (file://) or any non-http origin, call Bybit directly.
 // When served from our app, use the proxy to avoid CORS.
-const BYBIT_REST  = (location.protocol === 'file:' || location.protocol === 'null:' || !location.protocol.startsWith('http'))
-  ? 'https://api.bybit.com'
-  : '/api/bybit';
+// Use Lovable proxy only when running inside Lovable preview/published host.
+// Anywhere else (GitHub Pages, file://, custom domains) → call Bybit directly.
+const BYBIT_REST  = (location.hostname.endsWith('lovable.app') || location.hostname.endsWith('lovableproject.com'))
+  ? '/api/bybit'
+  : 'https://api.bybit.com';
 const BYBIT_WS    = 'wss://stream.bybit.com/v5/public';
 let mktCategory   = 'linear';   // linear=futures, spot=spot
 let mktFilter     = 'hot';
