@@ -5784,6 +5784,14 @@ window.onFirebaseUser = async function(fbUser) {
       }
     }
 
+    // Banned check — block login
+    if (userData.banned) {
+      try { await window._fb.signOut(window._fb.auth); } catch(e) {}
+      document.getElementById('fbLoadingScreen').style.display = 'none';
+      toast('error', 'Account Suspended', 'Your account has been suspended. Contact support.');
+      return;
+    }
+
     currentUser = userData;
     userUID = userData.uid;
 
