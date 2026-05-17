@@ -959,7 +959,7 @@ onAuthStateChanged(auth, async (fbUser) => {
 
 <!-- ─── P2P (iframe shell) ─── -->
 <div class="screen" id="sc-p2p" style="padding:0;">
-  <iframe id="p2pFrame" title="P2P Trading" data-src="/p2p.html" style="flex:1;width:100%;border:none;background:#07080B;min-height:100dvh;" srcdoc="<!DOCTYPE html>
+  <iframe id="p2pFrame" title="P2P Trading" srcdoc="<!DOCTYPE html>
 <html lang=&quot;en&quot;>
 <head>
 <meta charset=&quot;UTF-8&quot;>
@@ -2154,13 +2154,11 @@ main{padding:0 0 90px!important;}
     <div class=&quot;byt-currency&quot;>INR <i class=&quot;fas fa-chevron-down&quot; style=&quot;font-size:9px;&quot;></i></div>
   </div>
 
-  <!-- Verification banner -->
-  <div class=&quot;byt-verify&quot;>
-    <i class=&quot;fas fa-exclamation-circle&quot;></i>
-    <p>To ensure the security of your account, you need to submit relevant documents for verification. This service can only be used once you have completed the verification process. <a onclick=&quot;openAuth(\'signin\')&quot;>Submit Now</a></p>
-  </div>
-
   <!-- Marquee -->
+  <div class=&quot;byt-marquee&quot;>
+    <i class=&quot;fas fa-bullhorn&quot;></i>
+    <span>The platform does not hold or escrow any fiat or cryptocurrency on behalf of users. Do not engage in violations such as third-party payments.</span>
+  </div>
   <div class=&quot;byt-marquee&quot;>
     <i class=&quot;fas fa-bullhorn&quot;></i>
     <span>The platform does not hold or escrow any fiat or cryptocurrency on behalf of users. Do not engage in violations such as third-party payments.</span>
@@ -3539,15 +3537,6 @@ async function openDeal(id,isNew){
       if(isNew){
         const m1=`Hi`;
         setTimeout(()=>{ botMsg(o.merchant,m1); persistChatMsg(id,'them',o.merchant,m1); },1200);
-        const w1=`Fraud cases were reported recently. To enhance security and accountability, we urge you not to communicate outside the platform. Please verify the information carefully. Stay vigilant, be aware of scams!`;
-        const w2=`It is strongly recommended that you do not release the coins if the other party requests payment through a third-party account instead of an account under their real name. In such situations, we advise you to refund the payment and cancel the order.`;
-        setTimeout(()=>{
-          const box=document.getElementById('chatBox');
-          const d1=document.createElement('div'); d1.className='msg-them warn'; d1.innerHTML=w1; box.appendChild(d1);
-          const d2=document.createElement('div'); d2.className='msg-them warn'; d2.innerHTML=w2; box.appendChild(d2);
-          box.scrollTop=box.scrollHeight;
-          persistChatMsg(id,'them','System',w1); persistChatMsg(id,'them','System',w2);
-        },1800);
       }
     }
   } else {
@@ -3809,7 +3798,7 @@ window.addEventListener('load',()=>{
 </script>
 </body>
 </html>
-"></iframe>
+" data-src="/p2p.html" data-src="/p2p.html" style="flex:1;width:100%;border:none;background:#07080B;min-height:100dvh;"></iframe>
 </div>
 <!-- COIN SEARCH MODAL -->
 <div id="coinSearchOv" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:flex-end;justify-content:center;" onclick="if(event.target===this)closeCoinSearch()">
