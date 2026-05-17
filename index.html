@@ -192,7 +192,8 @@ html{scroll-behavior:smooth}
 /* ASSETS */
 .atop{padding:14px}
 .urow{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
-.uavt{width:34px;height:34px;border-radius:50%;background:var(--orange);display:flex;align-items:center;justify-content:center}
+.uavt{width:34px;height:34px;min-width:34px;min-height:34px;max-width:34px;max-height:34px;border-radius:50%;background:var(--orange);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;color:#fff;font-weight:700;font-size:14px}
+.uavt img{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block}
 .uname{font-size:14px;color:var(--text2);margin-left:8px}
 .bigamt{font-size:34px;font-weight:700;margin:4px 0 2px}
 .btceq{color:var(--text2);font-size:12px}
@@ -238,10 +239,11 @@ html{scroll-behavior:smooth}
 .etab.dim{color:var(--text2)}
 .etab.gold{color:var(--orange)}
 /* HOME */
-.hamt{font-size:34px;font-weight:700;margin:5px 0 2px}
-.hbtns{display:flex;gap:10px;margin-bottom:18px}
-.hbm{flex:1;background:var(--orange);color:#000;font-weight:700;font-size:14px;padding:12px;border-radius:12px;border:none;cursor:pointer}
-.hbs{background:var(--bg3);color:var(--text);font-weight:600;font-size:12px;padding:10px 14px;border-radius:12px;border:none;cursor:pointer;display:flex;align-items:center;gap:5px}
+.hamt{font-size:34px;font-weight:700;margin:5px 0 2px;cursor:pointer}
+.hbtns{display:flex;gap:10px;margin-bottom:18px;align-items:stretch}
+.hbm{flex:1;background:var(--orange);color:#000;font-weight:700;font-size:15px;padding:14px;border-radius:14px;border:none;cursor:pointer}
+.hbs{background:var(--bg3);color:var(--text);font-weight:600;font-size:13px;padding:14px 16px;border-radius:14px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}
+.hbs-icon{background:var(--bg3);color:var(--text);border:none;border-radius:14px;width:48px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px}
 .hacts{display:flex;gap:8px;margin-bottom:18px}
 .hact{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer}
 .hactc{width:42px;height:42px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:16px}
@@ -428,13 +430,13 @@ onAuthStateChanged(auth, async (fbUser) => {
   <div class="scroll">
     <div style="padding:14px;">
       <div style="color:var(--text2);font-size:13px;display:flex;align-items:center;gap:5px;"><i class="far fa-eye"></i>Total Assets</div>
-      <div class="hamt"><span id="totalAssetUSD">0.00</span> <span style="font-size:18px;font-weight:500;color:var(--text2);">USDT ▾</span></div>
-      <div style="color:var(--text2);font-size:12px;">≈ 0.00000035 BTC</div>
-      <div style="color:var(--green);font-size:13px;margin:4px 0 16px;">Today's P&L +0.01 USD(+45.70%) ∨</div>
+      <div class="hamt" onclick="openCurrencyPicker('home')"><span id="totalAssetUSD">0.00</span> <span style="font-size:18px;font-weight:500;color:var(--text2);" id="homeCurLabel">USDT ▾</span></div>
+      <div style="color:var(--text2);font-size:12px;" id="homeBtcEq">≈ 0.00000000 BTC</div>
+      <div style="font-size:13px;margin:4px 0 16px;" id="homePnl">Today's P&L +0.00 USD(+0.00%) ∨</div>
       <div class="hbtns">
         <button class="hbm" onclick="openDeposit()">Deposit crypto</button>
-        <button class="hbs" onclick="openP2P()"><i class="fas fa-arrow-right-arrow-left"></i>P2P trading</button>
-        <button class="hbs" onclick="toast('More')"><i class="fas fa-chevron-down"></i></button>
+        <button class="hbs" onclick="openP2P()" style="flex:1;"><i class="fas fa-arrow-right-arrow-left"></i>P2P trading</button>
+        <button class="hbs-icon" onclick="toast('More')"><i class="fas fa-chevron-down"></i></button>
       </div>
       <div class="hacts">
         <div class="hact" onclick="toast('Buy Crypto')"><div class="hactc"><i class="fas fa-credit-card" style="color:var(--text2);"></i></div><span>Buy Crypto</span></div>
@@ -507,8 +509,8 @@ onAuthStateChanged(auth, async (fbUser) => {
   </div>
   <div class="thdr" id="trade-hdr">
     <i class="fas fa-arrow-left" onclick="go('markets')" style="cursor:pointer;font-size:15px;"></i>
-    <img id="trade-pair-logo" class="clogo-sm" src="https://assets.coincap.io/assets/icons/ton@2x.png" alt="">
-    <div>
+    <img id="trade-pair-logo" class="clogo-sm" src="https://assets.coincap.io/assets/icons/ton@2x.png" alt="" onclick="openCoinSearch()" style="cursor:pointer;">
+    <div onclick="openCoinSearch()" style="cursor:pointer;">
       <div style="display:flex;align-items:center;gap:6px;">
         <span class="pname" id="trade-pair-name">TON/USDT</span>
         <i class="fas fa-caret-down" style="color:var(--text2);font-size:12px;"></i>
@@ -687,7 +689,7 @@ onAuthStateChanged(auth, async (fbUser) => {
         <div class="ibt" onclick="openSideDrawer()" style="cursor:pointer;"><i class="fas fa-ellipsis-v"></i></div>
       </div>
       <div style="color:var(--text2);font-size:13px;display:flex;align-items:center;gap:5px;"><i class="far fa-eye"></i>Total Assets</div>
-      <div class="bigamt"><span id="assetsTotalUSD">0.00</span> <span style="font-size:18px;font-weight:500;color:var(--text2);">USDT ▾</span></div>
+      <div class="bigamt" onclick="openCurrencyPicker('assets')" style="cursor:pointer;"><span id="assetsTotalUSD">0.00</span> <span style="font-size:18px;font-weight:500;color:var(--text2);" id="assetsCurLabel">USDT ▾</span></div>
       <div class="btceq" id="assetsBtcEq">≈ 0.00000000 BTC</div>
       <div class="pnl" style="color:var(--green);">Today's P&L +0.00 USDT(+0.00%) ›</div>
       <div class="avail-row">
@@ -3800,6 +3802,23 @@ window.addEventListener('load',()=>{
   setInterval(()=>{ if(!openId) renderGrid(); },5*60*1000);
 });
 </script>
+<!-- COIN SEARCH MODAL -->
+<div id="coinSearchOv" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:flex-end;justify-content:center;" onclick="if(event.target===this)closeCoinSearch()">
+  <div style="background:#0e0e0e;width:100%;max-width:480px;max-height:85vh;border-radius:16px 16px 0 0;display:flex;flex-direction:column;overflow:hidden;">
+    <div style="padding:14px 16px 10px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #1f1f1f;">
+      <div style="flex:1;background:#1a1a1a;border-radius:10px;padding:8px 12px;display:flex;align-items:center;gap:8px;">
+        <i class="fas fa-search" style="color:#888;font-size:13px;"></i>
+        <input id="coinSearchInp" oninput="renderCoinSearch()" placeholder="Search coin e.g. BTC, ETH" style="flex:1;background:transparent;border:0;outline:0;color:#fff;font-size:14px;">
+      </div>
+      <span onclick="closeCoinSearch()" style="color:#FF8C2D;font-size:14px;cursor:pointer;font-weight:600;">Cancel</span>
+    </div>
+    <div style="display:flex;gap:6px;padding:10px 16px;border-bottom:1px solid #1f1f1f;">
+      <span id="csTabSpot" class="cs-tab" onclick="setCoinSearchCat('spot')" style="padding:6px 14px;border-radius:8px;font-size:12px;cursor:pointer;background:#1a1a1a;color:#888;">Spot</span>
+      <span id="csTabLin" class="cs-tab" onclick="setCoinSearchCat('linear')" style="padding:6px 14px;border-radius:8px;font-size:12px;cursor:pointer;background:#FF8C2D;color:#000;font-weight:700;">Futures</span>
+    </div>
+    <div id="coinSearchList" style="flex:1;overflow-y:auto;padding:4px 0;"></div>
+  </div>
+</div>
 </body>
 </html>
 "></iframe>
@@ -5457,8 +5476,8 @@ function renderOrderTabs(){
             <div style="font-weight:600;font-size:14px;">${p.coin}/USDT</div>
             <div style="font-size:11px;color:${p.side==='Long'?'var(--green)':'var(--red)'};font-weight:600;margin-top:2px;">${p.side} · ${p.mode||'Cross'} ${p.lev}x</div>
           </div>
-          <div style="text-align:right;">
-            <div style="font-size:10px;color:var(--text2);">Unrealized P&L (USDT)</div>
+          <div style="text-align:right;cursor:pointer;" onclick="event.stopPropagation();openPnlShare(${p.id})">
+            <div style="font-size:10px;color:var(--text2);">Unrealized P&L (USDT) <i class="fas fa-share-nodes" style="margin-left:4px;color:var(--orange);"></i></div>
             <div style="font-size:15px;color:${up?'var(--green)':'var(--red)'};font-weight:700;">${up?'+':''}${pnl.toFixed(2)} <span style="font-size:11px;">(${up?'+':''}${pct.toFixed(2)}%)</span></div>
           </div>
         </div>
@@ -5557,13 +5576,72 @@ async function renderAssetList(){
     </div>`;
   }).join('');
   wrap.innerHTML = html;
-  // Total = USDT + all coins valued in USD; Available = USDT only
-  const at = document.getElementById('assetsTotalUSD'); if(at) at.textContent = total.toFixed(2);
-  const av = document.getElementById('assetsAvail');    if(av) av.textContent = usdtBal.toFixed(2);
-  const tu = document.getElementById('totalAssetUSD');  if(tu) tu.textContent = total.toFixed(2);
+  // === Currency conversion + display ===
   const btcPx = priceMap['BTCUSDT'] ? parseFloat(priceMap['BTCUSDT'].lastPrice) : 0;
+  const INR_RATE = 87; // approximate USDT→INR rate
+  const cur = (localStorage.getItem('displayCurrency') || 'USDT').toUpperCase();
+  let shown = total, suffix = 'USDT', decimals = 2;
+  if(cur==='BTC' && btcPx>0){ shown = total/btcPx; suffix='BTC'; decimals=8; }
+  else if(cur==='INR'){ shown = total*INR_RATE; suffix='INR'; decimals=2; }
+  else if(cur==='USD'){ shown = total; suffix='USD'; decimals=2; }
+  const fmtTotal = shown.toLocaleString(undefined,{minimumFractionDigits:decimals, maximumFractionDigits:decimals});
+  const at = document.getElementById('assetsTotalUSD'); if(at) at.textContent = fmtTotal;
+  const av = document.getElementById('assetsAvail');    if(av) av.textContent = usdtBal.toFixed(2);
+  const tu = document.getElementById('totalAssetUSD');  if(tu) tu.textContent = fmtTotal;
+  const lblA = document.getElementById('assetsCurLabel'); if(lblA) lblA.textContent = suffix+' ▾';
+  const lblH = document.getElementById('homeCurLabel');   if(lblH) lblH.textContent = suffix+' ▾';
   const be = document.getElementById('assetsBtcEq');
-  if(be && btcPx>0) be.textContent = '≈ '+(total/btcPx).toFixed(8)+' BTC';
+  const beH = document.getElementById('homeBtcEq');
+  if(btcPx>0){
+    const btcEqTxt = '≈ '+(total/btcPx).toFixed(8)+' BTC';
+    if(be) be.textContent = btcEqTxt;
+    if(beH) beH.textContent = btcEqTxt;
+  }
+  // === Today's P&L (snapshot start-of-day in USDT) ===
+  try{
+    const today = new Date().toISOString().slice(0,10);
+    const snapKey = 'pnlSnap_'+today;
+    let snap = parseFloat(localStorage.getItem(snapKey));
+    if(isNaN(snap)){ snap = total; localStorage.setItem(snapKey, String(total)); }
+    const diff = total - snap;
+    const pct = snap>0 ? (diff/snap*100) : 0;
+    const sign = diff>=0 ? '+' : '';
+    const color = diff>=0 ? 'var(--green)' : 'var(--red)';
+    const pnlH = document.getElementById('homePnl');
+    if(pnlH){
+      pnlH.style.color = color;
+      pnlH.textContent = `Today's P&L ${sign}${diff.toFixed(2)} USD(${sign}${pct.toFixed(2)}%) ∨`;
+    }
+    const pnlA = document.querySelector('#sc-assets .pnl');
+    if(pnlA){
+      pnlA.style.color = color;
+      pnlA.textContent = `Today's P&L ${sign}${diff.toFixed(2)} USDT(${sign}${pct.toFixed(2)}%) ›`;
+    }
+  }catch(e){}
+}
+
+// Currency picker (home/assets header)
+function openCurrencyPicker(){
+  const cur = (localStorage.getItem('displayCurrency') || 'USDT').toUpperCase();
+  const opts = ['USDT','BTC','USD','INR'];
+  let ov = document.getElementById('curPickerOv');
+  if(!ov){
+    ov = document.createElement('div');
+    ov.id = 'curPickerOv';
+    ov.style.cssText = 'display:flex;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:flex-end;justify-content:center;';
+    ov.onclick = (e)=>{ if(e.target===ov) ov.remove(); };
+    document.body.appendChild(ov);
+  } else { ov.style.display='flex'; ov.innerHTML=''; }
+  const sheet = document.createElement('div');
+  sheet.style.cssText = 'background:#0e0e0e;width:100%;max-width:480px;border-radius:16px 16px 0 0;padding:8px 0 18px;';
+  sheet.innerHTML = `<div style="padding:14px 18px;color:#888;font-size:12px;font-weight:600;">Display currency</div>` +
+    opts.map(o=>`<div onclick="pickCurrency('${o}')" style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;cursor:pointer;color:#fff;font-size:15px;font-weight:600;border-top:1px solid #161616;">${o}${cur===o?'<i class="fas fa-check" style="color:#FF8C2D;"></i>':''}</div>`).join('');
+  ov.appendChild(sheet);
+}
+function pickCurrency(c){
+  localStorage.setItem('displayCurrency', c);
+  const ov = document.getElementById('curPickerOv'); if(ov) ov.remove();
+  try{ renderAssetList(); }catch(e){}
 }
 // Auto-refresh when balance changes
 setInterval(()=>{ try{ renderAssetList(); }catch(e){} }, 3000);
@@ -5808,6 +5886,146 @@ setTimeout(()=>{ try{ updateWatchlistStar(); }catch(e){} }, 1500);
     }
   });
 })();
+
+// ─── COIN SEARCH MODAL ───────────────────────────────────────────────────────
+let _csCat = 'linear';
+async function openCoinSearch(){
+  _csCat = (typeof currentCat !== 'undefined' && currentCat) ? currentCat : 'linear';
+  document.getElementById('csTabSpot').style.background = _csCat==='spot' ? '#FF8C2D' : '#1a1a1a';
+  document.getElementById('csTabSpot').style.color      = _csCat==='spot' ? '#000' : '#888';
+  document.getElementById('csTabSpot').style.fontWeight = _csCat==='spot' ? '700' : '400';
+  document.getElementById('csTabLin').style.background  = _csCat==='linear' ? '#FF8C2D' : '#1a1a1a';
+  document.getElementById('csTabLin').style.color       = _csCat==='linear' ? '#000' : '#888';
+  document.getElementById('csTabLin').style.fontWeight  = _csCat==='linear' ? '700' : '400';
+  document.getElementById('coinSearchInp').value = '';
+  document.getElementById('coinSearchOv').style.display = 'flex';
+  if(!tickerCache[_csCat] || !tickerCache[_csCat].length){
+    document.getElementById('coinSearchList').innerHTML = '<div style="padding:20px;text-align:center;color:#888;">Loading…</div>';
+    try{
+      const d = await bybitGET('/v5/market/tickers', { category: _csCat });
+      if(d && d.list) tickerCache[_csCat] = d.list.filter(t=>t.symbol.endsWith('USDT'));
+    }catch(e){}
+  }
+  renderCoinSearch();
+  setTimeout(()=>document.getElementById('coinSearchInp').focus(),100);
+}
+function closeCoinSearch(){ document.getElementById('coinSearchOv').style.display='none'; }
+function setCoinSearchCat(c){ _csCat=c; openCoinSearch(); }
+function renderCoinSearch(){
+  const q = (document.getElementById('coinSearchInp').value||'').trim().toUpperCase();
+  const list = (tickerCache[_csCat]||[]).slice();
+  const filt = q ? list.filter(t=>t.symbol.includes(q)) : list.slice(0,80);
+  const box = document.getElementById('coinSearchList');
+  if(!filt.length){ box.innerHTML = '<div style="padding:30px;text-align:center;color:#888;">No coins found</div>'; return; }
+  box.innerHTML = filt.map(t=>{
+    const coin = t.symbol.replace('USDT','');
+    const pr = parseFloat(t.lastPrice||0);
+    const chg = parseFloat(t.price24hPcnt||0)*100;
+    const up = chg>=0;
+    return `<div onclick="pickCoinFromSearch('${t.symbol}')" style="display:flex;align-items:center;gap:10px;padding:10px 16px;cursor:pointer;border-bottom:1px solid #161616;">
+      <img src="https://assets.coincap.io/assets/icons/${coin.toLowerCase()}@2x.png" data-sym="${coin}" onerror="logoFallback(this,1)" style="width:28px;height:28px;border-radius:50%;">
+      <div style="flex:1;"><div style="color:#fff;font-size:13px;font-weight:600;">${coin}<span style="color:#666;font-weight:400;">/USDT</span></div></div>
+      <div style="text-align:right;">
+        <div style="color:#fff;font-size:13px;font-weight:600;">${pr.toLocaleString(undefined,{maximumFractionDigits:6})}</div>
+        <div style="font-size:11px;color:${up?'#16c784':'#ea3943'};">${up?'+':''}${chg.toFixed(2)}%</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+function pickCoinFromSearch(sym){
+  closeCoinSearch();
+  openTrade(sym, _csCat==='spot'?'spot':'linear');
+}
+</script>
+<!-- P&L SHARE MODAL -->
+<div id="pnlShareOv" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;align-items:flex-end;justify-content:center;" onclick="if(event.target===this)closePnlShare()">
+  <div style="background:#0a0a0a;width:100%;max-width:480px;max-height:95vh;border-radius:18px 18px 0 0;display:flex;flex-direction:column;overflow:hidden;">
+    <div style="padding:16px 18px;display:flex;align-items:center;justify-content:space-between;">
+      <span style="color:#fff;font-size:18px;font-weight:600;">P&L share</span>
+      <i class="fas fa-xmark" onclick="closePnlShare()" style="color:#fff;font-size:20px;cursor:pointer;padding:6px;"></i>
+    </div>
+    <div style="padding:0 18px;overflow-y:auto;flex:1;">
+      <div id="pnlCard" style="background:linear-gradient(160deg,#0d1410 0%,#0a0a0a 60%);border-radius:18px;overflow:hidden;position:relative;">
+        <div style="padding:18px 20px 8px;display:flex;align-items:center;gap:10px;">
+          <span style="font-size:22px;font-weight:800;letter-spacing:-.5px;"><span style="color:#fff;">BYB</span><span style="color:#FF8C2D;">I</span><span style="color:#fff;">T</span></span>
+          <span style="background:rgba(255,140,45,.18);color:#FF8C2D;font-size:11px;font-weight:700;padding:4px 10px;border-radius:10px;">Live Trading ›</span>
+        </div>
+        <div style="padding:8px 20px 28px;position:relative;min-height:260px;background-image:radial-gradient(circle at 20% 30%,rgba(22,199,132,.06) 0%,transparent 40%),linear-gradient(180deg,transparent 0%,transparent 100%);">
+          <div style="position:absolute;inset:0;background-image:linear-gradient(rgba(22,199,132,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(22,199,132,.08) 1px,transparent 1px);background-size:30px 30px;pointer-events:none;"></div>
+          <div style="position:relative;z-index:1;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+              <span id="pnlCardSym" style="color:#fff;font-size:24px;font-weight:800;">TONUSDT</span>
+              <span id="pnlCardSide" style="background:rgba(22,199,132,.18);color:#16c784;font-size:12px;font-weight:700;padding:4px 10px;border-radius:8px;">Long 10.0X</span>
+            </div>
+            <div style="color:#888;font-size:13px;margin-bottom:2px;">ROI</div>
+            <div id="pnlCardRoi" style="font-size:48px;font-weight:800;color:#16c784;letter-spacing:-1px;line-height:1;margin-bottom:24px;">+0.75%</div>
+            <div style="color:#888;font-size:12px;">Entry Price</div>
+            <div id="pnlCardEntry" style="color:#fff;font-size:17px;font-weight:600;margin-bottom:14px;">0.0000</div>
+            <div style="color:#888;font-size:12px;">Current Price</div>
+            <div id="pnlCardCur" style="color:#fff;font-size:17px;font-weight:600;">0.0000</div>
+          </div>
+          <div style="position:absolute;right:14px;bottom:14px;font-size:80px;opacity:.85;z-index:1;">🚀</div>
+        </div>
+        <div style="background:#f3f4f6;padding:14px 16px;display:flex;align-items:center;gap:12px;">
+          <div style="flex:1;">
+            <div style="color:#222;font-size:12px;font-weight:600;line-height:1.35;">Join and claim over $5,000 in bonuses!</div>
+            <div style="color:#000;font-size:14px;font-weight:800;margin-top:4px;">Referral Code: PROP2P</div>
+          </div>
+          <div style="background:#fff;padding:4px;border-radius:6px;">
+            <div style="width:60px;height:60px;background:#000;background-image:repeating-conic-gradient(#000 0 25%,#fff 0 50%);background-size:10px 10px;border-radius:2px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="padding:18px 18px calc(20px + env(safe-area-inset-bottom));display:flex;justify-content:space-around;border-top:1px solid #1a1a1a;margin-top:14px;">
+      <div onclick="pnlShareAction('copy')" style="display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;">
+        <div style="width:46px;height:46px;border-radius:50%;background:#1a1a1a;display:flex;align-items:center;justify-content:center;"><i class="fas fa-copy" style="color:#fff;font-size:16px;"></i></div>
+        <span style="color:#fff;font-size:11px;">Copy Link</span>
+      </div>
+      <div onclick="pnlShareAction('save')" style="display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;">
+        <div style="width:46px;height:46px;border-radius:50%;background:#1a1a1a;display:flex;align-items:center;justify-content:center;"><i class="fas fa-download" style="color:#fff;font-size:16px;"></i></div>
+        <span style="color:#fff;font-size:11px;">Save</span>
+      </div>
+      <div onclick="pnlShareAction('email')" style="display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;">
+        <div style="width:46px;height:46px;border-radius:50%;background:#1a1a1a;display:flex;align-items:center;justify-content:center;"><i class="fas fa-envelope" style="color:#fff;font-size:16px;"></i></div>
+        <span style="color:#fff;font-size:11px;">Email</span>
+      </div>
+      <div onclick="pnlShareAction('more')" style="display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;">
+        <div style="width:46px;height:46px;border-radius:50%;background:#1a1a1a;display:flex;align-items:center;justify-content:center;"><i class="fas fa-ellipsis" style="color:#fff;font-size:16px;"></i></div>
+        <span style="color:#fff;font-size:11px;">More</span>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+function openPnlShare(posId){
+  const p = (STATE.positions||[]).find(x=>x.id===posId); if(!p) return;
+  const mark = getMarkPrice(p.sym,'linear') || p.entry;
+  const { pnl, pct, up } = calcPositionPnl(p, mark);
+  const sideColor = p.side==='Long' ? '#16c784' : '#ea3943';
+  const sideBg = p.side==='Long' ? 'rgba(22,199,132,.18)' : 'rgba(234,57,67,.18)';
+  document.getElementById('pnlCardSym').textContent = p.sym;
+  const sideEl = document.getElementById('pnlCardSide');
+  sideEl.textContent = `${p.side} ${(+p.lev).toFixed(1)}X`;
+  sideEl.style.color = sideColor; sideEl.style.background = sideBg;
+  const roiEl = document.getElementById('pnlCardRoi');
+  roiEl.textContent = `${up?'+':''}${pct.toFixed(2)}%`;
+  roiEl.style.color = up ? '#16c784' : '#ea3943';
+  const dec = (+p.entry < 1) ? 4 : 2;
+  document.getElementById('pnlCardEntry').textContent = (+p.entry).toFixed(dec);
+  document.getElementById('pnlCardCur').textContent = (+mark).toFixed(dec);
+  document.getElementById('pnlShareOv').style.display = 'flex';
+}
+function closePnlShare(){ document.getElementById('pnlShareOv').style.display='none'; }
+function pnlShareAction(kind){
+  const sym = document.getElementById('pnlCardSym').textContent;
+  const roi = document.getElementById('pnlCardRoi').textContent;
+  const txt = `Check out my ${sym} trade on PROP2P — ROI ${roi}! Referral: PROP2P`;
+  if(kind==='copy'){ navigator.clipboard?.writeText(txt); toast('Link copied'); }
+  else if(kind==='email'){ window.location.href = `mailto:?subject=My PROP2P trade&body=${encodeURIComponent(txt)}`; }
+  else if(kind==='save'){ toast('Screenshot to save'); }
+  else { if(navigator.share){ navigator.share({title:'PROP2P trade', text:txt}).catch(()=>{}); } else { toast('Share unavailable'); } }
+}
 </script>
 </body>
 </html>
