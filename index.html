@@ -49,6 +49,71 @@
 .dw-btn.green{background:var(--green);color:#fff}
 .dw-avail{font-size:11px;color:#8c8c8c;margin-top:6px}
 .dw-avail b{color:var(--orange)}
+/* Bybit-style deposit screens */
+.bb-screen{position:fixed;inset:0;background:#000;z-index:600;display:none;flex-direction:column;max-width:430px;margin:0 auto;overflow:hidden}
+.bb-screen.show{display:flex}
+.bb-hdr{display:flex;align-items:center;padding:14px 16px;gap:12px;border-bottom:1px solid #111}
+.bb-hdr .bb-back{background:none;border:none;color:#fff;font-size:20px;cursor:pointer;padding:0;width:24px}
+.bb-hdr .bb-ttl{flex:1;text-align:center;font-size:17px;font-weight:800;margin-right:60px}
+.bb-hdr .bb-act{background:none;border:none;color:#fff;font-size:16px;cursor:pointer;padding:0;width:24px}
+.bb-body{flex:1;overflow-y:auto;padding:14px 16px 30px;position:relative}
+.bb-srch{background:#1a1a1a;border:none;border-radius:20px;padding:11px 16px 11px 38px;color:#fff;width:100%;font-size:14px;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' fill='%238c8c8c' viewBox='0 0 16 16'><path d='M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398l3.85 3.85 1.4-1.4-3.853-3.848zM6.5 11A4.5 4.5 0 1 1 11 6.5 4.5 4.5 0 0 1 6.5 11z'/></svg>");background-repeat:no-repeat;background-position:14px center;background-size:14px;outline:none}
+.bb-info{background:#1a1a1a;border-radius:10px;padding:13px 14px;margin:14px 0;display:flex;align-items:center;gap:10px;font-size:13px}
+.bb-info i{color:#8c8c8c}
+.bb-info a{color:var(--orange);font-weight:700;text-decoration:none}
+.bb-sec{font-size:13px;color:#8c8c8c;margin:12px 0 10px}
+.bb-chips{display:flex;flex-wrap:wrap;gap:8px}
+.bb-chip{background:#1a1a1a;border:none;color:#fff;padding:8px 18px;border-radius:18px;font-size:13px;font-weight:600;cursor:pointer}
+.bb-letter{padding:8px 4px;color:#8c8c8c;font-size:13px;background:#0a0a0a;font-weight:600}
+.bb-coin{display:flex;align-items:center;padding:12px 4px;gap:12px;cursor:pointer;border-bottom:1px solid #111}
+.bb-coin .bb-ico{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-size:13px;flex-shrink:0}
+.bb-coin .bb-sym{font-weight:800;font-size:16px;color:#fff}
+.bb-coin .bb-nm{color:#8c8c8c;font-size:13px;margin-left:6px}
+.bb-alpha{position:absolute;right:4px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;font-size:10px;color:#8c8c8c;line-height:1.4;font-weight:600;pointer-events:auto}
+.bb-alpha span{cursor:pointer;padding:0 4px}
+.bb-chain{display:flex;align-items:flex-start;gap:14px;padding:18px 0;border-bottom:1px solid #111;cursor:pointer}
+.bb-chain .bb-cico{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:12px;flex-shrink:0}
+.bb-chain .bb-cnm{font-weight:700;font-size:15px;color:#fff;display:flex;align-items:center;gap:8px}
+.bb-chain .bb-cnm .bb-badge{background:#2a2a2a;color:#fff;font-size:10px;padding:2px 8px;border-radius:10px;font-weight:600}
+.bb-chain .bb-cdesc{color:#8c8c8c;font-size:12px;line-height:1.6;margin-top:4px}
+/* payment page */
+.bb-netbar{text-align:center;color:#8c8c8c;font-size:13px;padding:10px 0}
+.bb-netbar b{color:#fff;font-weight:700;margin-left:6px}
+.bb-qrwrap{display:flex;justify-content:center;margin:10px 0 18px}
+.bb-qr{background:#fff;padding:14px;border-radius:14px}
+.bb-qr img{display:block;width:200px;height:200px}
+.bb-walbox{background:#1a1a1a;border-radius:12px;padding:14px;margin-bottom:14px}
+.bb-walbox .bb-wlbl{color:#8c8c8c;font-size:13px;margin-bottom:6px}
+.bb-walbox .bb-wrow{display:flex;align-items:center;gap:10px}
+.bb-walbox code{flex:1;color:#fff;font-family:monospace;font-size:13px;word-break:break-all;line-height:1.5}
+.bb-walbox button{background:#2a2a2a;border:1px solid #333;color:#fff;border-radius:6px;padding:7px 9px;cursor:pointer}
+.bb-kv{display:flex;justify-content:space-between;padding:10px 0;font-size:14px}
+.bb-kv .k{color:#8c8c8c}
+.bb-kv .v{color:#fff;font-weight:600}
+.bb-finp{width:100%;background:#1a1a1a;border:1px solid #222;color:#fff;padding:13px 14px;border-radius:10px;font-size:14px;outline:none;font-weight:600;margin-bottom:10px}
+.bb-pact{display:flex;gap:12px;padding:14px 16px;border-top:1px solid #111}
+.bb-pact button{flex:1;padding:14px;border-radius:24px;font-weight:800;font-size:15px;cursor:pointer;border:none}
+.bb-pact .bb-cancel{background:transparent;border:1px solid #333;color:#fff}
+.bb-pact .bb-paid{background:var(--orange);color:#000}
+.bb-faq-row{display:flex;justify-content:space-between;align-items:center;padding:20px 0;border-bottom:1px solid #1a1a1a;cursor:pointer;font-size:15px;color:#fff}
+.bb-faq-row i{color:#666}
+.bb-htab{display:flex;gap:20px;padding:14px 0;border-bottom:1px solid #1a1a1a;overflow-x:auto;font-size:14px}
+.bb-htab span{color:#8c8c8c;font-weight:600;padding-bottom:6px;cursor:pointer;white-space:nowrap}
+.bb-htab span.active{color:#fff;border-bottom:2px solid #fff}
+.bb-hitem{display:flex;justify-content:space-between;padding:16px 0;border-bottom:1px solid #111;cursor:pointer}
+.bb-hitem .hl{font-size:15px;color:#fff;font-weight:600}
+.bb-hitem .hs{font-size:12px;color:#666;margin-top:4px}
+.bb-hitem .hr{text-align:right}
+.bb-hitem .hr .ha{font-size:15px;color:#fff;font-weight:600}
+.bb-hitem .hr .hst{font-size:12px;color:#888;margin-top:4px}
+.bb-hitem .hr .hst.ok{color:var(--green)}
+.bb-popup{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:900;display:none;align-items:center;justify-content:center;padding:0 28px}
+.bb-popup.show{display:flex}
+.bb-popup .bb-pop-card{background:#1c1c1c;border-radius:16px;padding:26px 22px;width:100%;max-width:340px;text-align:center}
+.bb-popup .bb-pop-ico{width:54px;height:54px;border-radius:50%;background:rgba(247,166,0,.15);color:var(--orange);display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto 14px}
+.bb-popup .bb-pop-ttl{font-size:17px;font-weight:800;margin-bottom:8px}
+.bb-popup .bb-pop-sub{font-size:13px;color:#999;line-height:1.5;margin-bottom:18px}
+.bb-popup .bb-pop-btn{width:100%;background:var(--orange);color:#000;border:none;border-radius:24px;padding:13px;font-weight:800;font-size:14px;cursor:pointer}
 :root{--bg:#000;--bg2:#0d0d0d;--bg3:#1a1a1a;--bg4:#222;--text:#fff;--text2:#8c8c8c;--text3:#444;--green:#00c087;--red:#f0444b;--orange:#f7a600;--border:#1f1f1f;--card:#111}
 body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;font-size:14px;max-width:430px;margin:0 auto;height:100dvh;display:flex;flex-direction:column;overflow:hidden;position:relative}
 .screen{display:none;flex:1;flex-direction:column;overflow:hidden}
@@ -621,60 +686,274 @@ onAuthStateChanged(auth, async (fbUser) => {
   </div>
 </div>
 
-<!-- ─── EARN ─── -->
+<!-- ─── EARN (Bybit-style rebuild) ─── -->
+<style>
+#sc-earn{background:#0a0a0a;color:#fff;}
+.ern-top{padding:8px 14px;display:flex;gap:8px;align-items:center;flex-shrink:0;}
+.ern-srch{flex:1;background:#1a1a1a;border-radius:20px;padding:9px 14px;display:flex;align-items:center;gap:8px;font-size:13px;color:#8c8c8c;cursor:pointer;}
+.ern-info{padding:4px 14px 10px;display:flex;justify-content:space-between;align-items:center;font-size:12px;color:#8c8c8c;flex-shrink:0;}
+.ern-pill{background:#1a1a1a;padding:3px 9px;border-radius:14px;color:#8c8c8c;font-size:11px;}
+.ern-tabs{display:flex;gap:22px;padding:6px 14px 0;border-bottom:1px solid #1a1a1a;flex-shrink:0;overflow-x:auto;}
+.ern-tabs span{font-size:14px;font-weight:700;color:#8c8c8c;padding:10px 0 12px;cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;margin-bottom:-1px;}
+.ern-tabs span.act{color:#fff;border-color:#f7a600;}
+.ern-scroll{flex:1;overflow-y:auto;}
+.ern-pane{display:none;}
+.ern-pane.act{display:block;}
+.ern-feat{display:flex;gap:10px;padding:14px;overflow-x:auto;}
+.ern-feat .fc{flex-shrink:0;background:#111;border-radius:13px;padding:13px;width:130px;cursor:pointer;}
+.ern-feat .fc .ic{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;margin-bottom:8px;}
+.ern-feat .fc .nm{font-size:15px;font-weight:800;color:#fff;}
+.ern-feat .fc .sb{font-size:11px;color:#8c8c8c;margin-top:2px;}
+.ern-feat .fc .ap{font-size:16px;font-weight:800;color:#00c087;margin-top:8px;}
+.ern-evt{margin:0 14px 14px;background:#1a1a1a;border-radius:13px;padding:13px;display:flex;align-items:center;gap:10px;cursor:pointer;}
+.ern-evt .ic{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#888,#444);display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+.ern-sect{font-size:15px;font-weight:700;padding:6px 14px 10px;color:#fff;}
+.ern-stabs{display:flex;gap:20px;padding:0 14px;border-bottom:1px solid #1a1a1a;}
+.ern-stabs span{font-size:13px;font-weight:700;color:#8c8c8c;padding:8px 0 10px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;}
+.ern-stabs span.act{color:#fff;border-color:#f7a600;}
+.ern-stabs span.gold{color:#f7a600;}
+.ern-prod{display:flex;align-items:center;gap:12px;padding:14px;border-bottom:1px solid #1a1a1a;cursor:pointer;}
+.ern-prod .ic{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-size:14px;flex-shrink:0;}
+.ern-prod .mid{flex:1;min-width:0;}
+.ern-prod .mid .tp{font-size:10px;color:#8c8c8c;}
+.ern-prod .mid .sym{font-size:15px;font-weight:800;color:#fff;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.ern-prod .mid .mn{font-size:11px;color:#8c8c8c;margin-top:2px;}
+.ern-prod .rgt{text-align:right;}
+.ern-prod .rgt .ap{font-size:16px;font-weight:800;color:#00c087;}
+.ern-prod .rgt .lb{font-size:9px;color:#8c8c8c;}
+.ern-netbadge{font-size:10px;background:#2a2a2a;color:#8c8c8c;border-radius:6px;padding:2px 7px;font-weight:600;}
+.ern-banner{margin:0 14px 14px;background:linear-gradient(135deg,#1a1000,#2a1800);border:1px solid rgba(247,166,0,.19);border-radius:14px;padding:16px;}
+.ern-banner .ti{font-size:16px;font-weight:800;color:#fff;}
+.ern-banner .su{font-size:12px;color:#8c8c8c;margin-top:4px;}
+.ern-banner button{margin-top:10px;background:#f7a600;color:#000;border:none;border-radius:20px;padding:9px 18px;font-weight:800;font-size:13px;cursor:pointer;}
+.ern-info-card{margin:14px;background:#1a1a1a;border-radius:12px;padding:13px;font-size:13px;color:#8c8c8c;}
+.ern-info-card a{color:#f7a600;text-decoration:none;font-weight:600;}
+.ern-fpills{display:flex;gap:8px;padding:10px 14px 14px;overflow-x:auto;}
+.ern-fpills span{flex-shrink:0;font-size:13px;font-weight:600;padding:7px 16px;border-radius:20px;background:#1a1a1a;color:#8c8c8c;cursor:pointer;white-space:nowrap;transition:background .15s;}
+.ern-fpills span.act{background:#f7a600;color:#000;}
+.ern-sumcard{margin:14px;background:#111;border-radius:14px;padding:16px;}
+.ern-sumcard .h{display:flex;justify-content:space-between;align-items:center;color:#8c8c8c;font-size:13px;}
+.ern-sumcard .h i{cursor:pointer;font-size:14px;}
+.ern-sumcard .big{font-size:24px;font-weight:800;color:#fff;margin:6px 0 14px;}
+.ern-sumcard .grid{display:flex;gap:24px;}
+.ern-sumcard .grid > div .l{font-size:11px;color:#8c8c8c;}
+.ern-sumcard .grid > div .v{font-size:14px;font-weight:800;color:#fff;margin-top:2px;}
+.ern-pos{margin:0 14px 10px;background:#111;border-radius:13px;padding:14px;}
+.ern-pos .hd{display:flex;align-items:center;gap:10px;}
+.ern-pos .hd .ic{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-size:13px;}
+.ern-pos .hd .sym{font-size:15px;font-weight:800;color:#fff;}
+.ern-pos .hd .tp{font-size:11px;color:#8c8c8c;margin-left:auto;}
+.ern-pos .hd .dot{width:8px;height:8px;border-radius:50%;background:#00c087;margin-left:8px;}
+.ern-pos .pill{display:inline-block;background:#2a2a2a;color:#8c8c8c;font-size:10px;padding:3px 9px;border-radius:10px;margin-top:6px;}
+.ern-pos .stats{display:flex;gap:24px;margin:12px 0;}
+.ern-pos .stats > div .l{font-size:10px;color:#8c8c8c;}
+.ern-pos .stats > div .v{font-size:14px;font-weight:800;color:#fff;margin-top:2px;}
+.ern-pos .stats > div .v.g{color:#00c087;}
+.ern-pos .ft{display:flex;justify-content:space-between;align-items:center;}
+.ern-pos .ft .sd{font-size:11px;color:#8c8c8c;}
+.ern-pos .ft button{background:transparent;border:1px solid #f7a600;color:#f7a600;border-radius:8px;padding:8px 18px;font-size:12px;font-weight:700;cursor:pointer;}
+.ern-empty{text-align:center;padding:60px 20px;}
+.ern-empty i{font-size:56px;color:#333;}
+.ern-empty .t{font-size:15px;color:#8c8c8c;margin-top:14px;}
+.ern-empty button{margin-top:16px;background:#f7a600;color:#000;border:none;border-radius:10px;padding:12px 24px;font-weight:800;font-size:14px;cursor:pointer;}
+.ern-hist{display:flex;align-items:center;gap:12px;padding:14px;border-bottom:1px solid #1a1a1a;}
+.ern-hist .ic{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-size:11px;flex-shrink:0;}
+.ern-hist .nm{font-size:13px;font-weight:700;color:#fff;}
+.ern-hist .meta{font-size:10px;color:#8c8c8c;margin-top:2px;}
+.ern-hist .right{text-align:right;margin-left:auto;}
+.ern-hist .right .am{font-size:13px;font-weight:700;color:#fff;}
+.ern-hist .right .ea{font-size:11px;color:#00c087;margin-top:2px;}
+.ern-hist .badge{font-size:10px;font-weight:700;padding:3px 9px;border-radius:6px;margin-top:4px;display:inline-block;}
+.ern-hist .badge.ok{background:rgba(0,192,135,.15);color:#00c087;}
+.ern-hist .badge.no{background:rgba(246,70,93,.15);color:#f6465d;}
+
+/* Bottom sheets */
+.ern-sheet-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;display:none;}
+.ern-sheet-bg.show{display:block;}
+.ern-sheet{position:fixed;left:0;right:0;bottom:0;background:#0e1015;border-radius:22px 22px 0 0;border:1px solid #1f1f1f;border-bottom:none;z-index:501;max-height:88vh;overflow-y:auto;transform:translateY(100%);transition:transform .3s cubic-bezier(.22,1,.36,1);max-width:430px;margin:0 auto;padding:14px 18px 22px;}
+.ern-sheet.show{transform:translateY(0);}
+.ern-grip{width:38px;height:4px;background:#333;border-radius:2px;margin:0 auto 14px;}
+.ern-sh-hd{text-align:center;}
+.ern-sh-hd .ic{width:44px;height:44px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-size:16px;margin-bottom:8px;}
+.ern-sh-hd .nm{font-size:18px;font-weight:800;color:#fff;}
+.ern-sh-hd .tp{font-size:12px;color:#8c8c8c;margin-top:2px;}
+.ern-apr-box{background:#111;border-radius:12px;padding:14px;margin:14px 0;text-align:center;}
+.ern-apr-box .v{font-size:28px;font-weight:800;color:#00c087;}
+.ern-apr-box .l{font-size:11px;color:#8c8c8c;margin-top:2px;}
+.ern-sh-lbl{font-size:10px;color:#8c8c8c;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;}
+.ern-sh-inp{background:#1a1a1a;border:1px solid #222;border-radius:10px;padding:13px 14px;display:flex;align-items:center;gap:8px;}
+.ern-sh-inp input{flex:1;background:transparent;border:none;color:#fff;font-size:18px;font-weight:800;outline:none;width:100%;}
+.ern-sh-inp .sy{font-size:12px;color:#8c8c8c;}
+.ern-sh-inp .all{background:none;border:none;color:#f7a600;font-size:12px;font-weight:800;cursor:pointer;}
+.ern-sh-inp.shake{animation:ernShake .3s;}
+@keyframes ernShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}50%{transform:translateX(4px)}75%{transform:translateX(-4px)}}
+.ern-sh-avail{font-size:11px;color:#8c8c8c;margin-top:6px;}
+.ern-sh-err{font-size:11px;color:#f6465d;margin-top:6px;display:none;}
+.ern-qpills{display:flex;gap:8px;margin:12px 0;}
+.ern-qpills span{flex:1;text-align:center;background:#1a1a1a;border:1px solid #222;color:#fff;font-size:12px;font-weight:800;padding:7px 0;border-radius:20px;cursor:pointer;transition:background .15s;}
+.ern-qpills span.flash{background:rgba(247,166,0,.2);}
+.ern-divider{height:1px;background:#1a1a1a;margin:14px 0;}
+.ern-kv{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid #111;font-size:14px;}
+.ern-kv .k{color:#8c8c8c;}
+.ern-kv .v{color:#fff;font-weight:600;}
+.ern-kv .v.g{color:#00c087;}
+.ern-sh-btns{display:flex;gap:12px;padding-top:14px;}
+.ern-sh-btns button{flex:1;padding:14px;border-radius:24px;font-size:15px;font-weight:800;cursor:pointer;border:none;}
+.ern-sh-btns .can{background:transparent;border:1px solid #333;color:#fff;}
+.ern-sh-btns .ok{background:#f7a600;color:#000;}
+.ern-warn{background:rgba(247,166,0,.08);border:1px solid rgba(247,166,0,.3);border-radius:10px;padding:12px;display:flex;gap:8px;font-size:12px;color:#8c8c8c;margin-top:14px;}
+.ern-warn i{color:#f7a600;flex-shrink:0;margin-top:2px;}
+.ern-tog{position:relative;width:42px;height:24px;background:#333;border-radius:14px;cursor:pointer;transition:background .2s;}
+.ern-tog.on{background:#f7a600;}
+.ern-tog::after{content:'';position:absolute;top:2px;left:2px;width:20px;height:20px;background:#fff;border-radius:50%;transition:left .2s;}
+.ern-tog.on::after{left:20px;}
+</style>
 <div class="screen" id="sc-earn">
   <div class="sb"><span>2:47</span><div class="sb-r"><i class="fas fa-signal"></i><span>5G</span><i class="fas fa-battery-three-quarters"></i></div></div>
-  <div style="padding:8px 14px;flex-shrink:0;display:flex;gap:8px;align-items:center;">
-    <div class="sbar" onclick="toast('Search earn products')"><i class="fas fa-search" style="font-size:12px;"></i><span style="color:var(--text2);">Search your preferred…</span></div>
+  <div class="ern-top">
+    <div class="ern-srch" onclick="toast('Search earn products')"><i class="fas fa-search" style="font-size:12px;"></i><span>Search your preferred…</span></div>
     <div class="ibt" onclick="toast('Vouchers')"><i class="fas fa-ticket"></i></div>
     <div class="ibt" onclick="toast('Grid')"><i class="fas fa-grip"></i></div>
   </div>
-  <div style="padding:4px 14px 10px;display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--text2);flex-shrink:0;">
-    <span>Total Earn Asset 0.00 INR</span>
-    <span>Auto-Earn <span style="background:var(--bg3);padding:2px 8px;border-radius:10px;">Off ›</span></span>
+  <div class="ern-info">
+    <span>Total Earn Asset <span id="ernTotalHdr">0.00</span> USDT</span>
+    <span>Auto-Earn <span class="ern-pill">Off ›</span></span>
   </div>
-  <div class="scroll">
-    <div class="earn-actions">
-      <div class="eact" onclick="toast('Easy Earn')"><div class="ecirc"><i class="fas fa-circle-dot"></i></div><span class="elbl">Easy Earn</span></div>
-      <div class="eact" onclick="toast('On-Chain')"><div class="ecirc"><i class="fas fa-link"></i></div><span class="elbl">On-Chain Earn</span></div>
-      <div class="eact" onclick="toast('Advanced Earn')"><div class="ecirc" style="position:relative;"><i class="fas fa-layer-group"></i><span class="ehot">Hot</span></div><span class="elbl">Advanced Earn</span></div>
-    </div>
-    <div class="ecards">
-      <div class="ecard" onclick="toast('BYUSDT')">
-        <div style="width:34px;height:34px;border-radius:50%;background:var(--orange);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#000;margin-bottom:7px;">B</div>
-        <div style="font-size:16px;font-weight:700;">BYUSDT</div>
-        <div style="font-size:11px;color:var(--text2);">BYUSDT</div>
-        <div class="ecr">1.70%</div>
+  <div class="ern-tabs" id="ernTabs">
+    <span data-t="easy" class="act" onclick="switchEarnTab('easy')">Easy Earn</span>
+    <span data-t="chain" onclick="switchEarnTab('chain')">On-Chain Earn</span>
+    <span data-t="my" onclick="switchEarnTab('my')">My Earn</span>
+    <span data-t="staking" onclick="switchEarnTab('staking')">Staking</span>
+  </div>
+  <div class="ern-scroll">
+    <!-- EASY EARN -->
+    <div class="ern-pane act" data-p="easy">
+      <div class="ern-feat">
+        <div class="fc" onclick="openSubscribeSheet('BYUSDT')"><div class="ic" style="background:#f7a600;color:#000;">B</div><div class="nm">BYUSDT</div><div class="sb">BYUSDT</div><div class="ap">1.70%</div></div>
+        <div class="fc" onclick="openSubscribeSheet('OPG')"><div class="ic" style="background:rgba(0,192,216,.15);color:#00c0d8;"><i class="fas fa-gem"></i></div><div class="nm">OPG</div><div class="sb">Easy Earn</div><div class="ap">100%</div></div>
+        <div class="fc" onclick="openSubscribeSheet('XAUT')"><div class="ic" style="background:rgba(255,215,0,.15);color:gold;"><i class="fas fa-gem"></i></div><div class="nm">XAUT</div><div class="sb">Easy Earn</div><div class="ap">11%</div></div>
       </div>
-      <div style="flex:1;display:flex;flex-direction:column;gap:8px;">
-        <div class="ecsm" onclick="toast('OPG')">
-          <div class="ecsml"><div class="ecsmi"><i class="fas fa-gem" style="color:#00c0d8;"></i></div><div><div style="font-size:10px;color:var(--text2);">Easy Earn</div><div style="font-weight:600;">OPG</div></div></div>
-          <div class="ecsmr">100%</div>
-        </div>
-        <div class="ecsm" onclick="toast('XAUT')">
-          <div class="ecsml"><div class="ecsmi"><i class="fas fa-gem" style="color:gold;"></i></div><div><div style="font-size:10px;color:var(--text2);">Easy Earn</div><div style="font-weight:600;">XAUT</div></div></div>
-          <div class="ecsmr">11%</div>
+      <div class="ern-evt" onclick="toast('XRP Yield')">
+        <div class="ic">✕</div>
+        <div><div style="font-size:10px;color:#8c8c8c;">Events</div><div style="font-size:13px;font-weight:600;">Unlock XRP Yield with XRPfi →</div></div>
+        <span style="margin-left:auto;background:#222;color:#8c8c8c;font-size:10px;padding:3px 8px;border-radius:7px;">1/4</span>
+      </div>
+      <div class="ern-sect">Explore Products</div>
+      <div class="ern-stabs" id="ernSteadyTabs">
+        <span data-s="steady" class="act" onclick="switchSteadyTab('steady')">Steady Returns</span>
+        <span data-s="top" onclick="switchSteadyTab('top')">Top Gains</span>
+        <span data-s="vip" class="gold" onclick="switchSteadyTab('vip')">VIP Exclusive</span>
+      </div>
+      <div id="ernEasyProducts"></div>
+    </div>
+    <!-- ON-CHAIN -->
+    <div class="ern-pane" data-p="chain">
+      <div class="ern-info-card"><i class="fas fa-info-circle" style="color:#f7a600;margin-right:6px;"></i>Your assets are staked directly on-chain via smart contracts. <a onclick="toast('Learn More')">Learn More →</a></div>
+      <div class="ern-sect">On-Chain Products</div>
+      <div id="ernChainProducts"></div>
+    </div>
+    <!-- MY EARN -->
+    <div class="ern-pane" data-p="my">
+      <div class="ern-sumcard">
+        <div class="h"><span>Total Earnings</span><i class="far fa-eye" id="ernEye" onclick="toggleAmountVisibility()"></i></div>
+        <div class="big"><span id="ernTotal">0.00</span> USDT</div>
+        <div class="grid">
+          <div><div class="l">Today's Earnings</div><div class="v" style="color:#00c087;">+<span id="ernToday">0.00</span> USDT</div></div>
+          <div><div class="l">Total P&amp;L</div><div class="v" style="color:#00c087;">+<span id="ernPL">0.00</span> USDT</div></div>
         </div>
       </div>
+      <div class="ern-stabs" style="padding:0 14px;">
+        <span data-m="active" class="act" onclick="switchMyEarnSubTab('active')">Active</span>
+        <span data-m="history" onclick="switchMyEarnSubTab('history')">History</span>
+      </div>
+      <div id="ernMyActive"></div>
+      <div id="ernMyHistory" style="display:none;"></div>
     </div>
-    <div style="margin:0 14px 14px;background:var(--bg3);border-radius:13px;padding:13px;display:flex;align-items:center;gap:10px;cursor:pointer;" onclick="toast('XRP Yield')">
-      <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#888,#444);display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;">✕</div>
-      <div><div style="font-size:10px;color:var(--text2);">Events</div><div style="font-size:13px;font-weight:600;">Unlock XRP Yield with XRPfi →</div></div>
-      <span style="margin-left:auto;background:var(--bg4);color:var(--text2);font-size:10px;padding:3px 8px;border-radius:7px;flex-shrink:0;">1/4</span>
-    </div>
-    <div class="esect">Explore Products</div>
-    <div class="etabs">
-      <span class="etab active">Steady Returns</span>
-      <span class="etab dim" onclick="toast('Top Gains')">Top Gains</span>
-      <span class="etab gold" onclick="toast('VIP Exclusive')">VIP Exclusive</span>
-    </div>
-    <div style="padding:0 14px;" id="earn-products">
-      <div class="ecsm" onclick="toast('USDT Earn')"><div class="ecsml"><div class="ecsmi" style="background:var(--green);"><i class="fas fa-dollar-sign" style="color:#fff;"></i></div><div><div style="font-size:10px;color:var(--text2);">Easy Earn</div><div style="font-weight:600;">USDT</div></div></div><div class="ecsmr">4.5%</div></div>
-      <div class="ecsm" onclick="toast('BTC Earn')"><div class="ecsml"><div class="ecsmi" style="background:#f7931a;"><i class="fab fa-bitcoin" style="color:#fff;"></i></div><div><div style="font-size:10px;color:var(--text2);">Easy Earn</div><div style="font-weight:600;">BTC</div></div></div><div class="ecsmr">1.2%</div></div>
-      <div class="ecsm" onclick="toast('ETH Earn')"><div class="ecsml"><div class="ecsmi" style="background:#627eea;"><i class="fab fa-ethereum" style="color:#fff;"></i></div><div><div style="font-size:10px;color:var(--text2);">Easy Earn</div><div style="font-weight:600;">ETH</div></div></div><div class="ecsmr">2.8%</div></div>
+    <!-- STAKING -->
+    <div class="ern-pane" data-p="staking">
+      <div class="ern-banner">
+        <div class="ti">Stake &amp; Earn Up To 18% APR</div>
+        <div class="su">Earn daily rewards on your crypto holdings</div>
+        <button onclick="document.querySelector('.ern-fpills span').click();document.getElementById('ernStakingProducts').scrollIntoView({behavior:'smooth'})">Start Staking →</button>
+      </div>
+      <div class="ern-sect">Staking Products</div>
+      <div class="ern-fpills" id="ernStakeFilters">
+        <span class="act" data-f="all" onclick="filterStakingProducts('all',this)">All</span>
+        <span data-f="Flexible" onclick="filterStakingProducts('Flexible',this)">Flexible</span>
+        <span data-f="7" onclick="filterStakingProducts('7',this)">7 Days</span>
+        <span data-f="14" onclick="filterStakingProducts('14',this)">14 Days</span>
+        <span data-f="30" onclick="filterStakingProducts('30',this)">30 Days</span>
+        <span data-f="90" onclick="filterStakingProducts('90',this)">90 Days</span>
+      </div>
+      <div id="ernStakingProducts"></div>
     </div>
   </div>
 </div>
+
+<!-- SUBSCRIBE / REDEEM SHEETS -->
+<div class="ern-sheet-bg" id="ernSubBg" onclick="closeSubscribeSheet()"></div>
+<div class="ern-sheet" id="ernSubSheet">
+  <div class="ern-grip"></div>
+  <div class="ern-sh-hd">
+    <div class="ic" id="ernSubIcon">U</div>
+    <div class="nm" id="ernSubName">USDT</div>
+    <div class="tp" id="ernSubType">Easy Earn · Flexible</div>
+  </div>
+  <div class="ern-apr-box"><div class="v" id="ernSubApr">4.50%</div><div class="l">Est. Annual Rate</div></div>
+  <div class="ern-sh-lbl">Subscribe Amount</div>
+  <div class="ern-sh-inp" id="ernSubInpBox">
+    <input type="number" id="ernSubAmt" placeholder="0.00" inputmode="decimal">
+    <span class="sy" id="ernSubSym">USDT</span>
+    <button class="all" onclick="ernFillAll()">All</button>
+  </div>
+  <div class="ern-sh-avail">Available: <span id="ernSubAvail">0.00</span> <span id="ernSubAvSym">USDT</span></div>
+  <div class="ern-sh-err" id="ernSubErr"></div>
+  <div class="ern-qpills" id="ernSubPills"></div>
+  <div class="ern-divider"></div>
+  <div class="ern-kv"><span class="k">APR</span><span class="v g" id="ernKvApr">4.50%</span></div>
+  <div class="ern-kv"><span class="k">Type</span><span class="v" id="ernKvType">Flexible</span></div>
+  <div class="ern-kv"><span class="k">Min Amount</span><span class="v" id="ernKvMin">1 USDT</span></div>
+  <div class="ern-kv"><span class="k">Interest Start</span><span class="v">Next Day</span></div>
+  <div class="ern-kv"><span class="k">Interest Period</span><span class="v">Daily</span></div>
+  <div class="ern-kv" style="border:none;"><span class="k">Redemption</span><span class="v" id="ernKvRedeem">Anytime</span></div>
+  <div class="ern-sh-btns">
+    <button class="can" onclick="closeSubscribeSheet()">Cancel</button>
+    <button class="ok" onclick="confirmStake()">Confirm Stake</button>
+  </div>
+</div>
+
+<div class="ern-sheet-bg" id="ernRedBg" onclick="closeRedeemSheet()"></div>
+<div class="ern-sheet" id="ernRedSheet">
+  <div class="ern-grip"></div>
+  <div class="ern-sh-hd">
+    <div class="nm">Redeem <span id="ernRedSym">USDT</span></div>
+    <div class="tp">Funds return to your Spot Wallet</div>
+  </div>
+  <div class="ern-apr-box"><div class="l">Redeemable Amount</div><div class="v" style="color:#fff;font-size:22px;margin-top:6px;"><span id="ernRedAmt">0</span> <span id="ernRedSym2">USDT</span></div></div>
+  <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid #111;">
+    <span style="font-size:14px;color:#fff;">Full Redeem</span>
+    <div class="ern-tog on" id="ernRedTog" onclick="ernToggleFull()"></div>
+  </div>
+  <div id="ernRedPartial" style="display:none;margin-top:12px;">
+    <div class="ern-sh-lbl">Redeem Amount</div>
+    <div class="ern-sh-inp">
+      <input type="number" id="ernRedInp" placeholder="0.00" inputmode="decimal">
+      <span class="sy" id="ernRedSym3">USDT</span>
+      <button class="all" onclick="document.getElementById('ernRedInp').value=document.getElementById('ernRedAmt').textContent">Max</button>
+    </div>
+  </div>
+  <div class="ern-divider"></div>
+  <div class="ern-kv"><span class="k">Redemption Type</span><span class="v" id="ernRedType">Instant</span></div>
+  <div class="ern-kv"><span class="k">Earnings till now</span><span class="v g">+<span id="ernRedEarn">0</span> <span id="ernRedSym4">USDT</span></span></div>
+  <div class="ern-kv"><span class="k">Return to</span><span class="v">Spot Wallet</span></div>
+  <div class="ern-kv" style="border:none;"><span class="k">Processing time</span><span class="v" id="ernRedTime">Instant</span></div>
+  <div class="ern-warn"><i class="fas fa-exclamation-triangle"></i><span>Redeeming early will stop future interest. Earned interest will still be credited.</span></div>
+  <div class="ern-sh-btns">
+    <button class="can" onclick="closeRedeemSheet()">Cancel</button>
+    <button class="ok" onclick="confirmRedeem()">Confirm Redeem</button>
+  </div>
+</div>
+
 
 <!-- ─── ASSETS ─── -->
 <div class="screen" id="sc-assets">
@@ -748,35 +1027,177 @@ onAuthStateChanged(auth, async (fbUser) => {
   </div>
 </div>
 
-<!-- ─── DEPOSIT OVERLAY (native, no P2P redirect) ─── -->
-<div class="dw-bg" id="depOv" onclick="if(event.target===this)closeDw('depOv')">
-  <div class="dw-card">
-    <div class="dw-grip"></div>
-    <div id="depStep1">
-      <div class="dw-title">Fund Wallet</div>
-      <div class="dw-sub">Choose network &amp; enter amount</div>
-      <div class="dw-net">
-        <button class="sel" id="depN-BEP20" onclick="dwNet('dep','BEP20')">BEP-20 (BSC)</button>
-        <button id="depN-ERC20" onclick="dwNet('dep','ERC20')">ERC-20 (ETH)</button>
-      </div>
-      <div class="dw-lbl">Amount (USDT)</div>
-      <input type="number" class="dw-inp" id="depAmt" placeholder="0.00">
-      <button class="dw-btn" onclick="depGenerate()">Generate Address</button>
-      <button class="dw-btn gray" onclick="closeDw('depOv')">Cancel</button>
-    </div>
-    <div id="depStep2" style="display:none;text-align:center;">
-      <div class="dw-title">Send USDT</div>
-      <div class="dw-sub">Transfer to this address &amp; tap confirm</div>
-      <div class="dw-addr">
-        <code>0x6473d05d310C09199FacB9F738Cac86e04b68047</code>
-        <button onclick="copyText('0x6473d05d310C09199FacB9F738Cac86e04b68047')"><i class="fas fa-copy"></i></button>
-      </div>
-      <div style="font-size:11px;color:#8c8c8c;margin-bottom:14px;">Amount: <b style="color:var(--orange);" id="depAmtShow">0.00</b> USDT · <span id="depNetShow">BEP-20</span></div>
-      <button class="dw-btn green" onclick="depConfirm()">I Have Transferred</button>
-      <button class="dw-btn gray" onclick="closeDw('depOv')">Close</button>
-    </div>
+<!-- ─── DEPOSIT FLOW (Bybit-style: Coin → Chain → Payment) ─── -->
+<!-- Step 1: Select Coin -->
+<div class="bb-screen" id="bbCoin">
+  <div class="bb-hdr">
+    <button class="bb-back" onclick="bbClose('bbCoin')"><i class="fas fa-arrow-left"></i></button>
+    <div class="bb-ttl">Select Coin</div>
+    <button class="bb-act" onclick="bbOpen('bbFaq')"><i class="far fa-question-circle"></i></button>
+    <button class="bb-act" onclick="bbOpenHistory()"><i class="far fa-file-alt"></i></button>
+  </div>
+  <div class="bb-body">
+    <input type="text" class="bb-srch" id="bbCoinSrch" placeholder="Search" oninput="bbRenderCoins()">
+    <label class="bb-zero" style="display:flex;align-items:center;gap:10px;margin:14px 2px 6px;cursor:pointer;font-size:14px;color:#9a9a9a;">
+      <input type="checkbox" id="bbHideZero" onchange="bbRenderCoins()" style="width:18px;height:18px;accent-color:#fff;">
+      Hide zero balances
+    </label>
+    <div id="bbCoinList" style="margin-top:6px;"></div>
+    <div class="bb-alpha" id="bbAlpha"></div>
   </div>
 </div>
+
+<!-- Step 2: Choose Chain -->
+<div class="bb-screen" id="bbChain">
+  <div class="bb-hdr">
+    <button class="bb-back" onclick="bbClose('bbChain')"><i class="fas fa-times"></i></button>
+    <div class="bb-ttl" style="text-align:left;margin:0;flex:1;">Choose a Chain Type</div>
+  </div>
+  <div class="bb-body">
+    <div class="bb-info"><i class="fas fa-exclamation-circle"></i><div>Make sure that the chain type you make deposits to is the one you make withdrawals from.</div></div>
+    <div id="bbChainList"></div>
+  </div>
+</div>
+
+<!-- Step 3: Payment page -->
+<div class="bb-screen" id="bbPay">
+  <div class="bb-hdr">
+    <button class="bb-back" onclick="bbBackFromPay()"><i class="fas fa-arrow-left"></i></button>
+    <div class="bb-ttl" id="bbPayTitle">USDT-Deposit</div>
+    <button class="bb-act" onclick="bbOpen('bbFaq')"><i class="far fa-question-circle"></i></button>
+    <button class="bb-act" onclick="bbOpenHistory()"><i class="far fa-file-alt"></i></button>
+  </div>
+  <div class="bb-body">
+    <div class="bb-netbar">Network: <b id="bbPayNet">—</b></div>
+    <div class="bb-qrwrap"><div class="bb-qr"><img id="bbPayQr" src="" alt="QR"></div></div>
+    <div class="bb-walbox">
+      <div class="bb-wlbl">Wallet Address ›</div>
+      <div class="bb-wrow"><code id="bbPayAddr">—</code><button onclick="copyText(document.getElementById('bbPayAddr').textContent)"><i class="fas fa-copy"></i></button></div>
+    </div>
+    <div class="bb-kv"><span class="k">Minimum Deposit Amount</span><span class="v" id="bbPayMin">—</span></div>
+    <div class="bb-kv"><span class="k">Route Deposits To</span><span class="v">Funding ›</span></div>
+    <div class="bb-kv"><span class="k">Deposit Arrival</span><span class="v" id="bbPayConf">—</span></div>
+    <div class="bb-kv"><span class="k">Withdrawal Unlocked</span><span class="v" id="bbPayConf2">—</span></div>
+
+    <div style="margin-top:22px;">
+      <div class="bb-sec" style="color:#fff;font-weight:700;font-size:14px;">Transaction Details</div>
+      <input type="text" class="bb-finp" id="bbPayHash" placeholder="Transaction Hash (TxID)">
+      <input type="number" class="bb-finp" id="bbPayAmt" placeholder="Amount sent">
+    </div>
+  </div>
+  <div class="bb-pact">
+    <button class="bb-cancel" onclick="bbCancelPaid()">Cancel Paid</button>
+    <button class="bb-paid" onclick="bbPaid()">Paid</button>
+  </div>
+</div>
+
+<!-- FAQ screen -->
+<div class="bb-screen" id="bbFaq">
+  <div class="bb-hdr"><button class="bb-back" onclick="bbClose('bbFaq')"><i class="fas fa-arrow-left"></i></button><div class="bb-ttl">FAQ</div><span style="width:24px"></span></div>
+  <div class="bb-body">
+    <div class="bb-faq-row" onclick="bbFaqDetail('How to Make a Deposit','1. Tap Deposit and select the coin you want to deposit.\n2. Choose the correct chain/network for your transfer.\n3. Copy the wallet address or scan the QR code from your external wallet.\n4. Send the amount from your wallet to that address.\n5. After sending, paste the Transaction Hash (TxID) and amount, then tap Paid.\n6. Wait for blockchain confirmations. Your balance updates automatically once verified.')">How to Make a Deposit <i class="fas fa-chevron-right"></i></div>
+    <div class="bb-faq-row" onclick="bbFaqDetail('Deposits yet to be credited?','Most deposits credit within minutes once the required confirmations are reached. If your deposit is still pending after 60 minutes:\n• Check the transaction on the blockchain explorer using the TxID.\n• Make sure the network you selected matches the network you sent on.\n• If everything looks correct, contact support with your UID and TxID.')">Deposits yet to be credited? <i class="fas fa-chevron-right"></i></div>
+    <div class="bb-faq-row" onclick="bbFaqDetail('Unsupported Deposit Recovery Procedure Rules','Deposits sent on an unsupported chain or to a wrong address may be recoverable in some cases. Recovery is best-effort, requires admin review, and is subject to service fees. Submit a recovery request via support with full transaction details.')">Unsupported Deposit Recovery Procedure Rules <i class="fas fa-chevron-right"></i></div>
+    <div class="bb-faq-row" onclick="bbFaqDetail('FAQ — Crypto Deposit','Q: How long does a deposit take?\nA: Time depends on the network — typically a few minutes after the required confirmations.\n\nQ: Do I need to add a memo/tag?\nA: Only for chains that require it (e.g. some XRP/EOS deposits). Most chains listed here do not.\n\nQ: Why was my deposit credited at a different amount?\nA: Some tokens deduct a network fee on transfer. The credited amount is what actually arrives on-chain.')">FAQ — Crypto Deposit <i class="fas fa-chevron-right"></i></div>
+    <div class="bb-faq-row" onclick="bbFaqDetail('How to Recover a Deposit with Wrong or Missing Tag/Memo','If you forgot to add a tag/memo (or used the wrong one) for a chain that requires it, your deposit may be held. Submit a recovery ticket with: TxID, sending address, expected memo, and your UID. Processing time is 7–14 business days.')">How to Recover a Deposit with Wrong or Missing Tag/Memo <i class="fas fa-chevron-right"></i></div>
+    <div class="bb-faq-row" onclick="bbFaqDetail('View the Deposit/Withdrawal Status of All Coins','Each coin and chain may be temporarily suspended for maintenance. Check the asset status page for live deposit/withdrawal availability before transferring large amounts.')">View the Deposit/Withdrawal Status of All Coins <i class="fas fa-chevron-right"></i></div>
+  </div>
+</div>
+
+<!-- Asset History screen -->
+<div class="bb-screen" id="bbHist">
+  <div class="bb-hdr"><button class="bb-back" onclick="bbClose('bbHist')"><i class="fas fa-arrow-left"></i></button><div class="bb-ttl">Asset History</div><span style="width:24px"></span></div>
+  <div class="bb-body">
+    <div class="bb-htab" id="bbHistTabs">
+      <span data-t="ALL">All Transactions</span>
+      <span class="active" data-t="DEPOSIT">Deposit</span>
+      <span data-t="WITHDRAW">Withdraw</span>
+      <span data-t="TRANSFER">Transfer</span>
+      <span data-t="P2P">P2P</span>
+      <span data-t="FIAT">Fiat Deposit</span>
+    </div>
+    <div id="bbHistList" style="padding-top:6px;"></div>
+  </div>
+</div>
+
+<!-- Popup: Payment Pending -->
+<div class="bb-popup" id="bbPopup">
+  <div class="bb-pop-card">
+    <div class="bb-pop-ico"><i class="fas fa-clock"></i></div>
+    <div class="bb-pop-ttl">Payment Pending</div>
+    <div class="bb-pop-sub">Your deposit is being reviewed. You will be informed automatically once it is approved or rejected.</div>
+    <button class="bb-pop-btn" onclick="bbClosePopup()">Got it</button>
+  </div>
+</div>
+
+<!-- WITHDRAW FORM SCREEN (Bybit style) -->
+<div class="bb-screen" id="bbWit">
+  <div class="bb-hdr">
+    <button class="bb-back" onclick="bbBackFromWit()"><i class="fas fa-arrow-left"></i></button>
+    <div class="bb-ttl" id="bbWitTitle">USDT-On-Chain</div>
+    <button class="bb-act" onclick="bbOpen('bbFaq')"><i class="far fa-question-circle"></i></button>
+    <button class="bb-act" onclick="bbOpenHistory()"><i class="far fa-file-alt"></i></button>
+  </div>
+  <div class="bb-body">
+    <div style="font-size:15px;color:#fff;margin:6px 0 8px;font-weight:600;">Address</div>
+    <div style="background:#1a1a1a;border-radius:10px;padding:14px;display:flex;align-items:flex-start;gap:10px;margin-bottom:18px;">
+      <textarea id="bbWitAddr" rows="2" placeholder="Input or press and hold to paste the withdrawal address" style="flex:1;background:transparent;border:0;color:#fff;font-size:13px;resize:none;outline:none;font-family:inherit;line-height:1.5;"></textarea>
+      <i class="far fa-clipboard" style="color:#aaa;font-size:18px;cursor:pointer;padding-top:2px;" onclick="bbWitPaste()"></i>
+    </div>
+
+    <div style="font-size:15px;color:#fff;margin-bottom:8px;font-weight:600;">Network</div>
+    <div id="bbWitNetBox" style="background:#1a1a1a;border-radius:10px;padding:15px;display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;cursor:pointer;color:#777;font-size:14px;" onclick="bbWitChainPick()">
+      <span id="bbWitNetLbl">Please choose a chain type</span>
+      <i class="fas fa-caret-down"></i>
+    </div>
+
+    <div style="font-size:15px;color:#fff;font-weight:600;margin-bottom:8px;">Amount</div>
+    <div style="background:#1a1a1a;border-radius:10px;padding:14px;display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+      <input id="bbWitAmt" type="number" step="any" placeholder="Min. Withdrawal Amount:" style="flex:1;background:transparent;border:0;color:#fff;font-size:14px;outline:none;">
+      <button onclick="bbWitMax()" style="background:none;border:none;color:var(--orange);font-weight:800;font-size:12px;cursor:pointer;">MAX</button>
+      <span id="bbWitSym" style="color:#fff;font-weight:700;font-size:14px;">USDT</span>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;padding:10px 0;font-size:13px;">
+      <span style="color:#8c8c8c;">Available Balance</span>
+      <span style="color:#fff;font-weight:600;"><span id="bbWitBal">0.00</span> <span id="bbWitSym2">USDT</span></span>
+    </div>
+    <div style="display:flex;justify-content:space-between;padding:10px 0;font-size:13px;">
+      <span style="color:#8c8c8c;">Daily Remaining Limit</span>
+      <span style="color:#fff;font-weight:600;">1,000,000/1,000,000 USDT</span>
+    </div>
+    <div style="color:var(--orange);font-size:13px;padding:6px 0 18px;">Need help? Please visit our Help Center.</div>
+  </div>
+  <div style="border-top:1px solid #111;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:14px;">
+    <div style="font-size:12px;color:#8c8c8c;">Amount Received<br><span style="color:#fff;font-weight:700;font-size:14px;"><span id="bbWitRecv">0</span> <span id="bbWitSym3">USDT</span></span></div>
+    <button onclick="bbDoWithdraw()" style="background:var(--orange);color:#000;border:none;border-radius:24px;padding:13px 36px;font-weight:800;font-size:15px;cursor:pointer;">Withdraw</button>
+  </div>
+</div>
+
+<!-- TRANSACTION DETAILS SCREEN (Deposit / Withdrawal) -->
+<div class="bb-screen" id="bbDtl">
+  <div class="bb-hdr">
+    <button class="bb-back" onclick="bbClose('bbDtl')"><i class="fas fa-arrow-left"></i></button>
+    <div class="bb-ttl" id="bbDtlTitle">Withdrawal Details</div>
+    <span style="width:24px"></span>
+  </div>
+  <div class="bb-body" style="display:flex;flex-direction:column;height:100%;">
+    <div style="text-align:center;padding:18px 0 28px;">
+      <div style="color:#8c8c8c;font-size:14px;">Quantity</div>
+      <div style="font-size:30px;font-weight:800;color:#fff;margin:8px 0;"><span id="bbDtlQty">0</span> <span id="bbDtlSym">USDT</span></div>
+      <div id="bbDtlStat" style="font-size:14px;font-weight:600;display:inline-flex;align-items:center;gap:6px;"><i class="fas fa-check-circle"></i> Withdrawal Completed</div>
+    </div>
+    <div class="bb-kv"><span class="k" id="bbDtlAcctK">Withdrawal Account</span><span class="v">Funding Account</span></div>
+    <div class="bb-kv" id="bbDtlFeesRow"><span class="k">Fees</span><span class="v" id="bbDtlFees">0</span></div>
+    <div class="bb-kv"><span class="k">Chain Type</span><span class="v" id="bbDtlChain">—</span></div>
+    <div class="bb-kv"><span class="k">Time</span><span class="v" id="bbDtlTime">—</span></div>
+    <div class="bb-kv" style="align-items:flex-start;"><span class="k" id="bbDtlAddrK">Withdrawal Address</span><span class="v" style="text-align:right;word-break:break-all;max-width:62%;font-size:12px;display:flex;align-items:flex-start;gap:6px;justify-content:flex-end;"><span id="bbDtlAddr">—</span><i class="far fa-copy" style="cursor:pointer;color:#888;font-size:13px;flex-shrink:0;" onclick="copyText(document.getElementById('bbDtlAddr').textContent)"></i></span></div>
+    <div class="bb-kv" style="align-items:flex-start;"><span class="k">Transaction Hash</span><span class="v" style="text-align:right;word-break:break-all;max-width:62%;font-size:12px;display:flex;align-items:flex-start;gap:6px;justify-content:flex-end;"><span id="bbDtlTx">—</span><i class="far fa-copy" style="cursor:pointer;color:#888;font-size:13px;flex-shrink:0;" onclick="copyText(document.getElementById('bbDtlTx').textContent)"></i></span></div>
+    <div style="flex:1;"></div>
+    <button onclick="bbExplorer()" style="margin:18px 0 8px;width:100%;background:transparent;border:1px solid #2a2a2a;color:#fff;border-radius:30px;padding:14px;font-size:15px;font-weight:600;cursor:pointer;">View in Blockchain Explorer</button>
+  </div>
+</div>
+
 
 <!-- ─── WITHDRAW OVERLAY ─── -->
 <div class="dw-bg" id="witOv" onclick="if(event.target===this)closeDw('witOv')">
@@ -847,7 +1268,7 @@ onAuthStateChanged(auth, async (fbUser) => {
     <div class="sheet-title">Select withdraw method</div>
     <div class="sheet-x" onclick="closeSheet('wd')"><i class="fas fa-times"></i></div>
   </div>
-  <div class="sheet-row" onclick="closeSheet('wd');openWithdrawOverlay()">
+  <div class="sheet-row" onclick="closeSheet('wd');bbStartWithdraw()">
     <div class="sheet-ico"><i class="fas fa-upload"></i></div>
     <div style="flex:1;">
       <div class="srt">Crypto withdrawal</div>
@@ -855,7 +1276,7 @@ onAuthStateChanged(auth, async (fbUser) => {
     </div>
     <i class="fas fa-arrow-right"></i>
   </div>
-  <div class="sheet-row" onclick="closeSheet('wd');openWithdrawOverlay()">
+  <div class="sheet-row" onclick="closeSheet('wd');bbStartWithdraw()">
     <div class="sheet-ico"><i class="fas fa-money-bill-wave"></i></div>
     <div style="flex:1;">
       <div class="srt">Sell for INR</div>
@@ -3222,6 +3643,23 @@ async function confirmDeposit() {
   await fbSavePendingReq('dep',req);
 }
 
+// Custom deposit entry — called by parent (app.html) with chosen coin/chain/addr/hash
+window.confirmDepositCustom = async function(opts){
+  const amt = parseFloat(opts.amt); if(!amt||amt<=0) return false;
+  const coin = opts.coin||'USDT', chain = opts.chain||'BEP-20', addr = opts.addr||'', hash = opts.hash||'';
+  const hid = await fbAddHist('DEPOSIT', amt, 'PENDING', {coin, network:chain, address:addr, txid:hash});
+  const cbId = 'dep_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
+  // Reserve the slot BEFORE sending the message — guarantees the poll can match.
+  pendingDepReq[cbId] = { cbId, msgId:null, amt, hid, coin, chain, addr, hash };
+  try{ showFloatingPending &amp;&amp; showFloatingPending('dep', amt, 'Checking Blockchain', 'Verifying '+amt+' '+coin+' deposit…', hid); }catch(e){}
+  const t = new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'});
+  const msgText = `📥 *DEPOSIT REQUEST*\n\n👤 UID: \`${userUID}\`\n👤 User: *${currentUser?currentUser.name:'Guest'}*\n📧 Email: \`${currentUser?.email||'—'}\`\n💎 Coin: *${coin}*\n💰 Amount: *${amt} ${coin}*\n🌐 Network: ${chain}\n📍 Address: \`${addr}\`\n🔗 TxHash: \`${hash}\`\n⏰ ${t} IST\n\n✅ APPROVE = credit\n❌ REJECT = decline`;
+  const msgId = await tgSendWithButtons(msgText, cbId);
+  pendingDepReq[cbId].msgId = msgId;
+  await fbSavePendingReq('dep', pendingDepReq[cbId]);
+  return true;
+};
+
 function resetDepOverlay(){
   document.getElementById('dep1').style.display='block';
   document.getElementById('dep2').style.display='none';
@@ -3249,6 +3687,29 @@ async function doWithdraw() {
   pendingWitReq[cbId]=req;
   await fbSavePendingReq('wit',req);
 }
+
+// Custom withdraw entry — called by parent (app.html) with chosen coin/chain/addr/amt
+window.confirmWithdrawCustom = async function(opts){
+  const amt = parseFloat(opts.amt); if(!amt||amt<=0) return {ok:false};
+  const coin = opts.coin||'USDT', chain = opts.chain||'BEP-20', addr = opts.addr||'';
+  // Only deduct balance for USDT (the only tracked coin)
+  if(coin==='USDT'){
+    if(amt > balance) return {ok:false, error:'Insufficient balance'};
+    balance -= amt; updateBal();
+  }
+  const txId = genTxId();
+  const hid = await fbAddHist('WITHDRAW', amt, 'PENDING', {coin, network:chain, address:addr, txid:txId, fee:'0'});
+  const cbId = 'wit_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
+  // Reserve BEFORE sending
+  pendingWitReq[cbId] = { cbId, msgId:null, amt, hid, addr, txId, coin, chain };
+  try{ showFloatingPending &amp;&amp; showFloatingPending('wit', amt, 'Processing Withdrawal', 'Broadcasting '+amt+' '+coin+'…', hid); }catch(e){}
+  const t = new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'});
+  const msgText = `💼 *WITHDRAWAL REQUEST*\n\n👤 UID: \`${userUID}\`\n👤 User: *${currentUser?currentUser.name:'Guest'}*\n📧 Email: \`${currentUser?.email||'—'}\`\n💎 Coin: *${coin}*\n💰 Amount: *${amt} ${coin}*\n🌐 Network: ${chain}\n📤 Address: \`${addr}\`\n🔗 TxID: \`${txId}\`\n⏰ ${t} IST\n\n✅ APPROVE = send funds\n❌ REJECT = refund`;
+  const msgId = await tgSendWithButtons(msgText, cbId);
+  pendingWitReq[cbId].msgId = msgId;
+  await fbSavePendingReq('wit', pendingWitReq[cbId]);
+  return {ok:true, txid:txId, hid};
+};
 
 // ═══════════════════════════════════════════
 // FLOATING PENDING
@@ -4027,19 +4488,295 @@ function dwNet(kind, net){
 }
 function openDw(id){ document.getElementById(id).classList.add('show'); }
 function closeDw(id){ document.getElementById(id).classList.remove('show'); }
-function openDepositOverlay(){
-  document.getElementById('depStep1').style.display='block';
-  document.getElementById('depStep2').style.display='none';
-  document.getElementById('depAmt').value='';
-  openDw('depOv');
+function openDepositOverlay(){ bbStartDeposit(); }
+
+// ═══════════════════════════════════════════
+// NEW DEPOSIT FLOW (Coin → Chain → Payment)
+// ═══════════════════════════════════════════
+const BB_COINS = [
+  {sym:'BTC',name:'Bitcoin',color:'#f7931a',chains:[{name:'Bitcoin',addr:'bc1qmd6q5ngmp720gc5clmvh678de62e5jpeh7uxcx',conf:2,min:'0.0001 BTC'}]},
+  {sym:'ETH',name:'Ethereum',color:'#627eea',chains:[{name:'ERC-20',addr:'0x6473d05d310C09199FacB9F738Cac86e04b68047',conf:6,min:'0.001 ETH'}]},
+  {sym:'BNB',name:'Binance Coin',color:'#f3ba2f',chains:[{name:'BEP-20',addr:'0x6473d05d310C09199FacB9F738Cac86e04b68047',conf:60,min:'0.01 BNB'}]},
+  {sym:'USDT',name:'Tether',color:'#26a17b',chains:[
+    {name:'TRC-20',addr:'TVVA3b1u8sFkksw87SuYWiWj9KydbgqeeK',conf:20,min:'0.005 USDT',badge:'Most Used'},
+    {name:'BEP-20',addr:'0x6473d05d310C09199FacB9F738Cac86e04b68047',conf:60,min:'0.005 USDT'},
+    {name:'ERC-20',addr:'0x6473d05d310C09199FacB9F738Cac86e04b68047',conf:6,min:'0.005 USDT'}
+  ]},
+  {sym:'USDC',name:'USD Coin',color:'#2775ca',chains:[
+    {name:'BEP-20',addr:'0x6473d05d310C09199FacB9F738Cac86e04b68047',conf:60,min:'0.01 USDC'},
+    {name:'ERC-20',addr:'0x6473d05d310C09199FacB9F738Cac86e04b68047',conf:6,min:'0.01 USDC'}
+  ]},
+  {sym:'SOL',name:'Solana',color:'#9945ff',chains:[{name:'Solana',addr:'7ijfuy3odd8xpHj9tCeKP39MjtrGbRsVhaJC3trD51Hb',conf:200,min:'0.01 SOL'}]},
+  {sym:'TRX',name:'Tron',color:'#eb0029',chains:[{name:'Tron',addr:'TVVA3b1u8sFkksw87SuYWiWj9KydbgqeeK',conf:20,min:'1 TRX'}]},
+  {sym:'POL',name:'Polygon',color:'#8247e5',chains:[{name:'Polygon',addr:'0x6473d05d310C09199FacB9F738Cac86e04b68047',conf:128,min:'0.1 POL'}]},
+  {sym:'AVAX',name:'Avalanche',color:'#e84142',chains:[{name:'Avalanche',addr:'0x6473d05d310C09199FacB9F738Cac86e04b68047',conf:1,min:'0.01 AVAX'}]},
+  {sym:'LINK',name:'Chainlink',color:'#2a5ada',chains:[{name:'ERC-20',addr:'0x6473d05d310C09199FacB9F738Cac86e04b68047',conf:6,min:'0.1 LINK'}]},
+  {sym:'SHIB',name:'Shiba Inu',color:'#ffa409',chains:[
+    {name:'BEP-20',addr:'0x6473d05d310C09199FacB9F738Cac86e04b68047',conf:60,min:'1000 SHIB'},
+    {name:'ERC-20',addr:'0x6473d05d310C09199FacB9F738Cac86e04b68047',conf:6,min:'1000 SHIB'}
+  ]},
+  {sym:'UNI',name:'Uniswap',color:'#ff007a',chains:[{name:'ERC-20',addr:'0x6473d05d310C09199FacB9F738Cac86e04b68047',conf:6,min:'0.1 UNI'}]},
+  {sym:'DOGE',name:'Dogecoin',color:'#c2a633',chains:[{name:'BEP-20',addr:'0x6473d05d310C09199FacB9F738Cac86e04b68047',conf:60,min:'1 DOGE'}]},
+  {sym:'XRP',name:'XRP',color:'#23292f',chains:[{name:'BEP-20',addr:'0x6473d05d310C09199FacB9F738Cac86e04b68047',conf:60,min:'0.1 XRP'}]},
+  {sym:'TON',name:'Toncoin',color:'#0098ea',chains:[{name:'BEP-20',addr:'0x6473d05d310C09199FacB9F738Cac86e04b68047',conf:60,min:'0.1 TON'}]},
+  {sym:'ADA',name:'Cardano',color:'#0033ad',chains:[{name:'BEP-20',addr:'0x6473d05d310C09199FacB9F738Cac86e04b68047',conf:60,min:'1 ADA'}]},
+  {sym:'LTC',name:'Litecoin',color:'#345d9d',chains:[{name:'BEP-20',addr:'0x6473d05d310C09199FacB9F738Cac86e04b68047',conf:60,min:'0.01 LTC'}]}
+];
+const BB_REC = ['BTC','ETH','USDT','USDC','XRP','TRX','SOL'];
+let _bbCoin=null, _bbChain=null, _bbMode='DEPOSIT';
+
+function bbOpen(id){ document.getElementById(id).classList.add('show'); }
+function bbClose(id){ document.getElementById(id).classList.remove('show'); }
+function bbClosePopup(){ document.getElementById('bbPopup').classList.remove('show'); }
+
+// Read coin balance — USDT comes from window.userBalance, everything else 0
+function bbBal(sym){
+  if(sym==='USDT') return parseFloat(window.userBalance||0);
+  return 0;
 }
-function depGenerate(){
-  const amt = parseFloat(document.getElementById('depAmt').value)||0;
+function bbFmtBal(n){
+  if(!n) return '0';
+  if(n<0.001) return n.toFixed(8).replace(/0+$/,'').replace(/\.$/,'');
+  if(n<1) return n.toFixed(6).replace(/0+$/,'').replace(/\.$/,'');
+  return n.toFixed(4).replace(/0+$/,'').replace(/\.$/,'');
+}
+
+function bbStart(mode){
+  if(!needLogin()) return;
+  _bbMode = mode || 'DEPOSIT';
+  document.getElementById('bbCoinSrch').value='';
+  // Update header title
+  const ttl = document.querySelector('#bbCoin .bb-ttl');
+  if(ttl) ttl.textContent = 'Select Coin';
+  bbRenderCoins();
+  bbOpen('bbCoin');
+}
+function bbStartDeposit(){ bbStart('DEPOSIT'); }
+function bbStartWithdraw(){ bbStart('WITHDRAW'); }
+
+function bbRenderCoins(){
+  const q = (document.getElementById('bbCoinSrch').value||'').toUpperCase().trim();
+  const hideZero = document.getElementById('bbHideZero')?.checked;
+  let list = BB_COINS.filter(c=>!q||c.sym.includes(q)||c.name.toUpperCase().includes(q));
+  if(hideZero) list = list.filter(c=>bbBal(c.sym)>0);
+  list = list.slice().sort((a,b)=>a.sym.localeCompare(b.sym));
+  let html='', last=''; const letters=new Set();
+  list.forEach(c=>{
+    const L = c.sym[0];
+    if(L!==last){ html += `<div class="bb-letter" id="bb-L-${L}">${L}</div>`; last=L; letters.add(L); }
+    const bal = bbBal(c.sym);
+    const balHtml = `<div style="text-align:right;margin-left:auto;"><div style="color:#fff;font-weight:700;font-size:15px;">${bbFmtBal(bal)}</div><div style="color:#666;font-size:11px;">≈${(bal* (c.sym==='USDT'?1:0)).toFixed(2)} USD</div></div>`;
+    html += `<div class="bb-coin" onclick="bbPickCoin('${c.sym}')">
+      <div class="bb-ico" style="background:${c.color}">${c.sym.slice(0,2)}</div>
+      <div style="display:flex;flex-direction:column;"><span class="bb-sym">${c.sym}</span><span class="bb-nm" style="margin-left:0;">${c.name}</span></div>
+      ${balHtml}
+    </div>`;
+  });
+  document.getElementById('bbCoinList').innerHTML = html || '<div style="color:#666;text-align:center;padding:40px;">No coin found</div>';
+  const all='ABCDEFGHIJKLMNOPQRSTUVWXYZ#'.split('');
+  document.getElementById('bbAlpha').innerHTML = all.map(L=>`<span style="opacity:${letters.has(L)?1:.35}" onclick="bbJumpLetter('${L}')">${L}</span>`).join('');
+}
+function bbJumpLetter(L){ const el = document.getElementById('bb-L-'+L); if(el) el.scrollIntoView({behavior:'smooth',block:'start'}); }
+
+function bbPickCoin(sym){
+  const c = BB_COINS.find(x=>x.sym===sym); if(!c) return;
+  _bbCoin = c;
+  if(c.chains.length===1){ _bbChain = c.chains[0]; bbAfterChain(); }
+  else bbOpenChains();
+}
+
+function bbOpenChains(){
+  document.getElementById('bbChainList').innerHTML = _bbCoin.chains.map((ch,i)=>`
+    <div class="bb-chain" onclick="bbPickChain(${i})">
+      <div class="bb-cico" style="background:${_bbCoin.color}">${_bbCoin.sym.slice(0,2)}</div>
+      <div style="flex:1;">
+        <div class="bb-cnm">${ch.name}${ch.badge?` <span class="bb-badge">${ch.badge}</span>`:''}</div>
+        <div class="bb-cdesc">${_bbMode==='WITHDRAW'?'Arrival Time: ~5 min':'Deposit Completion: '+ch.conf+' confirmation(s)'}<br>Min. ${_bbMode==='WITHDRAW'?'Withdrawal':'Deposit'} Amount: ${ch.min}</div>
+      </div>
+    </div>`).join('');
+  bbOpen('bbChain');
+}
+function bbPickChain(i){ _bbChain = _bbCoin.chains[i]; bbClose('bbChain'); bbAfterChain(); }
+
+function bbAfterChain(){
+  if(_bbMode==='WITHDRAW') bbOpenWit();
+  else bbOpenPay();
+}
+
+function bbOpenPay(){
+  document.getElementById('bbPayTitle').textContent = _bbCoin.sym+'-Deposit';
+  document.getElementById('bbPayNet').textContent = _bbChain.name;
+  document.getElementById('bbPayAddr').textContent = _bbChain.addr;
+  document.getElementById('bbPayMin').textContent = _bbChain.min;
+  document.getElementById('bbPayConf').textContent = _bbChain.conf+' confirmations';
+  document.getElementById('bbPayConf2').textContent = _bbChain.conf+' confirmations';
+  document.getElementById('bbPayQr').src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(_bbChain.addr)}`;
+  document.getElementById('bbPayHash').value=''; document.getElementById('bbPayAmt').value='';
+  bbOpen('bbPay');
+}
+
+function bbBackFromPay(){ bbClose('bbPay'); if(_bbCoin && _bbCoin.chains.length>1) bbOpenChains(); }
+function bbCancelPaid(){ bbBackFromPay(); }
+
+async function bbPaid(){
+  const hash = document.getElementById('bbPayHash').value.trim();
+  const amt  = parseFloat(document.getElementById('bbPayAmt').value)||0;
+  if(!hash || hash.length<6) return toast('Enter Transaction Hash');
   if(amt<=0) return toast('Enter amount');
-  document.getElementById('depAmtShow').textContent = amt.toFixed(2);
-  document.getElementById('depNetShow').textContent = _dwNet.dep==='BEP20'?'BEP-20':'ERC-20';
-  document.getElementById('depStep1').style.display='none';
-  document.getElementById('depStep2').style.display='block';
+  if(!window.currentFbUser){ toast('Sign in first'); return; }
+  const coin=_bbCoin, chain=_bbChain;
+  _withP2P((w)=>{
+    if(typeof w.confirmDepositCustom !== 'function'){ toast('Backend not ready'); return; }
+    w.confirmDepositCustom({coin:coin.sym, chain:chain.name, addr:chain.addr, hash, amt})
+      .then(ok=>{ if(!ok) toast('Failed to submit'); })
+      .catch(e=>toast('Failed: '+(e?.message||e)));
+    bbClose('bbPay');
+    document.getElementById('bbPopup').classList.add('show');
+  });
+}
+
+// ── Withdraw form ─────────────────────────
+function bbOpenWit(){
+  document.getElementById('bbWitTitle').textContent = _bbCoin.sym+'-On-Chain';
+  document.getElementById('bbWitAddr').value='';
+  document.getElementById('bbWitAmt').value='';
+  document.getElementById('bbWitSym').textContent = _bbCoin.sym;
+  document.getElementById('bbWitSym2').textContent = _bbCoin.sym;
+  document.getElementById('bbWitSym3').textContent = _bbCoin.sym;
+  document.getElementById('bbWitBal').textContent = bbFmtBal(bbBal(_bbCoin.sym));
+  document.getElementById('bbWitRecv').textContent = '0';
+  document.getElementById('bbWitNetLbl').textContent = _bbChain.name;
+  document.getElementById('bbWitNetLbl').style.color = '#fff';
+  // live amount-received
+  const amtEl = document.getElementById('bbWitAmt');
+  amtEl.oninput = ()=>{ const v=parseFloat(amtEl.value)||0; document.getElementById('bbWitRecv').textContent = v? v.toFixed(6).replace(/0+$/,'').replace(/\.$/,'') : '0'; };
+  bbOpen('bbWit');
+}
+function bbBackFromWit(){ bbClose('bbWit'); if(_bbCoin && _bbCoin.chains.length>1) bbOpenChains(); }
+function bbWitChainPick(){ if(_bbCoin && _bbCoin.chains.length>1){ bbClose('bbWit'); bbOpenChains(); } }
+function bbWitMax(){ document.getElementById('bbWitAmt').value = bbBal(_bbCoin.sym); document.getElementById('bbWitAmt').dispatchEvent(new Event('input')); }
+async function bbWitPaste(){ try{ const t = await navigator.clipboard.readText(); if(t) document.getElementById('bbWitAddr').value = t; }catch(e){} }
+
+async function bbDoWithdraw(){
+  const addr = document.getElementById('bbWitAddr').value.trim();
+  const amt  = parseFloat(document.getElementById('bbWitAmt').value)||0;
+  if(!addr || addr.length<10) return toast('Enter valid address');
+  if(amt<=0) return toast('Enter amount');
+  if(_bbCoin.sym==='USDT' && amt > (window.userBalance||0)) return toast('Insufficient balance');
+  if(!window.currentFbUser){ toast('Sign in first'); return; }
+  const coin=_bbCoin, chain=_bbChain;
+  _withP2P((w)=>{
+    if(typeof w.confirmWithdrawCustom !== 'function'){ toast('Backend not ready'); return; }
+    w.confirmWithdrawCustom({coin:coin.sym, chain:chain.name, addr, amt})
+      .then(res=>{
+        if(!res || !res.ok){ toast('Failed to submit'); return; }
+        bbShowHistDetail({
+          type:'WITHDRAW', coin:coin.sym, chain:chain.name,
+          amt:amt, addr:addr, hash:res.txid||'—',
+          ts:Date.now(), status:'PENDING'
+        });
+        bbClose('bbWit');
+      })
+      .catch(e=>toast('Failed: '+(e?.message||e)));
+  });
+}
+
+function bbFaqDetail(title, body){
+  const ov = document.getElementById('bbFaq');
+  ov.querySelector('.bb-body').innerHTML =
+    `<div style="font-size:17px;font-weight:800;margin:6px 0 14px;">${title}</div>
+     <div style="color:#bbb;font-size:14px;line-height:1.7;white-space:pre-wrap;">${body}</div>
+     <button class="bb-pop-btn" style="margin-top:22px;" onclick="bbClose('bbFaq')">Back</button>`;
+}
+
+let _bbHistTab='DEPOSIT';
+async function bbOpenHistory(){
+  _bbHistTab='DEPOSIT';
+  document.querySelectorAll('#bbHistTabs span').forEach(s=>s.classList.toggle('active', s.dataset.t==='DEPOSIT'));
+  bbOpen('bbHist');
+  document.getElementById('bbHistList').innerHTML = '<div style="text-align:center;color:#666;padding:60px 0;">Loading…</div>';
+  await bbLoadHistFromFb();
+  bbRenderHist();
+}
+let _bbHistCache = [];
+async function bbLoadHistFromFb(){
+  try{
+    if(!window._fb || !window.currentFbUser){ _bbHistCache=[]; return; }
+    const { db, ref, get } = window._fb;
+    const snap = await get(ref(db, 'users/'+window.currentFbUser.firebaseUid+'/history'));
+    const v = snap.exists() ? snap.val() : null;
+    _bbHistCache = v ? Object.values(v).sort((a,b)=>(b.ts||0)-(a.ts||0)) : [];
+  }catch(e){ _bbHistCache=[]; }
+}
+document.addEventListener('click',(e)=>{
+  const s = e.target.closest('#bbHistTabs span'); if(!s) return;
+  _bbHistTab = s.dataset.t;
+  document.querySelectorAll('#bbHistTabs span').forEach(x=>x.classList.toggle('active', x===s));
+  bbRenderHist();
+});
+function bbRenderHist(){
+  let items = _bbHistCache.slice();
+  if(!items.length){
+    try{ const fr=document.getElementById('p2pFrame'); const w=fr&&fr.contentWindow; if(w && w.hist) items=w.hist.slice(); }catch(e){}
+  }
+  if(_bbHistTab!=='ALL'){
+    if(_bbHistTab==='P2P') items = items.filter(h=> h.type==='BUY'||h.type==='SELL'||(h.type||'').includes('P2P')||(h.type||'').includes('CANCEL'));
+    else if(_bbHistTab==='TRANSFER') items = items.filter(h=>h.type==='TRANSFER');
+    else items = items.filter(h=>h.type===_bbHistTab);
+  }
+  const list = document.getElementById('bbHistList');
+  if(!items.length){ list.innerHTML='<div style="text-align:center;color:#666;padding:60px 0;">No records</div>'; return; }
+  window._bbHistView = items;
+  list.innerHTML = items.map((h,idx)=>{
+    const ok = (h.status==='SUCCESS'||h.status==='APPROVED'||h.status==='COMPLETED'||h.status==='Succeeded');
+    const rej = (h.status==='REJECTED'||h.status==='FAILED'||h.status==='CANCELLED');
+    const isWit = h.type==='WITHDRAW';
+    const stLbl = ok ? ('• '+(isWit?'Withdrawal Completed':'Deposit Completed'))
+                 : rej ? '• Rejected'
+                 : ('• '+(isWit?'Pending':'Verification successful'));
+    const stCol = ok ? 'var(--green)' : rej ? '#f6465d' : 'var(--orange)';
+    const time = h.date || (h.ts? new Date(h.ts).toLocaleString('en-IN',{hour12:false}).replace(',',''): '');
+    const coin = h.coin || 'USDT';
+    const sign = isWit ? '-' : '+';
+    return `<div class="bb-hitem" onclick="bbShowHistDetail(window._bbHistView[${idx}])"><div><div class="hl">${coin}</div><div class="hs">${time}</div></div>
+      <div class="hr"><div class="ha">${sign}${h.amt}</div><div class="hst" style="color:${stCol}">${stLbl}</div></div></div>`;
+  }).join('');
+}
+function bbExplorer(){
+  const tx = document.getElementById('bbDtlTx').textContent.trim();
+  const chain = (document.getElementById('bbDtlChain').textContent||'').toUpperCase();
+  if(!tx || tx==='—') return toast('No transaction hash');
+  let url='';
+  if(chain.includes('TRC')||chain.includes('TRON')) url='https://tronscan.org/#/transaction/'+tx;
+  else if(chain.includes('BEP')||chain.includes('BSC')||chain.includes('BNB')) url='https://bscscan.com/tx/'+tx;
+  else if(chain.includes('ERC')||chain.includes('ETH')) url='https://etherscan.io/tx/'+tx;
+  else if(chain.includes('SOL')) url='https://solscan.io/tx/'+tx;
+  else if(chain.includes('BTC')||chain.includes('BITCOIN')) url='https://www.blockchain.com/btc/tx/'+tx;
+  else if(chain.includes('POLY')||chain.includes('MATIC')) url='https://polygonscan.com/tx/'+tx;
+  else url='https://www.google.com/search?q='+encodeURIComponent(tx);
+  window.open(url,'_blank');
+}
+function bbShowHistDetail(h){
+  if(!h) return;
+  const isWit = h.type==='WITHDRAW';
+  const ok = (h.status==='SUCCESS'||h.status==='APPROVED'||h.status==='COMPLETED'||h.status==='Succeeded');
+  const rej = (h.status==='REJECTED'||h.status==='FAILED'||h.status==='CANCELLED');
+  document.getElementById('bbDtlTitle').textContent = isWit?'Withdrawal Details':'Deposit Details';
+  document.getElementById('bbDtlQty').textContent = h.amt||'0';
+  document.getElementById('bbDtlSym').textContent = h.coin||'USDT';
+  const st = document.getElementById('bbDtlStat');
+  if(rej){ st.style.color='#f6465d'; st.innerHTML='<i class="fas fa-times-circle"></i> Rejected'; }
+  else if(ok){ st.style.color='var(--green)'; st.innerHTML='<i class="fas fa-check-circle"></i> '+(isWit?'Withdrawal Completed':'Deposit Completed'); }
+  else { st.style.color='var(--orange)'; st.innerHTML='<i class="fas fa-check-circle"></i> '+(isWit?'Pending Approval':'Verification successful'); }
+  document.getElementById('bbDtlAcctK').textContent = isWit?'Withdrawal Account':'Deposit Account';
+  document.getElementById('bbDtlAddrK').textContent = isWit?'Withdrawal Address':'Deposit Address';
+  document.getElementById('bbDtlFeesRow').style.display = isWit?'flex':'none';
+  document.getElementById('bbDtlFees').textContent = isWit?(h.fees||'0'):'0';
+  document.getElementById('bbDtlChain').textContent = h.chain||'—';
+  document.getElementById('bbDtlTime').textContent = h.date || (h.ts? new Date(h.ts).toLocaleString('en-IN',{hour12:false}).replace(',',''):'—');
+  document.getElementById('bbDtlAddr').textContent = h.addr||'—';
+  document.getElementById('bbDtlTx').textContent = h.hash||h.txid||'—';
+  bbOpen('bbDtl');
 }
 function openWithdrawOverlay(){
   document.getElementById('witAddr').value='';
@@ -5134,7 +5871,7 @@ function needLogin(){
   return false;
 }
 function openDeposit(){ if(!needLogin()) return; openSheet('dep'); }
-function openWithdraw(){ if(!needLogin()) return; openSheet('wd'); }
+function openWithdraw(){ if(!needLogin()) return; bbStartWithdraw(); }
 
 // ─── TP/SL & CLOSE BY MANAGEMENT ───────────────────────────────────
 let _activePos = null;
@@ -5693,16 +6430,22 @@ const CONVERT_COINS = ['USDT','USDC','BTC','ETH','BNB','SOL','XRP','TON','DOGE',
 let convertPrices = {};
 async function initConvertUI(){
   const fromSel = $('cv-from'), toSel = $('cv-to');
-  if(!fromSel.options.length){
-    CONVERT_COINS.forEach(c=>{
-      fromSel.add(new Option(c, c));
-      toSel.add(new Option(c, c));
-    });
-    fromSel.value = 'USDT';
-    toSel.value = 'BTC';
+  // FROM: only coins user owns (always include USDT)
+  const owned = CONVERT_COINS.filter(c=> c==='USDT' || getCoinAvail(c)>0);
+  const ownedList = owned.length ? owned : ['USDT'];
+  const prevFrom = fromSel.value;
+  fromSel.innerHTML = '';
+  ownedList.forEach(c=>{
+    const bal = getCoinAvail(c);
+    fromSel.add(new Option(`${c}  (${bal>0?bal.toFixed(6).replace(/0+$/,'').replace(/\.$/,''):'0'})`, c));
+  });
+  fromSel.value = ownedList.includes(prevFrom) ? prevFrom : ownedList[0];
+  // TO: all coins
+  if(!toSel.options.length){
+    CONVERT_COINS.forEach(c=> toSel.add(new Option(c, c)));
+    toSel.value = fromSel.value==='USDT' ? 'BTC' : 'USDT';
   }
   updateConvertLogos();
-  // load tickers
   try {
     const r = await bybitGET('/v5/market/tickers',{category:'spot'});
     (r?.list||[]).forEach(t=>{ convertPrices[t.symbol] = parseFloat(t.lastPrice); });
@@ -5800,7 +6543,7 @@ function doConvert(){
   saveState(STATE);
   toast(`Converted ${amt} ${f} → ${out.toFixed(6)} ${t}`);
   $('cv-from-amt').value=''; updateConvertPreview();
-  renderAssetList(); renderOrderTabs();
+  renderAssetList(); renderOrderTabs(); initConvertUI();
 }
 
 // Preload P2P iframe in background so no "connecting…" delay later
@@ -5930,6 +6673,263 @@ function pickCoinFromSearch(sym){
   closeCoinSearch();
   openTrade(sym, _csCat==='spot'?'spot':'linear');
 }
+
+// ─── EARN SECTION LOGIC ─────────────────────────────────────────────
+const earnState = {
+  balance: { USDT:1000, BTC:0.05, ETH:0.5, SOL:10, BNB:2, USDC:500, DOT:50, ATOM:30, MATIC:200, BYUSDT:0, OPG:0, XAUT:0 },
+  activePositions: [],
+  history: [],
+  totalEarned: 0,
+  todayEarned: 0,
+  amountsHidden: false
+};
+const EARN_PRODUCTS = {
+  steady: [
+    {coin:'USDT', type:'Easy Earn', lock:'Flexible', lockDays:0, min:1, apr:4.5, color:'#00c087', ic:'$'},
+    {coin:'USDT', type:'Fixed 7D', lock:'7 Days', lockDays:7, min:10, apr:6.2, color:'#00c087', ic:'$'},
+    {coin:'BTC', type:'Easy Earn', lock:'Flexible', lockDays:0, min:0.001, apr:1.2, color:'#f7931a', ic:'₿'},
+    {coin:'ETH', type:'Easy Earn', lock:'Flexible', lockDays:0, min:0.01, apr:2.8, color:'#627eea', ic:'Ξ'},
+    {coin:'SOL', type:'Staking', lock:'30 Days', lockDays:30, min:1, apr:8.5, color:'#9945ff', ic:'◎'},
+    {coin:'BNB', type:'Easy Earn', lock:'Flexible', lockDays:0, min:0.1, apr:3.1, color:'#f3ba2f', ic:'B'},
+    {coin:'USDC', type:'Fixed 30D', lock:'30 Days', lockDays:30, min:10, apr:7.8, color:'#2775ca', ic:'$'},
+  ],
+  top: [
+    {coin:'OPG', type:'Easy Earn', lock:'Flexible', lockDays:0, min:1, apr:100, color:'#00c0d8', ic:'◆'},
+    {coin:'XAUT', type:'Easy Earn', lock:'Flexible', lockDays:0, min:0.01, apr:11, color:'#d4af37', ic:'◆'},
+    {coin:'ATOM', type:'Staking', lock:'21 Days', lockDays:21, min:1, apr:18, color:'#6f4cd2', ic:'A'},
+    {coin:'DOT', type:'Staking', lock:'14 Days', lockDays:14, min:1, apr:14, color:'#e6007a', ic:'D'},
+  ],
+  vip: [],
+  chain: [
+    {coin:'ETH', type:'On-Chain Staking', lock:'Flexible', lockDays:0, min:0.01, apr:3.8, color:'#627eea', ic:'Ξ', net:'Ethereum'},
+    {coin:'SOL', type:'On-Chain Staking', lock:'30 Days', lockDays:30, min:1, apr:7.2, color:'#9945ff', ic:'◎', net:'Solana'},
+    {coin:'DOT', type:'On-Chain Staking', lock:'14 Days', lockDays:14, min:1, apr:14, color:'#e6007a', ic:'D', net:'Polkadot'},
+    {coin:'ATOM', type:'On-Chain Staking', lock:'21 Days', lockDays:21, min:1, apr:18, color:'#6f4cd2', ic:'A', net:'Cosmos'},
+    {coin:'MATIC', type:'On-Chain Staking', lock:'7 Days', lockDays:7, min:5, apr:5.2, color:'#8247e5', ic:'M', net:'Polygon'},
+  ],
+  staking: [
+    {coin:'SOL', type:'Staking', lock:'30 Days', lockDays:30, min:1, apr:8.5, color:'#9945ff', ic:'◎'},
+    {coin:'DOT', type:'Staking', lock:'14 Days', lockDays:14, min:1, apr:14, color:'#e6007a', ic:'D'},
+    {coin:'ATOM', type:'Staking', lock:'21 Days', lockDays:21, min:1, apr:18, color:'#6f4cd2', ic:'A'},
+    {coin:'ETH', type:'Staking', lock:'Flexible', lockDays:0, min:0.5, apr:3.8, color:'#627eea', ic:'Ξ'},
+    {coin:'MATIC', type:'Staking', lock:'7 Days', lockDays:7, min:5, apr:5.2, color:'#8247e5', ic:'M'},
+    {coin:'BNB', type:'Staking', lock:'30 Days', lockDays:30, min:0.5, apr:4.8, color:'#f3ba2f', ic:'B'},
+  ]
+};
+let _ernSteady='steady', _ernMySub='active', _ernSubCtx=null, _ernRedCtx=null, _ernStakeFilter='all', _ernRedFull=true;
+
+function ernProdRow(p, withNet){
+  const netHtml = withNet && p.net ? `<span class="ern-netbadge">${p.net}</span>` : '';
+  const lockPill = (p.type==='Staking'||p.type==='On-Chain Staking') ? `<span class="ern-netbadge" style="background:#2a2a2a;color:#fff;">${p.lock}</span>` : '';
+  const safe = encodeURIComponent(JSON.stringify(p));
+  return `<div class="ern-prod" onclick="openSubscribeSheet(JSON.parse(decodeURIComponent('${safe}')))">
+    <div class="ic" style="background:${p.color}">${p.ic}</div>
+    <div class="mid">
+      <div class="tp">${p.type} · ${p.lock}</div>
+      <div class="sym">${p.coin} ${netHtml} ${lockPill}</div>
+      <div class="mn">Min: ${p.min} ${p.coin}</div>
+    </div>
+    <div class="rgt"><div class="ap">${p.apr.toFixed(2)}%</div><div class="lb">Est. Annual Rate</div></div>
+  </div>`;
+}
+function renderEasyProducts(){
+  const list = EARN_PRODUCTS[_ernSteady] || [];
+  const el = document.getElementById('ernEasyProducts'); if(!el) return;
+  if(_ernSteady==='vip'){ el.innerHTML = `<div class="ern-empty"><i class="fas fa-lock" style="color:#d4af37;"></i><div class="t">VIP Level required</div></div>`; return; }
+  el.innerHTML = list.map(p=>ernProdRow(p,false)).join('');
+}
+function renderChainProducts(){ const el=document.getElementById('ernChainProducts'); if(el) el.innerHTML = EARN_PRODUCTS.chain.map(p=>ernProdRow(p,true)).join(''); }
+function renderStakingProducts(){
+  let list = EARN_PRODUCTS.staking.slice();
+  if(_ernStakeFilter!=='all'){
+    if(_ernStakeFilter==='Flexible') list = list.filter(p=>p.lock==='Flexible');
+    else list = list.filter(p=>String(p.lockDays)===_ernStakeFilter);
+  }
+  const el=document.getElementById('ernStakingProducts'); if(el) el.innerHTML = list.map(p=>ernProdRow(p,false)).join('') || `<div class="ern-empty"><i class="fas fa-inbox"></i><div class="t">No products</div></div>`;
+}
+function filterStakingProducts(f, el){
+  _ernStakeFilter = f;
+  document.querySelectorAll('#ernStakeFilters span').forEach(s=>s.classList.toggle('act', s===el));
+  renderStakingProducts();
+}
+function switchEarnTab(t){
+  document.querySelectorAll('#ernTabs span').forEach(s=>s.classList.toggle('act', s.dataset.t===t));
+  document.querySelectorAll('#sc-earn .ern-pane').forEach(p=>p.classList.toggle('act', p.dataset.p===t));
+  if(t==='easy') renderEasyProducts();
+  if(t==='chain') renderChainProducts();
+  if(t==='staking') renderStakingProducts();
+  if(t==='my') renderMyEarn();
+}
+function switchSteadyTab(s){
+  _ernSteady = s;
+  document.querySelectorAll('#ernSteadyTabs span').forEach(x=>x.classList.toggle('act', x.dataset.s===s));
+  renderEasyProducts();
+}
+function switchMyEarnSubTab(t){
+  _ernMySub = t;
+  document.querySelectorAll('#sc-earn .ern-stabs span[data-m]').forEach(s=>s.classList.toggle('act', s.dataset.m===t));
+  document.getElementById('ernMyActive').style.display = t==='active'?'block':'none';
+  document.getElementById('ernMyHistory').style.display = t==='history'?'block':'none';
+  if(t==='active') renderActivePositions(); else renderHistory();
+}
+function _ernMask(v){ return earnState.amountsHidden ? '*****' : v; }
+function toggleAmountVisibility(){
+  earnState.amountsHidden = !earnState.amountsHidden;
+  document.getElementById('ernEye').className = earnState.amountsHidden?'fas fa-eye-slash':'far fa-eye';
+  renderMyEarn();
+}
+function renderMyEarn(){
+  let tot=0; earnState.activePositions.forEach(p=>tot+=(p.earned||0));
+  earnState.totalEarned = tot;
+  const set=(id,v)=>{const e=document.getElementById(id); if(e) e.textContent=v;};
+  set('ernTotal', _ernMask(tot.toFixed(2)));
+  set('ernToday', _ernMask((earnState.todayEarned||0).toFixed(2)));
+  set('ernPL', _ernMask(tot.toFixed(2)));
+  set('ernTotalHdr', tot.toFixed(2));
+  if(_ernMySub==='active') renderActivePositions(); else renderHistory();
+}
+function _ernProdMeta(coin){
+  const all = [...EARN_PRODUCTS.steady, ...EARN_PRODUCTS.top, ...EARN_PRODUCTS.chain, ...EARN_PRODUCTS.staking];
+  return all.find(p=>p.coin===coin) || {color:'#444',ic:coin[0]};
+}
+function renderActivePositions(){
+  const el = document.getElementById('ernMyActive'); if(!el) return;
+  if(!earnState.activePositions.length){
+    el.innerHTML = `<div class="ern-empty"><i class="fas fa-piggy-bank"></i><div class="t">No active positions</div><button onclick="switchEarnTab('easy')">Explore Earn Products</button></div>`;
+    return;
+  }
+  el.innerHTML = earnState.activePositions.map(p=>{
+    const prod = _ernProdMeta(p.coin);
+    return `<div class="ern-pos">
+      <div class="hd"><div class="ic" style="background:${prod.color};">${prod.ic}</div><div><div class="sym">${p.coin}</div><span class="pill">${p.lock||'Flexible'}</span></div><div class="tp">${p.type}</div><div class="dot"></div></div>
+      <div class="stats"><div><div class="l">Staked Amount</div><div class="v">${_ernMask(p.amount.toFixed(4))} ${p.coin}</div></div><div><div class="l">Interest Earned</div><div class="v g">+${_ernMask((p.earned||0).toFixed(4))} ${p.coin}</div></div></div>
+      <div class="ft"><div class="sd">Start: ${new Date(p.startDate).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</div><button onclick="openRedeemSheet(${p.id})">Redeem</button></div>
+    </div>`;
+  }).join('');
+}
+function renderHistory(){
+  const el = document.getElementById('ernMyHistory'); if(!el) return;
+  if(!earnState.history.length){ el.innerHTML='<div class="ern-empty"><i class="fas fa-clock-rotate-left"></i><div class="t">No history yet</div></div>'; return; }
+  el.innerHTML = earnState.history.map(h=>{
+    const prod = _ernProdMeta(h.coin);
+    const ok = h.status==='Completed';
+    return `<div class="ern-hist"><div class="ic" style="background:${prod.color};">${prod.ic}</div>
+      <div><div class="nm">${h.coin}</div><div class="meta">${h.type} · ${new Date(h.endDate).toLocaleDateString()}</div></div>
+      <div class="right"><div class="am">${h.amount.toFixed(4)} ${h.coin}</div><div class="ea">+${(h.earned||0).toFixed(4)}</div><div class="badge ${ok?'ok':'no'}">${h.status}</div></div>
+    </div>`;
+  }).join('');
+}
+function openSubscribeSheet(p){
+  if(typeof p==='string'){
+    const map = {BYUSDT:{coin:'BYUSDT',type:'Easy Earn',lock:'Flexible',lockDays:0,min:1,apr:1.7,color:'#f7a600',ic:'B'},
+      OPG:EARN_PRODUCTS.top[0], XAUT:EARN_PRODUCTS.top[1]};
+    p = map[p];
+  }
+  if(!p) return;
+  _ernSubCtx = p;
+  document.getElementById('ernSubIcon').style.background = p.color;
+  document.getElementById('ernSubIcon').textContent = p.ic;
+  document.getElementById('ernSubName').textContent = p.coin;
+  document.getElementById('ernSubType').textContent = p.type+' · '+p.lock;
+  document.getElementById('ernSubApr').textContent = p.apr.toFixed(2)+'%';
+  document.getElementById('ernSubAmt').value = '';
+  document.getElementById('ernSubSym').textContent = p.coin;
+  document.getElementById('ernSubAvSym').textContent = p.coin;
+  const avail = (p.coin==='USDT' && window.userBalance) ? window.userBalance : (earnState.balance[p.coin]||0);
+  document.getElementById('ernSubAvail').textContent = avail.toFixed(4);
+  document.getElementById('ernKvApr').textContent = p.apr.toFixed(2)+'%';
+  document.getElementById('ernKvType').textContent = p.lock;
+  document.getElementById('ernKvMin').textContent = p.min+' '+p.coin;
+  document.getElementById('ernKvRedeem').textContent = p.lockDays>0?'On Maturity':'Anytime';
+  document.getElementById('ernSubErr').style.display='none';
+  const base = (p.coin==='USDT'||p.coin==='USDC') ? [100,500,1000,5000] : [p.min, p.min*10, p.min*100, p.min*1000];
+  document.getElementById('ernSubPills').innerHTML = base.map(v=>`<span onclick="ernPillTap(this,${v})">${v.toLocaleString()}</span>`).join('');
+  document.getElementById('ernSubBg').classList.add('show');
+  setTimeout(()=>document.getElementById('ernSubSheet').classList.add('show'),10);
+}
+function ernPillTap(el,v){ el.classList.add('flash'); setTimeout(()=>el.classList.remove('flash'),150); document.getElementById('ernSubAmt').value = v; }
+function ernFillAll(){
+  if(!_ernSubCtx) return;
+  const avail = (_ernSubCtx.coin==='USDT' && window.userBalance) ? window.userBalance : (earnState.balance[_ernSubCtx.coin]||0);
+  document.getElementById('ernSubAmt').value = avail;
+}
+function closeSubscribeSheet(){
+  document.getElementById('ernSubSheet').classList.remove('show');
+  setTimeout(()=>document.getElementById('ernSubBg').classList.remove('show'),300);
+}
+function confirmStake(){
+  const p = _ernSubCtx; if(!p) return;
+  const amt = parseFloat(document.getElementById('ernSubAmt').value)||0;
+  const avail = (p.coin==='USDT' && window.userBalance) ? window.userBalance : (earnState.balance[p.coin]||0);
+  const err = document.getElementById('ernSubErr');
+  const inp = document.getElementById('ernSubInpBox');
+  function fail(msg){ err.textContent=msg; err.style.display='block'; inp.classList.add('shake'); setTimeout(()=>inp.classList.remove('shake'),300); }
+  if(amt < p.min) return fail('Minimum amount is '+p.min+' '+p.coin);
+  if(amt > avail) return fail('Insufficient balance');
+  if(p.coin==='USDT' && window.userBalance && typeof writeBalance==='function'){
+    writeBalance(window.userBalance - amt);
+  } else {
+    earnState.balance[p.coin] = (earnState.balance[p.coin]||0) - amt;
+  }
+  earnState.activePositions.push({
+    id: Date.now(), coin:p.coin, type:p.type, apr:p.apr, amount:amt, earned:0,
+    startDate:new Date().toISOString(), lockDays:p.lockDays||0, lock:p.lock, status:'active'
+  });
+  closeSubscribeSheet();
+  toast('✓ Subscribed! Earning starts tomorrow.');
+  switchEarnTab('my');
+}
+function openRedeemSheet(pid){
+  const pos = earnState.activePositions.find(x=>x.id===pid); if(!pos) return;
+  _ernRedCtx = pos; _ernRedFull = true;
+  document.getElementById('ernRedTog').classList.add('on');
+  document.getElementById('ernRedPartial').style.display='none';
+  ['ernRedSym','ernRedSym2','ernRedSym3','ernRedSym4'].forEach(id=>{ const e=document.getElementById(id); if(e) e.textContent=pos.coin; });
+  document.getElementById('ernRedAmt').textContent = (pos.amount + (pos.earned||0)).toFixed(4);
+  document.getElementById('ernRedEarn').textContent = (pos.earned||0).toFixed(4);
+  const flex = (pos.lockDays||0)===0;
+  document.getElementById('ernRedType').textContent = flex?'Instant (Flexible)':'T+1 (Fixed)';
+  document.getElementById('ernRedTime').textContent = flex?'Instant':'Up to 24h';
+  document.getElementById('ernRedBg').classList.add('show');
+  setTimeout(()=>document.getElementById('ernRedSheet').classList.add('show'),10);
+}
+function ernToggleFull(){
+  _ernRedFull = !_ernRedFull;
+  document.getElementById('ernRedTog').classList.toggle('on', _ernRedFull);
+  document.getElementById('ernRedPartial').style.display = _ernRedFull?'none':'block';
+}
+function closeRedeemSheet(){
+  document.getElementById('ernRedSheet').classList.remove('show');
+  setTimeout(()=>document.getElementById('ernRedBg').classList.remove('show'),300);
+}
+function confirmRedeem(){
+  const pos = _ernRedCtx; if(!pos) return;
+  let redeemAmt = pos.amount + (pos.earned||0);
+  if(!_ernRedFull){
+    const v = parseFloat(document.getElementById('ernRedInp').value)||0;
+    if(v<=0 || v>redeemAmt) { toast('Invalid amount'); return; }
+    redeemAmt = v;
+  }
+  if(pos.coin==='USDT' && typeof writeBalance==='function'){
+    writeBalance((window.userBalance||0) + redeemAmt);
+  } else {
+    earnState.balance[pos.coin] = (earnState.balance[pos.coin]||0) + redeemAmt;
+  }
+  if(_ernRedFull){
+    earnState.activePositions = earnState.activePositions.filter(x=>x.id!==pos.id);
+    earnState.history.unshift({...pos, endDate:new Date().toISOString(), status:'Completed'});
+  } else {
+    pos.amount = Math.max(0, pos.amount - redeemAmt);
+    if(pos.amount<=0.0000001){
+      earnState.activePositions = earnState.activePositions.filter(x=>x.id!==pos.id);
+      earnState.history.unshift({...pos, endDate:new Date().toISOString(), status:'Completed'});
+    }
+  }
+  closeRedeemSheet();
+  toast('✓ Redeemed successfully! Funds sent to Spot Wallet.');
+  renderMyEarn();
+}
+setTimeout(()=>{ try{ renderEasyProducts(); renderChainProducts(); renderStakingProducts(); renderMyEarn(); }catch(e){} }, 600);
 </script>
 <!-- P&L SHARE MODAL -->
 <div id="pnlShareOv" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;align-items:flex-end;justify-content:center;" onclick="if(event.target===this)closePnlShare()">
