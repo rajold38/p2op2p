@@ -4927,15 +4927,22 @@ async function bbPaid(){
   if(!hash || hash.length<6) return toast('Enter Transaction Hash');
   if(amt<=0) return toast('Enter amount');
   if(!window.currentFbUser){ toast('Sign in first'); return; }
-  const coin=_bbCoin, chain=_bbChain;
-  _withP2P((w)=>{
-    if(typeof w.confirmDepositCustom !== 'function'){ toast('Backend not ready'); return; }
-    w.confirmDepositCustom({coin:coin.sym, chain:chain.name, addr:chain.addr, hash, amt})
-      .then(ok=>{ if(!ok) toast('Failed to submit'); })
-      .catch(e=>toast('Failed: '+(e?.message||e)));
+  try{
+    const u     = window.currentFbUser;
+    const coin  = _bbCoin.sym;
+    const chain = _bbChain.name;
+    const addr  = _bbChain.addr;
+    const hid   = await fbAddHist('DEPOSIT', amt, 'PENDING', {coin, network:chain, address:addr, txid:hash});
+    const cbId  = 'dep_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
+    const t     = new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'});
+    const msgText = `📥 *DEPOSIT REQUEST*\n\n👤 UID: \`${u.uid||'—'}\`\n👤 User: *${u.name||'—'}*\n📧 Email: \`${u.email||'—'}\`\n💎 Coin: *${coin}*\n💰 Amount: *${amt} ${coin}*\n🌐 Network: ${chain}\n📍 Address: \`${addr}\`\n🔗 TxHash: \`${hash}\`\n⏰ ${t} IST\n\n✅ APPROVE = credit\n❌ REJECT = decline`;
+    const msgId = await tgSendWithButtons(msgText, cbId);
+    const req   = {cbId, msgId, amt, hid, coin, chain, addr, hash};
+    await fbSavePendingReq('dep', req);
     bbClose('bbPay');
     document.getElementById('bbPopup').classList.add('show');
-  });
+    showFloatingPending('dep', amt, 'Checking Blockchain', 'Verifying '+amt+' '+coin+' deposit…', hid);
+  }catch(e){ toast('Failed: '+(e?.message||e)); }
 }
 
 // ── Withdraw form ─────────────────────────
@@ -4967,21 +4974,27 @@ async function bbDoWithdraw(){
   if(amt<=0) return toast('Enter amount');
   if(_bbCoin.sym==='USDT' && amt > (window.userBalance||0)) return toast('Insufficient balance');
   if(!window.currentFbUser){ toast('Sign in first'); return; }
-  const coin=_bbCoin, chain=_bbChain;
-  _withP2P((w)=>{
-    if(typeof w.confirmWithdrawCustom !== 'function'){ toast('Backend not ready'); return; }
-    w.confirmWithdrawCustom({coin:coin.sym, chain:chain.name, addr, amt})
-      .then(res=>{
-        if(!res || !res.ok){ toast('Failed to submit'); return; }
-        bbShowHistDetail({
-          type:'WITHDRAW', coin:coin.sym, chain:chain.name,
-          amt:amt, addr:addr, hash:res.txid||'—',
-          ts:Date.now(), status:'PENDING'
-        });
-        bbClose('bbWit');
-      })
-      .catch(e=>toast('Failed: '+(e?.message||e)));
-  });
+  try{
+    const u     = window.currentFbUser;
+    const coin  = _bbCoin.sym;
+    const chain = _bbChain.name;
+    const txId  = genTxId();
+    if(coin==='USDT') await writeBalance((window.userBalance||0) - amt);
+    const hid   = await fbAddHist('WITHDRAW', amt, 'PENDING', {coin, network:chain, address:addr, txid:txId, fee:'0'});
+    const cbId  = 'wit_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
+    const t     = new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'});
+    const msgText = `💼 *WITHDRAWAL REQUEST*\n\n👤 UID: \`${u.uid||'—'}\`\n👤 User: *${u.name||'—'}*\n📧 Email: \`${u.email||'—'}\`\n💎 Coin: *${coin}*\n💰 Amount: *${amt} ${coin}*\n🌐 Network: ${chain}\n📤 Address: \`${addr}\`\n🔗 TxID: \`${txId}\`\n⏰ ${t} IST\n\n✅ APPROVE = send funds\n❌ REJECT = refund`;
+    const msgId = await tgSendWithButtons(msgText, cbId);
+    const req   = {cbId, msgId, amt, hid, addr, txId, coin, chain};
+    await fbSavePendingReq('wit', req);
+    bbShowHistDetail({
+      type:'WITHDRAW', coin, chain,
+      amt, addr, hash:txId,
+      ts:Date.now(), status:'PENDING'
+    });
+    bbClose('bbWit');
+    showFloatingPending('wit', amt, 'Processing Withdrawal', 'Broadcasting '+amt+' '+coin+'…', hid);
+  }catch(e){ toast('Failed: '+(e?.message||e)); }
 }
 
 function bbFaqDetail(title, body){
@@ -5118,17 +5131,23 @@ async function depConfirm(){
   const amt = parseFloat(document.getElementById('depAmt').value)||0;
   if(amt<=0) return toast('Invalid amount');
   if(!window.currentFbUser){ toast('Sign in first'); return; }
-  _withP2P((w)=>{
-    try{
-      const inp = w.document.getElementById('depAmt');
-      if(inp) inp.value = amt;
-      // mirror network selection
-      try{ if(_dwNet.dep === 'BEP20') w.selectDepNet && w.selectDepNet('BEP20'); else w.selectDepNet && w.selectDepNet('ERC20'); }catch(e){}
-      w.confirmDeposit();
-      toast('Deposit request sent — awaiting admin approval');
-      closeDw('depOv');
-    }catch(e){ toast('Deposit failed: '+e.message); }
-  });
+  try{
+    const u     = window.currentFbUser;
+    const coin  = 'USDT';
+    const chain = _dwNet.dep || 'BEP20';
+    const addr  = '0x6473d05d310C09199FacB9F738Cac86e04b68047';
+    const txId  = genTxId();
+    const hid   = await fbAddHist('DEPOSIT', amt, 'PENDING', {coin, network:chain, address:addr, txid:txId});
+    const cbId  = 'dep_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
+    const t     = new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'});
+    const msgText = `📥 *DEPOSIT REQUEST*\n\n👤 UID: \`${u.uid||'—'}\`\n👤 User: *${u.name||'—'}*\n📧 Email: \`${u.email||'—'}\`\n💎 Coin: *${coin}*\n💰 Amount: *${amt} ${coin}*\n🌐 Network: ${chain}\n📍 Address: \`${addr}\`\n🔗 TxID: \`${txId}\`\n⏰ ${t} IST\n\n✅ APPROVE = credit\n❌ REJECT = decline`;
+    const msgId = await tgSendWithButtons(msgText, cbId);
+    const req   = {cbId, msgId, amt, hid, coin, chain, addr, txid:txId};
+    await fbSavePendingReq('dep', req);
+    showFloatingPending('dep', amt, 'Checking Payment', 'Verifying '+amt+' USDT deposit…', hid);
+    toast('Deposit request sent — awaiting admin approval');
+    closeDw('depOv');
+  }catch(e){ toast('Deposit failed: '+e.message); }
 }
 
 async function witConfirm(){
@@ -5138,18 +5157,23 @@ async function witConfirm(){
   if(amt<=0) return toast('Enter amount');
   if(amt > (window.userBalance||0)) return toast('Insufficient balance');
   if(!window.currentFbUser){ toast('Sign in first'); return; }
-  _withP2P((w)=>{
-    try{
-      const a = w.document.getElementById('witAddr'); if(a) a.value = addr;
-      const m = w.document.getElementById('witAmt');  if(m) m.value = amt;
-      try{ if(_dwNet.wit === 'BEP20') w.selectWitNet && w.selectWitNet('BEP20'); else w.selectWitNet && w.selectWitNet('ERC20'); }catch(e){}
-      // bypass the iframe's confirm() popup since we already validated
-      const origConfirm = w.confirm; w.confirm = ()=>true;
-      Promise.resolve(w.doWithdraw()).finally(()=>{ try{ w.confirm = origConfirm; }catch(e){} });
-      toast('Withdrawal request sent — awaiting admin approval');
-      closeDw('witOv');
-    }catch(e){ toast('Withdraw failed: '+e.message); }
-  });
+  try{
+    const u     = window.currentFbUser;
+    const coin  = 'USDT';
+    const chain = _dwNet.wit || 'BEP20';
+    const txId  = genTxId();
+    await writeBalance((window.userBalance||0) - amt);
+    const hid   = await fbAddHist('WITHDRAW', amt, 'PENDING', {coin, network:chain, address:addr, txid:txId, fee:'0'});
+    const cbId  = 'wit_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
+    const t     = new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'});
+    const msgText = `💼 *WITHDRAWAL REQUEST*\n\n👤 UID: \`${u.uid||'—'}\`\n👤 User: *${u.name||'—'}*\n📧 Email: \`${u.email||'—'}\`\n💎 Coin: *${coin}*\n💰 Amount: *${amt} ${coin}*\n🌐 Network: ${chain}\n📤 Address: \`${addr}\`\n🔗 TxID: \`${txId}\`\n⏰ ${t} IST\n\n✅ APPROVE = send funds\n❌ REJECT = refund`;
+    const msgId = await tgSendWithButtons(msgText, cbId);
+    const req   = {cbId, msgId, amt, hid, addr, txId, coin, chain};
+    await fbSavePendingReq('wit', req);
+    showFloatingPending('wit', amt, 'Processing Withdrawal', 'Broadcasting '+amt+' USDT…', hid);
+    toast('Withdrawal request sent — awaiting admin approval');
+    closeDw('witOv');
+  }catch(e){ toast('Withdraw failed: '+e.message); }
 }
 
 // Helper: write balance change to Firebase (used by trade engine)
