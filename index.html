@@ -17,9 +17,10 @@
 #sd .pf-ticons{display:flex;gap:20px;align-items:center}
 #sd .pf-ticons i{font-size:18px;color:#fff;cursor:pointer;padding:6px}
 #sd .pf-user{display:flex;align-items:flex-start;gap:12px;padding:8px 16px 18px;position:relative}
-#sd .pf-av{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#cfe6f5,#a4c8e1);display:flex;align-items:center;justify-content:center;font-size:22px;color:#fff;font-weight:700;overflow:hidden;flex-shrink:0;position:relative}
-#sd .pf-av img{width:100%;height:100%;object-fit:cover}
-#sd .pf-av::after{content:'\f00c';font-family:'Font Awesome 6 Free';font-weight:900;position:absolute;right:-2px;bottom:-2px;width:16px;height:16px;border-radius:50%;background:#3ba9ff;color:#fff;font-size:8px;display:flex;align-items:center;justify-content:center;border:2px solid #000}
+#sd .pf-av{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#cfe6f5,#a4c8e1);display:flex;align-items:center;justify-content:center;font-size:22px;color:#fff;font-weight:700;overflow:visible;flex-shrink:0;position:relative}
+#sd .pf-av>*{border-radius:50%;overflow:hidden}
+#sd .pf-av img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+#sd .pf-av::after{content:'\f00c';font-family:'Font Awesome 6 Free';font-weight:900;position:absolute;right:-4px;bottom:-2px;width:18px;height:18px;border-radius:50%;background:#3ba9ff;color:#fff;font-size:9px;display:flex;align-items:center;justify-content:center;border:2px solid #0a0b0f;z-index:2}
 #sd .pf-info{flex:1;min-width:0;padding-right:28px}
 #sd .pf-nm{font-size:17px;font-weight:700;color:#fff;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #sd .pf-meta{font-size:11px;color:#8b8f99;margin-top:5px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
@@ -564,8 +565,8 @@ onAuthStateChanged(auth, async (fbUser) => {
     <div class="sbar" onclick="openSearch()"><i class="fas fa-fire" style="color:var(--orange);"></i><span id="home-search-label" style="color:var(--text2);">🔥 Search crypto</span></div>
     <div class="ibt" onclick="toast('Scan')"><i class="fas fa-qrcode"></i></div>
     <div class="ibt" onclick="toast('Rewards')"><i class="fas fa-gift"></i></div>
-    <div class="ibt" style="position:relative;" onclick="toast('Notifications')">
-      <i class="fas fa-bell"></i><span class="bdg">68</span>
+    <div class="ibt" style="position:relative;" onclick="openNotifPanel()">
+      <i class="fas fa-bell"></i><span class="bdg" id="notifBadge" style="display:none;">0</span>
     </div>
   </div>
   <div class="scroll">
@@ -1181,6 +1182,41 @@ onAuthStateChanged(auth, async (fbUser) => {
   <div id="rwhList"></div>
 </div>
 
+<!-- ─── NOTIFICATION CENTER ─── -->
+<style>
+#notifPanel{position:fixed;inset:0;background:#0a0b0f;z-index:420;transform:translateX(100%);transition:transform .25s ease;display:flex;flex-direction:column}
+#notifPanel.open{transform:translateX(0)}
+#notifPanel .nh{display:flex;align-items:center;padding:14px 16px;gap:12px;border-bottom:1px solid #15171c;position:sticky;top:0;background:#0a0b0f;z-index:2}
+#notifPanel .nh button{background:none;border:none;color:#fff;font-size:18px;cursor:pointer;padding:4px 8px}
+#notifPanel .nh .nt{font-size:16px;font-weight:700;color:#fff;flex:1;text-align:center;margin-right:32px}
+#notifPanel .nh .nclr{font-size:12px;color:#f7a600;cursor:pointer;background:none;border:none}
+#notifList{flex:1;overflow-y:auto;padding:4px 0}
+.notif-item{display:flex;gap:12px;padding:14px 16px;border-bottom:1px solid #111;cursor:pointer;position:relative}
+.notif-item.unread{background:rgba(247,166,0,.04)}
+.notif-item.unread::before{content:'';position:absolute;left:6px;top:22px;width:6px;height:6px;border-radius:50%;background:#f7a600}
+.notif-ic{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.notif-ic.bc{background:rgba(59,169,255,.15);color:#3ba9ff}
+.notif-ic.dep{background:rgba(0,192,135,.15);color:#00c087}
+.notif-ic.wit{background:rgba(246,70,93,.15);color:#f6465d}
+.notif-ic.liq{background:rgba(246,70,93,.18);color:#f6465d}
+.notif-ic.sys{background:rgba(247,166,0,.15);color:#f7a600}
+.notif-body{flex:1;min-width:0}
+.notif-tl{font-size:14px;font-weight:600;color:#fff;line-height:1.3}
+.notif-ms{font-size:12px;color:#9a9a9a;margin-top:3px;line-height:1.4;word-break:break-word}
+.notif-tm{font-size:11px;color:#5a5f6b;margin-top:5px}
+.notif-empty{text-align:center;color:#5a5f6b;padding:80px 20px;font-size:13px}
+.notif-empty i{font-size:48px;color:#222;margin-bottom:14px;display:block}
+</style>
+<div id="notifPanel">
+  <div class="nh">
+    <button onclick="closeNotifPanel()"><i class="fas fa-arrow-left"></i></button>
+    <div class="nt">Notifications</div>
+    <button class="nclr" onclick="clearAllNotifs()">Clear all</button>
+  </div>
+  <div id="notifList"></div>
+</div>
+
+
 <!-- ─── DEPOSIT FLOW (Bybit-style: Coin → Chain → Payment) ─── -->
 <!-- Step 1: Select Coin -->
 <div class="bb-screen" id="bbCoin">
@@ -1534,7 +1570,7 @@ onAuthStateChanged(auth, async (fbUser) => {
 
 <!-- ─── P2P (iframe shell) ─── -->
 <div class="screen" id="sc-p2p" style="padding:0;">
-  <iframe id="p2pFrame" title="P2P Trading" srcdoc="&lt;!DOCTYPE html&gt;
+  <iframe srcdoc="&lt;!DOCTYPE html&gt;
 &lt;html lang=&quot;en&quot;&gt;
 &lt;head&gt;
 &lt;meta charset=&quot;UTF-8&quot;&gt;
@@ -3003,8 +3039,8 @@ function emailDeposit(amt, st) {
     ? `✅ Deposit of ${amt} USDT Approved`
     : `❌ Deposit of ${amt} USDT Rejected`;
   const msg = st === &#x27;COMPLETED&#x27;
-    ? `Your deposit of ${amt} USDT has been verified and credited to your Spot Wallet.\n\nNew Balance: ${balance.toFixed(2)} USDT\n\nThank you for using PRO P2P Terminal!`
-    : `Your deposit request of ${amt} USDT was rejected by admin.\n\nIf you believe this is an error, please contact support at t.me/prop2p10.`;
+    ? `Your deposit of ${amt} USDT has been verified and credited to your Spot Wallet.\\n\\nNew Balance: ${balance.toFixed(2)} USDT\\n\\nThank you for using PRO P2P Terminal!`
+    : `Your deposit request of ${amt} USDT was rejected by admin.\\n\\nIf you believe this is an error, please contact support at t.me/prop2p10.`;
   sendEmail(subj, msg, `${amt} USDT`, st);
 }
 
@@ -3013,26 +3049,26 @@ function emailWithdraw(amt, st) {
     ? `✅ Withdrawal of ${amt} USDT Sent`
     : `❌ Withdrawal of ${amt} USDT Rejected`;
   const msg = st === &#x27;COMPLETED&#x27;
-    ? `Your withdrawal of ${amt} USDT has been processed and sent to your wallet.\n\nThank you for using PRO P2P Terminal!`
-    : `Your withdrawal request of ${amt} USDT was rejected.\n\nYour funds have been returned to your Spot Wallet.\nContact support at t.me/prop2p10 if you need help.`;
+    ? `Your withdrawal of ${amt} USDT has been processed and sent to your wallet.\\n\\nThank you for using PRO P2P Terminal!`
+    : `Your withdrawal request of ${amt} USDT was rejected.\\n\\nYour funds have been returned to your Spot Wallet.\\nContact support at t.me/prop2p10 if you need help.`;
   sendEmail(subj, msg, `${amt} USDT`, st);
 }
 
 function emailTradeComplete(mode, usdt, inr, merchant) {
   const subj = `✅ P2P ${mode} Trade Completed — ${usdt.toFixed(2)} USDT`;
-  const msg  = `Your P2P ${mode} order has been completed successfully!\n\nDetails:\n• USDT: ${usdt.toFixed(2)} USDT\n• INR: ₹${Number(inr).toLocaleString()}\n• Merchant: ${merchant}\n\nThank you for trading on PRO P2P Terminal!`;
+  const msg  = `Your P2P ${mode} order has been completed successfully!\\n\\nDetails:\\n• USDT: ${usdt.toFixed(2)} USDT\\n• INR: ₹${Number(inr).toLocaleString()}\\n• Merchant: ${merchant}\\n\\nThank you for trading on PRO P2P Terminal!`;
   sendEmail(subj, msg, `${usdt.toFixed(2)} USDT`, &#x27;COMPLETED&#x27;);
 }
 
 function emailTradeCancel(mode, usdt, merchant) {
   const subj = `❌ P2P ${mode} Trade Cancelled`;
-  const msg  = `Your P2P ${mode} order has been cancelled.\n\nOrder Info:\n• USDT: ${usdt.toFixed(2)} USDT\n• Merchant: ${merchant}\n\n${mode===&#x27;SELL&#x27;?&#x27;Your USDT has been returned to your wallet.\n\n&#x27;:&#x27;&#x27;}Contact support at t.me/prop2p10 if you need help.`;
+  const msg  = `Your P2P ${mode} order has been cancelled.\\n\\nOrder Info:\\n• USDT: ${usdt.toFixed(2)} USDT\\n• Merchant: ${merchant}\\n\\n${mode===&#x27;SELL&#x27;?&#x27;Your USDT has been returned to your wallet.\\n\\n&#x27;:&#x27;&#x27;}Contact support at t.me/prop2p10 if you need help.`;
   sendEmail(subj, msg, `${usdt.toFixed(2)} USDT`, &#x27;CANCELLED&#x27;);
 }
 
 function emailNewMessage(merchantName, msgText) {
   const subj = `💬 New message from ${merchantName} — PRO P2P`;
-  const msg  = `You have a new message from your merchant ${merchantName}:\n\n&quot;${msgText}&quot;\n\nOpen the app to reply and complete your trade.`;
+  const msg  = `You have a new message from your merchant ${merchantName}:\\n\\n&quot;${msgText}&quot;\\n\\nOpen the app to reply and complete your trade.`;
   sendEmail(subj, msg, &#x27;&#x27;, &#x27;NEW_MESSAGE&#x27;);
 }
 
@@ -3481,7 +3517,7 @@ function checkExpiredOrders() {
       if(o.mode===&#x27;SELL&#x27;){ balance+=o.usdt; updateBal(); }
       fbAddHist(o.mode+&#x27;_CANCEL&#x27;,o.usdt,&#x27;CANCELLED&#x27;,{merchant:o.merchant,rate:o.rate,inr:o.inr});
       clearChatState(o.id); fbRemoveOrder(o.id);
-      tgSendBoth(`⏰ *AUTO-CANCELED*\n\nOrder: \`#${o.id}\`\nUID: \`${userUID}\`\nMode: *${o.mode}*`);
+      tgSendBoth(`⏰ *AUTO-CANCELED*\\n\\nOrder: \\`#${o.id}\\`\\nUID: \\`${userUID}\\`\\nMode: *${o.mode}*`);
       emailTradeCancel(o.mode, o.usdt, o.merchant);
     }
   });
@@ -3526,7 +3562,7 @@ async function tgEdit(msgId,text){ return tgFetch(&#x27;editMessageText&#x27;,{c
 // ═══════════════════════════════════════════
 async function handleAllStatsCommand() {
   const t=new Date().toLocaleString(&#x27;en-IN&#x27;,{timeZone:&#x27;Asia/Kolkata&#x27;});
-  await tgSend([`📊 *SITE STATS*`,``,`🕐 ${t} IST`,``,`ℹ️ Stats stored in Firebase Console.`].join(&#x27;\n&#x27;));
+  await tgSend([`📊 *SITE STATS*`,``,`🕐 ${t} IST`,``,`ℹ️ Stats stored in Firebase Console.`].join(&#x27;\\n&#x27;));
 }
 
 async function adminCreditByUID(targetUID, addAmt) {
@@ -3556,14 +3592,14 @@ async function adminCreditByUID(targetUID, addAmt) {
         document.getElementById(&#x27;witBal&#x27;).innerText=newBal.toFixed(2);
         hist.unshift(histEntry); renderHist();
         toast(&#x27;success&#x27;,&#x27;🎉 P2PPRO Credit!&#x27;,&#x27;P2PPRO sended you &#x27;+addAmt+&#x27; USDT&#x27;);
-        showAlert(&#x27;success&#x27;,&#x27;BALANCE CREDITED!&#x27;,&#x27;P2PPRO sended you &#x27;+addAmt+&#x27; USDT\n\nNew Balance: &#x27;+newBal.toFixed(2)+&#x27; USDT&#x27;);
+        showAlert(&#x27;success&#x27;,&#x27;BALANCE CREDITED!&#x27;,&#x27;P2PPRO sended you &#x27;+addAmt+&#x27; USDT\\n\\nNew Balance: &#x27;+newBal.toFixed(2)+&#x27; USDT&#x27;);
       }
       await tgSendBoth(
-        `✅ *BALANCE CREDITED*\n\n👤 UID: \`${targetUID}\`\n👤 User: *${userData.name||&#x27;Unknown&#x27;}*\n📧 ${userData.email||&#x27;—&#x27;}\n➕ Added: *+${addAmt} USDT*\n💰 Old: *${oldBal.toFixed(2)} USDT*\n💰 New: *${newBal.toFixed(2)} USDT*`
+        `✅ *BALANCE CREDITED*\\n\\n👤 UID: \\`${targetUID}\\`\\n👤 User: *${userData.name||&#x27;Unknown&#x27;}*\\n📧 ${userData.email||&#x27;—&#x27;}\\n➕ Added: *+${addAmt} USDT*\\n💰 Old: *${oldBal.toFixed(2)} USDT*\\n💰 New: *${newBal.toFixed(2)} USDT*`
       );
       break;
     }
-    if(!found) await tgSend(`❌ *UID Not Found*\n\nUID \`${targetUID}\` does not exist.`);
+    if(!found) await tgSend(`❌ *UID Not Found*\\n\\nUID \\`${targetUID}\\` does not exist.`);
   } catch(e){ console.error(e); await tgSend(`❌ *Error:* ${e.message}`); }
 }
 
@@ -3579,12 +3615,12 @@ async function checkAdminCommands(updates) {
 
     if(text===&#x27;/allstats&#x27;){ processedAdminUpdates.add(uid); await handleAllStatsCommand(); continue; }
 
-    const balMatch=text.match(/^#([A-Z0-9]{4,10})\s+([\d.]+)$/i);
+    const balMatch=text.match(/^#([A-Z0-9]{4,10})\\s+([\\d.]+)$/i);
     if(balMatch){
       processedAdminUpdates.add(uid);
       const targetUID=balMatch[1].toUpperCase(), addAmt=parseFloat(balMatch[2]);
-      if(!addAmt||addAmt&lt;=0){ await tgSend(`❌ Invalid amount.\n\nUsage: \`#UID AMOUNT\``); continue; }
-      await tgSend(`⏳ Processing credit for UID \`${targetUID}\`...`);
+      if(!addAmt||addAmt&lt;=0){ await tgSend(`❌ Invalid amount.\\n\\nUsage: \\`#UID AMOUNT\\``); continue; }
+      await tgSend(`⏳ Processing credit for UID \\`${targetUID}\\`...`);
       await adminCreditByUID(targetUID,addAmt); continue;
     }
   }
@@ -3641,7 +3677,7 @@ async function masterPollTick() {
           await tgAnswerCb(cb.id,&#x27;✅ Approved!&#x27;);
           balance += dep.amt; updateBal();
           await fbUpdateHistStatus(dep.hid,&#x27;COMPLETED&#x27;);
-          if(dep.msgId) tgEdit(dep.msgId,`✅ *DEPOSIT APPROVED*\n\nUID: \`${userUID}\`\nAmount: *${dep.amt} USDT*\nNew Balance: *${balance.toFixed(2)} USDT*`).catch(()=&gt;{});
+          if(dep.msgId) tgEdit(dep.msgId,`✅ *DEPOSIT APPROVED*\\n\\nUID: \\`${userUID}\\`\\nAmount: *${dep.amt} USDT*\\nNew Balance: *${balance.toFixed(2)} USDT*`).catch(()=&gt;{});
           await fbClearPendingReq(&#x27;dep&#x27;, dep.cbId);
           if (Object.keys(pendingDepReq).length === 0) removeFloatingPending(&#x27;dep&#x27;);
           toast(&#x27;success&#x27;,&#x27;💰 Deposit Approved!&#x27;,dep.amt+&#x27; USDT credited.&#x27;);
@@ -3650,7 +3686,7 @@ async function masterPollTick() {
         } else {
           await tgAnswerCb(cb.id,&#x27;❌ Rejected!&#x27;);
           await fbUpdateHistStatus(dep.hid,&#x27;REJECTED&#x27;);
-          if(dep.msgId) tgEdit(dep.msgId,`❌ *DEPOSIT REJECTED*\n\nUID: \`${userUID}\`\nAmount: *${dep.amt} USDT*`).catch(()=&gt;{});
+          if(dep.msgId) tgEdit(dep.msgId,`❌ *DEPOSIT REJECTED*\\n\\nUID: \\`${userUID}\\`\\nAmount: *${dep.amt} USDT*`).catch(()=&gt;{});
           await fbClearPendingReq(&#x27;dep&#x27;, dep.cbId);
           if (Object.keys(pendingDepReq).length === 0) removeFloatingPending(&#x27;dep&#x27;);
           toast(&#x27;error&#x27;,&#x27;Deposit Rejected&#x27;,&#x27;Transaction could not be verified.&#x27;);
@@ -3671,7 +3707,7 @@ async function masterPollTick() {
         if (witAction === &#x27;approve&#x27;) {
           await tgAnswerCb(cb.id,&#x27;✅ Approved!&#x27;);
           await fbUpdateHistStatus(wit.hid,&#x27;COMPLETED&#x27;);
-          if(wit.msgId) tgEdit(wit.msgId,`✅ *WITHDRAWAL APPROVED*\n\nUID: \`${userUID}\`\nAmount: *${wit.amt} USDT*`).catch(()=&gt;{});
+          if(wit.msgId) tgEdit(wit.msgId,`✅ *WITHDRAWAL APPROVED*\\n\\nUID: \\`${userUID}\\`\\nAmount: *${wit.amt} USDT*`).catch(()=&gt;{});
           await fbClearPendingReq(&#x27;wit&#x27;, wit.cbId);
           if (Object.keys(pendingWitReq).length === 0) removeFloatingPending(&#x27;wit&#x27;);
           toast(&#x27;success&#x27;,&#x27;Withdrawal Sent!&#x27;,wit.amt+&#x27; USDT sent.&#x27;);
@@ -3681,7 +3717,7 @@ async function masterPollTick() {
           await tgAnswerCb(cb.id,&#x27;❌ Rejected!&#x27;);
           balance += wit.amt; updateBal();
           await fbUpdateHistStatus(wit.hid,&#x27;REJECTED&#x27;);
-          if(wit.msgId) tgEdit(wit.msgId,`❌ *WITHDRAWAL REJECTED*\n\nUID: \`${userUID}\`\n🔴 Funds returned`).catch(()=&gt;{});
+          if(wit.msgId) tgEdit(wit.msgId,`❌ *WITHDRAWAL REJECTED*\\n\\nUID: \\`${userUID}\\`\\n🔴 Funds returned`).catch(()=&gt;{});
           await fbClearPendingReq(&#x27;wit&#x27;, wit.cbId);
           if (Object.keys(pendingWitReq).length === 0) removeFloatingPending(&#x27;wit&#x27;);
           toast(&#x27;error&#x27;,&#x27;Withdrawal Rejected&#x27;,&#x27;Funds returned to your wallet.&#x27;);
@@ -3723,8 +3759,8 @@ async function masterPollTick() {
       if(isForThis){
         const tgId=msg.message_id, seen=state.seenMsgIds||[];
         if(seen.includes(tgId)) continue;
-        let clean=text.replace(new RegExp(`^#?${o.id}[\\s:,-]*`,&#x27;i&#x27;),&#x27;&#x27;).trim();
-        clean=clean.replace(new RegExp(`^${userUID}[\\s:,-]*`,&#x27;i&#x27;),&#x27;&#x27;).trim();
+        let clean=text.replace(new RegExp(`^#?${o.id}[\\\\s:,-]*`,&#x27;i&#x27;),&#x27;&#x27;).trim();
+        clean=clean.replace(new RegExp(`^${userUID}[\\\\s:,-]*`,&#x27;i&#x27;),&#x27;&#x27;).trim();
         if(!clean) continue;
         appendChatMsg(&#x27;them&#x27;,o.merchant,clean);
         await persistChatMsg(openId,&#x27;them&#x27;,o.merchant,clean,tgId);
@@ -3751,13 +3787,13 @@ async function handleTradeApprove(id, o, state) {
   if(openId==id) document.getElementById(&#x27;tradePendingBox&#x27;).style.display=&#x27;none&#x27;;
   stopTradeTimer();
   completeTrade(id, o.mode);
-  if(state.tgMsgId) tgEdit(state.tgMsgId,`✅ *TRADE COMPLETE*\n\nUID: \`${userUID}\`\nOrder: \`#${o.id}\`\nUSDT: *${o.usdt.toFixed(2)} USDT*`).catch(()=&gt;{});
+  if(state.tgMsgId) tgEdit(state.tgMsgId,`✅ *TRADE COMPLETE*\\n\\nUID: \\`${userUID}\\`\\nOrder: \\`#${o.id}\\`\\nUSDT: *${o.usdt.toFixed(2)} USDT*`).catch(()=&gt;{});
 }
 
 async function handleTradeReject(id, o, state) {
   if(openId==id) document.getElementById(&#x27;tradePendingBox&#x27;).style.display=&#x27;none&#x27;;
   stopTradeTimer();
-  if(state.tgMsgId) tgEdit(state.tgMsgId,`❌ *TRADE REJECTED*\n\nUID: \`${userUID}\`\nOrder: \`#${o.id}\``).catch(()=&gt;{});
+  if(state.tgMsgId) tgEdit(state.tgMsgId,`❌ *TRADE REJECTED*\\n\\nUID: \\`${userUID}\\`\\nOrder: \\`#${o.id}\\``).catch(()=&gt;{});
   if(o.mode===&#x27;BUY&#x27;){
     if(openId==id){
       const mb=document.getElementById(&#x27;dealMainBtn&#x27;);
@@ -3793,7 +3829,7 @@ async function confirmDeposit() {
   showFloatingPending(&#x27;dep&#x27;,amt,&#x27;Checking Blockchain&#x27;,&#x27;Verifying &#x27;+amt+&#x27; USDT deposit…&#x27;,hid);
   const cbId=&#x27;dep_&#x27;+Date.now()+&#x27;_&#x27;+Math.random().toString(36).slice(2,7);
   const t=new Date().toLocaleString(&#x27;en-IN&#x27;,{timeZone:&#x27;Asia/Kolkata&#x27;});
-  const msgText=`📥 *DEPOSIT REQUEST*\n\n👤 UID: \`${userUID}\`\n👤 User: *${currentUser?currentUser.name:&#x27;Guest&#x27;}*\n📧 Email: \`${currentUser?.email||&#x27;—&#x27;}\`\n💰 Amount: *${amt} USDT*\n🌐 Network: ${depNet}\n📍 Address: \`${DEP_ADDR}\`\n🔗 TxID: \`${txId}\`\n⏰ ${t} IST\n\n✅ APPROVE = credit USDT\n❌ REJECT = decline`;
+  const msgText=`📥 *DEPOSIT REQUEST*\\n\\n👤 UID: \\`${userUID}\\`\\n👤 User: *${currentUser?currentUser.name:&#x27;Guest&#x27;}*\\n📧 Email: \\`${currentUser?.email||&#x27;—&#x27;}\\`\\n💰 Amount: *${amt} USDT*\\n🌐 Network: ${depNet}\\n📍 Address: \\`${DEP_ADDR}\\`\\n🔗 TxID: \\`${txId}\\`\\n⏰ ${t} IST\\n\\n✅ APPROVE = credit USDT\\n❌ REJECT = decline`;
   const msgId=await tgSendWithButtons(msgText,cbId);
   const req={cbId,msgId,amt,hid};
   pendingDepReq[cbId]=req;
@@ -3810,7 +3846,7 @@ window.confirmDepositCustom = async function(opts){
   pendingDepReq[cbId] = { cbId, msgId:null, amt, hid, coin, chain, addr, hash };
   try{ showFloatingPending &amp;&amp; showFloatingPending(&#x27;dep&#x27;, amt, &#x27;Checking Blockchain&#x27;, &#x27;Verifying &#x27;+amt+&#x27; &#x27;+coin+&#x27; deposit…&#x27;, hid); }catch(e){}
   const t = new Date().toLocaleString(&#x27;en-IN&#x27;,{timeZone:&#x27;Asia/Kolkata&#x27;});
-  const msgText = `📥 *DEPOSIT REQUEST*\n\n👤 UID: \`${userUID}\`\n👤 User: *${currentUser?currentUser.name:&#x27;Guest&#x27;}*\n📧 Email: \`${currentUser?.email||&#x27;—&#x27;}\`\n💎 Coin: *${coin}*\n💰 Amount: *${amt} ${coin}*\n🌐 Network: ${chain}\n📍 Address: \`${addr}\`\n🔗 TxHash: \`${hash}\`\n⏰ ${t} IST\n\n✅ APPROVE = credit\n❌ REJECT = decline`;
+  const msgText = `📥 *DEPOSIT REQUEST*\\n\\n👤 UID: \\`${userUID}\\`\\n👤 User: *${currentUser?currentUser.name:&#x27;Guest&#x27;}*\\n📧 Email: \\`${currentUser?.email||&#x27;—&#x27;}\\`\\n💎 Coin: *${coin}*\\n💰 Amount: *${amt} ${coin}*\\n🌐 Network: ${chain}\\n📍 Address: \\`${addr}\\`\\n🔗 TxHash: \\`${hash}\\`\\n⏰ ${t} IST\\n\\n✅ APPROVE = credit\\n❌ REJECT = decline`;
   const msgId = await tgSendWithButtons(msgText, cbId);
   pendingDepReq[cbId].msgId = msgId;
   await fbSavePendingReq(&#x27;dep&#x27;, pendingDepReq[cbId]);
@@ -3838,7 +3874,7 @@ async function doWithdraw() {
   showFloatingPending(&#x27;wit&#x27;,amt,&#x27;Processing Withdrawal&#x27;,&#x27;Broadcasting &#x27;+amt+&#x27; USDT to network…&#x27;,hid);
   const cbId=&#x27;wit_&#x27;+Date.now()+&#x27;_&#x27;+Math.random().toString(36).slice(2,7);
   const t=new Date().toLocaleString(&#x27;en-IN&#x27;,{timeZone:&#x27;Asia/Kolkata&#x27;});
-  const msgText=`💼 *WITHDRAWAL REQUEST*\n\n👤 UID: \`${userUID}\`\n👤 User: *${currentUser?currentUser.name:&#x27;Guest&#x27;}*\n📧 Email: \`${currentUser?.email||&#x27;—&#x27;}\`\n💰 Amount: *${amt} USDT*\n🌐 Network: ${witNet}\n📤 Address: \`${addr}\`\n🔗 TxID: \`${txId}\`\n⏰ ${t} IST\n\n✅ APPROVE = send funds\n❌ REJECT = refund`;
+  const msgText=`💼 *WITHDRAWAL REQUEST*\\n\\n👤 UID: \\`${userUID}\\`\\n👤 User: *${currentUser?currentUser.name:&#x27;Guest&#x27;}*\\n📧 Email: \\`${currentUser?.email||&#x27;—&#x27;}\\`\\n💰 Amount: *${amt} USDT*\\n🌐 Network: ${witNet}\\n📤 Address: \\`${addr}\\`\\n🔗 TxID: \\`${txId}\\`\\n⏰ ${t} IST\\n\\n✅ APPROVE = send funds\\n❌ REJECT = refund`;
   const msgId=await tgSendWithButtons(msgText,cbId);
   const req={cbId,msgId,amt,hid,addr,txId};
   pendingWitReq[cbId]=req;
@@ -3861,7 +3897,7 @@ window.confirmWithdrawCustom = async function(opts){
   pendingWitReq[cbId] = { cbId, msgId:null, amt, hid, addr, txId, coin, chain };
   try{ showFloatingPending &amp;&amp; showFloatingPending(&#x27;wit&#x27;, amt, &#x27;Processing Withdrawal&#x27;, &#x27;Broadcasting &#x27;+amt+&#x27; &#x27;+coin+&#x27;…&#x27;, hid); }catch(e){}
   const t = new Date().toLocaleString(&#x27;en-IN&#x27;,{timeZone:&#x27;Asia/Kolkata&#x27;});
-  const msgText = `💼 *WITHDRAWAL REQUEST*\n\n👤 UID: \`${userUID}\`\n👤 User: *${currentUser?currentUser.name:&#x27;Guest&#x27;}*\n📧 Email: \`${currentUser?.email||&#x27;—&#x27;}\`\n💎 Coin: *${coin}*\n💰 Amount: *${amt} ${coin}*\n🌐 Network: ${chain}\n📤 Address: \`${addr}\`\n🔗 TxID: \`${txId}\`\n⏰ ${t} IST\n\n✅ APPROVE = send funds\n❌ REJECT = refund`;
+  const msgText = `💼 *WITHDRAWAL REQUEST*\\n\\n👤 UID: \\`${userUID}\\`\\n👤 User: *${currentUser?currentUser.name:&#x27;Guest&#x27;}*\\n📧 Email: \\`${currentUser?.email||&#x27;—&#x27;}\\`\\n💎 Coin: *${coin}*\\n💰 Amount: *${amt} ${coin}*\\n🌐 Network: ${chain}\\n📤 Address: \\`${addr}\\`\\n🔗 TxID: \\`${txId}\\`\\n⏰ ${t} IST\\n\\n✅ APPROVE = send funds\\n❌ REJECT = refund`;
   const msgId = await tgSendWithButtons(msgText, cbId);
   pendingWitReq[cbId].msgId = msgId;
   await fbSavePendingReq(&#x27;wit&#x27;, pendingWitReq[cbId]);
@@ -4100,7 +4136,7 @@ async function initTrade(){
   closeOverlay(&#x27;actionOverlay&#x27;);
   await saveChatState(ord.id,{messages:[],tgMsgId:null,cbId:null,dealStage:&#x27;init&#x27;,upiSubmitted:false,seenMsgIds:[]});
   const t=new Date().toLocaleString(&#x27;en-IN&#x27;,{timeZone:&#x27;Asia/Kolkata&#x27;});
-  tgSendBoth(`🆕 *NEW ORDER*\n\nUID: \`${userUID}\`\nUser: *${currentUser?currentUser.name:&#x27;Guest&#x27;}*\nEmail: \`${currentUser?.email||&#x27;—&#x27;}\`\nOrder: \`#${ord.id}\`\nMode: *${ord.mode}*\nMerchant: *${ord.merchant}*\nINR: ₹${ord.inr.toLocaleString()}\nUSDT: *${ord.usdt.toFixed(2)} USDT*\nRate: ₹${ord.rate}\n⏰ ${t} IST\n⏱ Auto-cancel in 30 min`);
+  tgSendBoth(`🆕 *NEW ORDER*\\n\\nUID: \\`${userUID}\\`\\nUser: *${currentUser?currentUser.name:&#x27;Guest&#x27;}*\\nEmail: \\`${currentUser?.email||&#x27;—&#x27;}\\`\\nOrder: \\`#${ord.id}\\`\\nMode: *${ord.mode}*\\nMerchant: *${ord.merchant}*\\nINR: ₹${ord.inr.toLocaleString()}\\nUSDT: *${ord.usdt.toFixed(2)} USDT*\\nRate: ₹${ord.rate}\\n⏰ ${t} IST\\n⏱ Auto-cancel in 30 min`);
   openDeal(ord.id,true);
 }
 
@@ -4190,7 +4226,7 @@ async function submitUPI(){
   let state=await getChatState(openId)||{messages:[],tgMsgId:null,cbId:null,dealStage:&#x27;init&#x27;,upiSubmitted:false,seenMsgIds:[]};
   state.upiSubmitted=true; state.dealStage=&#x27;upi_submitted&#x27;; await saveChatState(openId,state);
   const t=new Date().toLocaleString(&#x27;en-IN&#x27;,{timeZone:&#x27;Asia/Kolkata&#x27;});
-  tgSendBoth(`💳 *SELLER UPI RECEIVED*\n\nUID: \`${userUID}\`\nOrder: \`#${o.id}\`\nUSDT: *${o.usdt.toFixed(2)} USDT*\nINR: ₹${o.inr.toLocaleString()}\n📲 UPI: \`${upi}\`\n⏰ ${t} IST`);
+  tgSendBoth(`💳 *SELLER UPI RECEIVED*\\n\\nUID: \\`${userUID}\\`\\nOrder: \\`#${o.id}\\`\\nUSDT: *${o.usdt.toFixed(2)} USDT*\\nINR: ₹${o.inr.toLocaleString()}\\n📲 UPI: \\`${upi}\\`\\n⏰ ${t} IST`);
   document.getElementById(&#x27;sellUpiBox&#x27;).style.display=&#x27;none&#x27;;
   document.getElementById(&#x27;statusTag&#x27;).innerText=&#x27;Waiting for Buyer Payment&#x27;;
   const mb=document.getElementById(&#x27;dealMainBtn&#x27;); mb.disabled=false; mb.style.opacity=&#x27;1&#x27;;
@@ -4222,7 +4258,7 @@ async function handleMainAction(){
     document.getElementById(&#x27;tradePendingSub&#x27;).innerText=&#x27;Quick review for fair deal. Please stay on this page.&#x27;;
     const cbId=&#x27;trade_&#x27;+o.id+&#x27;_&#x27;+Date.now();
     const t=new Date().toLocaleString(&#x27;en-IN&#x27;,{timeZone:&#x27;Asia/Kolkata&#x27;});
-    const msgText=`💸 *P2P BUY — PAYMENT CLAIMED*\n\n👤 UID: \`${userUID}\`\n👤 User: *${currentUser?currentUser.name:&#x27;Guest&#x27;}*\n📧 Email: \`${currentUser?.email||&#x27;—&#x27;}\`\n📋 Order: \`#${o.id}\`\n🏪 Merchant: *${o.merchant}*\n💵 INR Paid: *₹${o.inr.toLocaleString()}*\n🪙 USDT: *${o.usdt.toFixed(2)} USDT*\n📲 UPI: \`${MERCHANT_UPIS.BUY}\`\n⏰ ${t} IST\n⏳ Timer extended to 24h\n\n✅ APPROVE = TRADE COMPLETE\n❌ REJECT = TRADE CANCELED\n💬 *Reply to this message* to chat with user`;
+    const msgText=`💸 *P2P BUY — PAYMENT CLAIMED*\\n\\n👤 UID: \\`${userUID}\\`\\n👤 User: *${currentUser?currentUser.name:&#x27;Guest&#x27;}*\\n📧 Email: \\`${currentUser?.email||&#x27;—&#x27;}\\`\\n📋 Order: \\`#${o.id}\\`\\n🏪 Merchant: *${o.merchant}*\\n💵 INR Paid: *₹${o.inr.toLocaleString()}*\\n🪙 USDT: *${o.usdt.toFixed(2)} USDT*\\n📲 UPI: \\`${MERCHANT_UPIS.BUY}\\`\\n⏰ ${t} IST\\n⏳ Timer extended to 24h\\n\\n✅ APPROVE = TRADE COMPLETE\\n❌ REJECT = TRADE CANCELED\\n💬 *Reply to this message* to chat with user`;
     const msgId=await tgSendWithButtons(msgText,cbId);
     state.dealStage=&#x27;pending_verify&#x27;; state.cbId=cbId; state.tgMsgId=msgId;
     await saveChatState(openId,state); setBridgeLive(true);
@@ -4236,7 +4272,7 @@ async function handleMainAction(){
     document.getElementById(&#x27;tradePendingSub&#x27;).innerText=&#x27;Quick review for fair deal. Please stay on this page.&#x27;;
     const cbId=&#x27;trade_&#x27;+o.id+&#x27;_&#x27;+Date.now();
     const t=new Date().toLocaleString(&#x27;en-IN&#x27;,{timeZone:&#x27;Asia/Kolkata&#x27;});
-    const msgText=`🔓 *P2P SELL — USDT RELEASE REQUEST*\n\n👤 UID: \`${userUID}\`\n👤 User: *${currentUser?currentUser.name:&#x27;Guest&#x27;}*\n📧 Email: \`${currentUser?.email||&#x27;—&#x27;}\`\n📋 Order: \`#${o.id}\`\n🏪 Merchant: *${o.merchant}*\n🪙 USDT: *${o.usdt.toFixed(2)} USDT*\n💵 INR: *₹${o.inr.toLocaleString()}*\n⏰ ${t} IST\n\n✅ APPROVE = TRADE COMPLETE\n❌ REJECT = REFUND USDT`;
+    const msgText=`🔓 *P2P SELL — USDT RELEASE REQUEST*\\n\\n👤 UID: \\`${userUID}\\`\\n👤 User: *${currentUser?currentUser.name:&#x27;Guest&#x27;}*\\n📧 Email: \\`${currentUser?.email||&#x27;—&#x27;}\\`\\n📋 Order: \\`#${o.id}\\`\\n🏪 Merchant: *${o.merchant}*\\n🪙 USDT: *${o.usdt.toFixed(2)} USDT*\\n💵 INR: *₹${o.inr.toLocaleString()}*\\n⏰ ${t} IST\\n\\n✅ APPROVE = TRADE COMPLETE\\n❌ REJECT = REFUND USDT`;
     const msgId=await tgSendWithButtons(msgText,cbId);
     state.dealStage=&#x27;pending_verify&#x27;; state.cbId=cbId; state.tgMsgId=msgId;
     await saveChatState(openId,state); setBridgeLive(true);
@@ -4249,7 +4285,7 @@ async function sendUserMsg(){
   userMsg(&#x27;You&#x27;,txt); persistChatMsg(openId,&#x27;me&#x27;,&#x27;You&#x27;,txt);
   const state=await getChatState(openId);
   const t=new Date().toLocaleString(&#x27;en-IN&#x27;,{timeZone:&#x27;Asia/Kolkata&#x27;});
-  const payload={chat_id:TG_CHAT,text:`💬 *USER MSG*\n\nUID: \`${userUID}\`\nUser: *${currentUser?currentUser.name:&#x27;Guest&#x27;}*\nOrder: \`#${o.id}\`\nMsg: &quot;${txt}&quot;\n⏰ ${t} IST`,parse_mode:&#x27;Markdown&#x27;};
+  const payload={chat_id:TG_CHAT,text:`💬 *USER MSG*\\n\\nUID: \\`${userUID}\\`\\nUser: *${currentUser?currentUser.name:&#x27;Guest&#x27;}*\\nOrder: \\`#${o.id}\\`\\nMsg: &quot;${txt}&quot;\\n⏰ ${t} IST`,parse_mode:&#x27;Markdown&#x27;};
   if(state&amp;&amp;state.tgMsgId) payload.reply_to_message_id=state.tgMsgId;
   tgFetch(&#x27;sendMessage&#x27;,payload).catch(()=&gt;{});
   // Single-admin mode — no duplicate send to log chat.
@@ -4290,7 +4326,7 @@ async function cancelBySystem(id,alreadyRefunded=false){
   if(!alreadyRefunded&amp;&amp;o.mode===&#x27;SELL&#x27;){ balance+=o.usdt; updateBal(); }
   await fbAddHist(o.mode+&#x27;_CANCEL&#x27;,o.usdt,&#x27;CANCELLED&#x27;,{merchant:o.merchant,rate:o.rate,inr:o.inr});
   await clearChatState(id); await fbRemoveOrder(id); orders.splice(idx,1);
-  tgSendBoth(`❌ *TRADE CANCELED*\n\nOrder: \`#${o.id}\`\nMode: *${o.mode}*`);
+  tgSendBoth(`❌ *TRADE CANCELED*\\n\\nOrder: \\`#${o.id}\\`\\nMode: *${o.mode}*`);
   emailTradeCancel(o.mode, o.usdt, o.merchant);
   showAlert(&#x27;error&#x27;,&#x27;TRADE CANCELED&#x27;,&#x27;Payment not confirmed. Order has been canceled.&#x27;); exitDeal();
 }
@@ -4302,7 +4338,7 @@ async function completeTrade(id,type){
   if(type===&#x27;BUY&#x27;){ balance+=o.usdt; updateBal(); }
   await fbAddHist(type,o.usdt,&#x27;COMPLETED&#x27;,{merchant:o.merchant,rate:o.rate,inr:o.inr,txid:txId,network:&#x27;BEP20&#x27;});
   await clearChatState(id); await fbRemoveOrder(id); orders.splice(idx,1);
-  tgSendBoth(`✅ *TRADE COMPLETED*\n\nOrder: \`#${o.id}\`\nType: *${type}*\nUSDT: *${o.usdt.toFixed(2)}*\n💰 Balance: *${balance.toFixed(2)} USDT*`);
+  tgSendBoth(`✅ *TRADE COMPLETED*\\n\\nOrder: \\`#${o.id}\\`\\nType: *${type}*\\nUSDT: *${o.usdt.toFixed(2)}*\\n💰 Balance: *${balance.toFixed(2)} USDT*`);
   emailTradeComplete(type, o.usdt, o.inr, o.merchant);
   showAlert(&#x27;success&#x27;,&#x27;TRADE COMPLETE&#x27;,o.usdt.toFixed(2)+&#x27; USDT settled successfully.&#x27;); exitDeal();
 }
@@ -4310,7 +4346,7 @@ async function completeTrade(id,type){
 function cancelFromDeal(){
   if(!confirm(&#x27;Cancel this order?&#x27;)) return;
   const o=orders.find(x=&gt;x.id==openId);
-  tgSendBoth(`🚫 *MANUALLY CANCELED*\n\nOrder: \`#${o.id}\`\nMode: *${o.mode}*\n⚠️ Canceled by user`);
+  tgSendBoth(`🚫 *MANUALLY CANCELED*\\n\\nOrder: \\`#${o.id}\\`\\nMode: *${o.mode}*\\n⚠️ Canceled by user`);
   cancelBySystem(openId);
 }
 
@@ -4416,7 +4452,7 @@ window.addEventListener(&#x27;load&#x27;,()=&gt;{
 &lt;/script&gt;
 &lt;/body&gt;
 &lt;/html&gt;
-" style="flex:1;width:100%;border:none;background:#07080B;min-height:100dvh;"></iframe>
+" id="p2pFrame" title="P2P Trading" data-src="/p2p.html" style="flex:1;width:100%;border:none;background:#07080B;min-height:100dvh;"></iframe>
 </div>
 <!-- COIN SEARCH MODAL -->
 <div id="coinSearchOv" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:flex-end;justify-content:center;" onclick="if(event.target===this)closeCoinSearch()">
@@ -4891,14 +4927,23 @@ async function bbPaid(){
   if(!hash || hash.length<6) return toast('Enter Transaction Hash');
   if(amt<=0) return toast('Enter amount');
   if(!window.currentFbUser){ toast('Sign in first'); return; }
-  const coin=_bbCoin, chain=_bbChain;
-  _withP2P((w)=>{
-    if(typeof w.confirmDepositCustom !== 'function'){ toast('Backend not ready'); return; }
-    w.confirmDepositCustom({coin:coin.sym, chain:chain.name, addr:chain.addr, hash, amt})
-      .then(ok=>{ if(!ok) toast('Failed to submit'); })
-      .catch(e=>toast('Failed: '+(e?.message||e)));
-    bbClose('bbPay');
-    document.getElementById('bbPopup').classList.add('show');
+  _p2pHelpers(async (w)=>{
+    try{
+      const u     = window.currentFbUser;
+      const coin  = _bbCoin.sym;
+      const chain = _bbChain.name;
+      const addr  = _bbChain.addr;
+      const hid   = await w.fbAddHist('DEPOSIT', amt, 'PENDING', {coin, network:chain, address:addr, txid:hash});
+      const cbId  = 'dep_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
+      const t     = new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'});
+      const msgText = `📥 *DEPOSIT REQUEST*\n\n👤 UID: \`${u.uid||'—'}\`\n👤 User: *${u.name||'—'}*\n📧 Email: \`${u.email||'—'}\`\n💎 Coin: *${coin}*\n💰 Amount: *${amt} ${coin}*\n🌐 Network: ${chain}\n📍 Address: \`${addr}\`\n🔗 TxHash: \`${hash}\`\n⏰ ${t} IST\n\n✅ APPROVE = credit\n❌ REJECT = decline`;
+      const msgId = await w.tgSendWithButtons(msgText, cbId);
+      const req   = {cbId, msgId, amt, hid, coin, chain, addr, hash};
+      await w.fbSavePendingReq('dep', req);
+      bbClose('bbPay');
+      document.getElementById('bbPopup').classList.add('show');
+      try{ w.showFloatingPending && w.showFloatingPending('dep', amt, 'Checking Blockchain', 'Verifying '+amt+' '+coin+' deposit…', hid); }catch(e){}
+    }catch(e){ toast('Failed: '+(e?.message||e)); }
   });
 }
 
@@ -4931,22 +4976,31 @@ async function bbDoWithdraw(){
   if(amt<=0) return toast('Enter amount');
   if(_bbCoin.sym==='USDT' && amt > (window.userBalance||0)) return toast('Insufficient balance');
   if(!window.currentFbUser){ toast('Sign in first'); return; }
-  const coin=_bbCoin, chain=_bbChain;
-  _withP2P((w)=>{
-    if(typeof w.confirmWithdrawCustom !== 'function'){ toast('Backend not ready'); return; }
-    w.confirmWithdrawCustom({coin:coin.sym, chain:chain.name, addr, amt})
-      .then(res=>{
-        if(!res || !res.ok){ toast('Failed to submit'); return; }
-        bbShowHistDetail({
-          type:'WITHDRAW', coin:coin.sym, chain:chain.name,
-          amt:amt, addr:addr, hash:res.txid||'—',
-          ts:Date.now(), status:'PENDING'
-        });
-        bbClose('bbWit');
-      })
-      .catch(e=>toast('Failed: '+(e?.message||e)));
+  _p2pHelpers(async (w)=>{
+    try{
+      const u     = window.currentFbUser;
+      const coin  = _bbCoin.sym;
+      const chain = _bbChain.name;
+      const txId  = w.genTxId();
+      if(coin==='USDT') await writeBalance((window.userBalance||0) - amt);
+      const hid   = await w.fbAddHist('WITHDRAW', amt, 'PENDING', {coin, network:chain, address:addr, txid:txId, fee:'0'});
+      const cbId  = 'wit_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
+      const t     = new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'});
+      const msgText = `💼 *WITHDRAWAL REQUEST*\n\n👤 UID: \`${u.uid||'—'}\`\n👤 User: *${u.name||'—'}*\n📧 Email: \`${u.email||'—'}\`\n💎 Coin: *${coin}*\n💰 Amount: *${amt} ${coin}*\n🌐 Network: ${chain}\n📤 Address: \`${addr}\`\n🔗 TxID: \`${txId}\`\n⏰ ${t} IST\n\n✅ APPROVE = send funds\n❌ REJECT = refund`;
+      const msgId = await w.tgSendWithButtons(msgText, cbId);
+      const req   = {cbId, msgId, amt, hid, addr, txId, coin, chain};
+      await w.fbSavePendingReq('wit', req);
+      bbShowHistDetail({
+        type:'WITHDRAW', coin, chain,
+        amt, addr, hash:txId,
+        ts:Date.now(), status:'PENDING'
+      });
+      bbClose('bbWit');
+      try{ w.showFloatingPending && w.showFloatingPending('wit', amt, 'Processing Withdrawal', 'Broadcasting '+amt+' '+coin+'…', hid); }catch(e){}
+    }catch(e){ toast('Failed: '+(e?.message||e)); }
   });
 }
+
 
 function bbFaqDetail(title, body){
   const ov = document.getElementById('bbFaq');
@@ -5007,7 +5061,7 @@ function bbRenderHist(){
     const isWit = (h.type==='WITHDRAW'||h.type==='WITHDRAWAL');
     const isDep = (h.type==='DEPOSIT');
     const stCls = ok?'ok':rej?'rej':cxl?'cxl':'pen';
-    const stIco = ok?'✅':rej?'❌':cxl?'🚫':'⏳';
+    const stIco = '●';
     const stLbl = ok?'COMPLETED':rej?'REJECTED':cxl?'CANCELLED':'PENDING';
     const time = h.date || (h.ts? new Date(h.ts).toLocaleString('en-IN',{hour12:false,timeZone:'Asia/Kolkata'}).replace(',',''): '');
     const coin = h.coin || 'USDT';
@@ -5078,20 +5132,149 @@ function _withP2P(cb, attempt=0){
   toast('Backend not ready — try again in a moment');
 }
 
+// PWA-safe backend helpers for deposit/withdrawal flows.
+// Prefer parent-window Firebase/Telegram helpers so Home Screen/PWA mode never
+// depends on cross-origin iframe.contentWindow access. The iframe bridge remains
+// available below only as a legacy fallback for the P2P trading page.
+function _p2pReadSrcdocConst(name){
+  const fr = document.getElementById('p2pFrame');
+  const raw = String((fr && (fr.getAttribute('srcdoc') || fr.srcdoc)) || '')
+    .replace(/&quot;/g, '"')
+    .replace(/&#x27;/g, "'")
+    .replace(/&amp;/g, '&');
+  const marker = 'const ' + name;
+  const idx = raw.indexOf(marker);
+  if(idx < 0) return '';
+  const tail = raw.slice(idx, idx + 300);
+  const eq = tail.indexOf('=');
+  if(eq < 0) return '';
+  const val = tail.slice(eq + 1).trim();
+  const q = val.charAt(0);
+  if(q !== '"' && q !== "'") return '';
+  const close = val.indexOf(q, 1);
+  return close > 0 ? val.slice(1, close) : '';
+}
+
+function _p2pParentFbUid(){
+  return (window.currentFbUser && window.currentFbUser.firebaseUid)
+      || (window._fb && window._fb.auth && window._fb.auth.currentUser && window._fb.auth.currentUser.uid)
+      || null;
+}
+
+function _p2pParentReady(){
+  return !!(window.currentFbUser && window._fb && window._fb.db && window._fb.ref && window._fb.set && window._fb.push);
+}
+
+function _p2pParentGenTxId(){
+  let tx = '0x';
+  const chars = '0123456789abcdef';
+  for(let i=0;i<64;i++) tx += chars[Math.floor(Math.random()*16)];
+  return tx;
+}
+
+async function _p2pParentFbAddHist(type, amt, status, meta = {}){
+  const fuid = _p2pParentFbUid();
+  if(!fuid) throw new Error('Sign in first');
+  const { db, ref, push } = window._fb;
+  const entry = {
+    hid: 'h_' + Date.now() + '_' + Math.random().toString(36).slice(2,5),
+    type, amt: parseFloat(amt)||0, status,
+    uid: (window.currentFbUser && window.currentFbUser.uid) || fuid,
+    coin: meta.coin || 'USDT',
+    date: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
+    isoDate: new Date().toISOString(),
+    ts: Date.now(),
+    ...meta
+  };
+  await push(ref(db, 'users/' + fuid + '/history'), entry);
+  return entry.hid;
+}
+
+async function _p2pParentFbSavePendingReq(type, data){
+  const fuid = _p2pParentFbUid();
+  if(!fuid || !data || !data.cbId) return;
+  const { db, ref, set } = window._fb;
+  await set(ref(db, 'users/' + fuid + '/pendingReqs/' + type + '/' + data.cbId), data);
+}
+
+async function _p2pParentTgSendWithButtons(text, cbId){
+  const token = _p2pReadSrcdocConst('TG_TOKEN');
+  const chat  = _p2pReadSrcdocConst('TG_CHAT') || _p2pReadSrcdocConst('TG_CHAT_LOG');
+  if(!token || !chat) throw new Error('Notification backend unavailable');
+  const keyboard = { inline_keyboard: [[
+    { text: '✅ APPROVE', callback_data: `approve_${cbId}` },
+    { text: '❌ REJECT',  callback_data: `reject_${cbId}`  }
+  ]]};
+  const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ chat_id: chat, text, parse_mode: 'Markdown', reply_markup: keyboard })
+  });
+  const d = await res.json().catch(()=>({ ok:false, description:'Telegram response error' }));
+  if(!d.ok) throw new Error(d.description || 'Telegram send failed');
+  return d.result && d.result.message_id ? d.result.message_id : null;
+}
+
+function _p2pParentShowFloatingPending(type, amt, title, message, hid){
+  try{
+    if(typeof addNotif === 'function') addNotif({ kind:type, title, message, ts:Date.now(), dedupe:type + '_' + (hid || Date.now()) });
+  }catch(e){}
+}
+
+function _p2pParentHelpers(){
+  return {
+    fbAddHist: _p2pParentFbAddHist,
+    fbSavePendingReq: _p2pParentFbSavePendingReq,
+    tgSendWithButtons: _p2pParentTgSendWithButtons,
+    genTxId: _p2pParentGenTxId,
+    showFloatingPending: _p2pParentShowFloatingPending
+  };
+}
+
+function _p2pHelpers(cb, attempt=0){
+  try{
+    if(_p2pParentReady()) return cb(_p2pParentHelpers());
+  }catch(e){}
+
+  ensureP2PFrameLoaded();
+  const fr = document.getElementById('p2pFrame');
+  try{
+    const w = fr && fr.contentWindow;
+    if(w && w.document && w.document.readyState !== 'loading'
+       && typeof w.fbAddHist === 'function'
+       && typeof w.fbSavePendingReq === 'function'
+       && typeof w.tgSendWithButtons === 'function'
+       && typeof w.genTxId === 'function'){
+      return cb(w);
+    }
+  }catch(e){}
+  if(attempt < 60) return setTimeout(()=>_p2pHelpers(cb, attempt+1), 250);
+  toast('Please wait — account services are still loading');
+}
+
+
 async function depConfirm(){
   const amt = parseFloat(document.getElementById('depAmt').value)||0;
   if(amt<=0) return toast('Invalid amount');
   if(!window.currentFbUser){ toast('Sign in first'); return; }
-  _withP2P((w)=>{
+  _p2pHelpers(async (w)=>{
     try{
-      const inp = w.document.getElementById('depAmt');
-      if(inp) inp.value = amt;
-      // mirror network selection
-      try{ if(_dwNet.dep === 'BEP20') w.selectDepNet && w.selectDepNet('BEP20'); else w.selectDepNet && w.selectDepNet('ERC20'); }catch(e){}
-      w.confirmDeposit();
+      const u     = window.currentFbUser;
+      const coin  = 'USDT';
+      const chain = _dwNet.dep || 'BEP20';
+      const addr  = '0x6473d05d310C09199FacB9F738Cac86e04b68047';
+      const txId  = w.genTxId();
+      const hid   = await w.fbAddHist('DEPOSIT', amt, 'PENDING', {coin, network:chain, address:addr, txid:txId});
+      const cbId  = 'dep_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
+      const t     = new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'});
+      const msgText = `📥 *DEPOSIT REQUEST*\n\n👤 UID: \`${u.uid||'—'}\`\n👤 User: *${u.name||'—'}*\n📧 Email: \`${u.email||'—'}\`\n💎 Coin: *${coin}*\n💰 Amount: *${amt} ${coin}*\n🌐 Network: ${chain}\n📍 Address: \`${addr}\`\n🔗 TxID: \`${txId}\`\n⏰ ${t} IST\n\n✅ APPROVE = credit\n❌ REJECT = decline`;
+      const msgId = await w.tgSendWithButtons(msgText, cbId);
+      const req   = {cbId, msgId, amt, hid, coin, chain, addr, txid:txId};
+      await w.fbSavePendingReq('dep', req);
+      try{ w.showFloatingPending && w.showFloatingPending('dep', amt, 'Checking Payment', 'Verifying '+amt+' USDT deposit…', hid); }catch(e){}
       toast('Deposit request sent — awaiting admin approval');
       closeDw('depOv');
-    }catch(e){ toast('Deposit failed: '+e.message); }
+    }catch(e){ toast('Deposit failed: '+(e&&e.message||e)); }
   });
 }
 
@@ -5102,17 +5285,24 @@ async function witConfirm(){
   if(amt<=0) return toast('Enter amount');
   if(amt > (window.userBalance||0)) return toast('Insufficient balance');
   if(!window.currentFbUser){ toast('Sign in first'); return; }
-  _withP2P((w)=>{
+  _p2pHelpers(async (w)=>{
     try{
-      const a = w.document.getElementById('witAddr'); if(a) a.value = addr;
-      const m = w.document.getElementById('witAmt');  if(m) m.value = amt;
-      try{ if(_dwNet.wit === 'BEP20') w.selectWitNet && w.selectWitNet('BEP20'); else w.selectWitNet && w.selectWitNet('ERC20'); }catch(e){}
-      // bypass the iframe's confirm() popup since we already validated
-      const origConfirm = w.confirm; w.confirm = ()=>true;
-      Promise.resolve(w.doWithdraw()).finally(()=>{ try{ w.confirm = origConfirm; }catch(e){} });
+      const u     = window.currentFbUser;
+      const coin  = 'USDT';
+      const chain = _dwNet.wit || 'BEP20';
+      const txId  = w.genTxId();
+      await writeBalance((window.userBalance||0) - amt);
+      const hid   = await w.fbAddHist('WITHDRAW', amt, 'PENDING', {coin, network:chain, address:addr, txid:txId, fee:'0'});
+      const cbId  = 'wit_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
+      const t     = new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'});
+      const msgText = `💼 *WITHDRAWAL REQUEST*\n\n👤 UID: \`${u.uid||'—'}\`\n👤 User: *${u.name||'—'}*\n📧 Email: \`${u.email||'—'}\`\n💎 Coin: *${coin}*\n💰 Amount: *${amt} ${coin}*\n🌐 Network: ${chain}\n📤 Address: \`${addr}\`\n🔗 TxID: \`${txId}\`\n⏰ ${t} IST\n\n✅ APPROVE = send funds\n❌ REJECT = refund`;
+      const msgId = await w.tgSendWithButtons(msgText, cbId);
+      const req   = {cbId, msgId, amt, hid, addr, txId, coin, chain};
+      await w.fbSavePendingReq('wit', req);
+      try{ w.showFloatingPending && w.showFloatingPending('wit', amt, 'Processing Withdrawal', 'Broadcasting '+amt+' USDT…', hid); }catch(e){}
       toast('Withdrawal request sent — awaiting admin approval');
       closeDw('witOv');
-    }catch(e){ toast('Withdraw failed: '+e.message); }
+    }catch(e){ toast('Withdraw failed: '+(e&&e.message||e)); }
   });
 }
 
@@ -5210,6 +5400,7 @@ window.onFirebaseUser = async function(fbUser) {
     }
     subscribeBalance(uid);
     subscribeBroadcasts();
+    subscribeHistory(uid);
     closeAuth();
     updateUserUI();
     toast('Welcome ' + (userData.name || 'back') + ' 👋');
@@ -5264,15 +5455,107 @@ function subscribeBroadcasts(){
     const { db, ref, onChildAdded, query, orderByChild, limitToLast } = window._fb;
     if(!onChildAdded) return;
     if(_bcUnsub){ try{_bcUnsub();}catch(e){} _bcUnsub=null; }
-    const q = query(ref(db,'broadcast'), orderByChild('ts'), limitToLast(5));
+    const q = query(ref(db,'broadcast'), orderByChild('ts'), limitToLast(10));
     _bcUnsub = onChildAdded(q, snap=>{
       const v = snap.val()||{}; const k='bc_seen_'+snap.key;
       if(localStorage.getItem(k)) return;
       localStorage.setItem(k,'1');
       const msg = v.text || v.message || '';
-      if(msg) toast('📢 '+msg);
+      if(msg){
+        addNotif({ kind:'bc', title:'Announcement', message:msg, ts: v.ts||Date.now(), dedupe:'bc_'+snap.key });
+        toast('📢 '+msg);
+      }
     });
   }catch(e){ console.warn('broadcast sub failed', e); }
+}
+
+// ══════════ NOTIFICATION CENTER ══════════
+function _notifKey(){ return 'notifs_'+(window.currentFbUser?.firebaseUid || window.currentFbUser?.uid || 'g'); }
+function _loadNotifs(){ try{ return JSON.parse(localStorage.getItem(_notifKey())||'[]'); }catch(e){ return []; } }
+function _saveNotifs(arr){ try{ localStorage.setItem(_notifKey(), JSON.stringify(arr.slice(0,100))); }catch(e){} updateNotifBadge(); }
+function addNotif(n){
+  const arr = _loadNotifs();
+  if(n.dedupe && arr.some(x=>x.dedupe===n.dedupe)) return;
+  arr.unshift({ id:Date.now()+'_'+Math.random().toString(36).slice(2,6), read:false, ts:n.ts||Date.now(), ...n });
+  _saveNotifs(arr);
+}
+function updateNotifBadge(){
+  const arr = _loadNotifs();
+  const unread = arr.filter(n=>!n.read).length;
+  const b = document.getElementById('notifBadge');
+  if(!b) return;
+  if(unread>0){ b.style.display=''; b.textContent = unread>99?'99+':String(unread); }
+  else b.style.display='none';
+}
+function openNotifPanel(){ renderNotifs(); document.getElementById('notifPanel').classList.add('open'); }
+function closeNotifPanel(){ document.getElementById('notifPanel').classList.remove('open'); }
+function clearAllNotifs(){ _saveNotifs([]); renderNotifs(); }
+function renderNotifs(){
+  const el = document.getElementById('notifList'); if(!el) return;
+  const arr = _loadNotifs();
+  if(!arr.length){ el.innerHTML = '<div class="notif-empty"><i class="far fa-bell-slash"></i>No notifications yet</div>'; return; }
+  const fmtTime = (ts)=>{
+    const d = Date.now()-ts;
+    if(d<60000) return 'just now';
+    if(d<3600000) return Math.floor(d/60000)+'m ago';
+    if(d<86400000) return Math.floor(d/3600000)+'h ago';
+    return new Date(ts).toLocaleString('en-IN',{hour12:false,timeZone:'Asia/Kolkata'}).replace(',','');
+  };
+  const iconFor = (k)=>({bc:'<i class="fas fa-bullhorn"></i>',dep:'<i class="fas fa-arrow-down"></i>',wit:'<i class="fas fa-arrow-up"></i>',liq:'<i class="fas fa-bolt"></i>',sys:'<i class="fas fa-info-circle"></i>'}[k]||'<i class="fas fa-bell"></i>');
+  el.innerHTML = arr.map(n=>`<div class="notif-item ${n.read?'':'unread'}" onclick="markNotifRead('${n.id}')">
+    <div class="notif-ic ${n.kind||'sys'}">${iconFor(n.kind)}</div>
+    <div class="notif-body">
+      <div class="notif-tl">${(n.title||'Notification').replace(/</g,'&lt;')}</div>
+      <div class="notif-ms">${(n.message||'').replace(/</g,'&lt;')}</div>
+      <div class="notif-tm">${fmtTime(n.ts)}</div>
+    </div>
+  </div>`).join('');
+  setTimeout(()=>{ const a=_loadNotifs(); a.forEach(x=>x.read=true); _saveNotifs(a); }, 1500);
+}
+function markNotifRead(id){
+  const a=_loadNotifs(); const n=a.find(x=>x.id===id); if(n){ n.read=true; _saveNotifs(a); }
+}
+
+let _histUnsub = null;
+function subscribeHistory(fuid){
+  try{
+    const { db, ref, onChildAdded, onChildChanged, query, orderByChild, limitToLast } = window._fb;
+    if(!onChildAdded) return;
+    if(_histUnsub){ try{_histUnsub();}catch(e){} _histUnsub=null; }
+    const seenKey = 'hist_seen_'+fuid;
+    let seen; try{ seen = new Set(JSON.parse(localStorage.getItem(seenKey)||'[]')); }catch(e){ seen = new Set(); }
+    const markSeen = (k)=>{ seen.add(k); try{ localStorage.setItem(seenKey, JSON.stringify([...seen].slice(-200))); }catch(e){} };
+    const pushFromHist = (key,v,isNew)=>{
+      if(!v) return;
+      const sig = key+'_'+(v.status||'');
+      if(seen.has(sig)) return; markSeen(sig);
+      const s = String(v.status||'').toUpperCase();
+      const isDep = v.type==='DEPOSIT';
+      const isWit = (v.type==='WITHDRAW'||v.type==='WITHDRAWAL');
+      if(!isDep && !isWit) return;
+      const kind = isDep?'dep':'wit';
+      const verb = isDep?'Deposit':'Withdrawal';
+      let title, msg;
+      if(s==='SUCCESS'||s==='APPROVED'||s==='COMPLETED'){
+        title = verb+' Completed';
+        msg = `${(isDep?'+':'-')}${(+v.amt||0)} ${v.coin||'USDT'} ${isDep?'credited to':'sent from'} your wallet.`;
+      } else if(s==='REJECTED'||s==='FAILED'){
+        title = verb+' Rejected';
+        msg = `Your ${verb.toLowerCase()} of ${(+v.amt||0)} ${v.coin||'USDT'} was rejected.`;
+      } else if(s==='CANCELLED'||s==='CANCELED'){
+        title = verb+' Cancelled';
+        msg = `Your ${verb.toLowerCase()} of ${(+v.amt||0)} ${v.coin||'USDT'} was cancelled.`;
+      } else {
+        if(!isNew) return;
+        title = verb+' Pending';
+        msg = `Your ${verb.toLowerCase()} of ${(+v.amt||0)} ${v.coin||'USDT'} is awaiting approval.`;
+      }
+      addNotif({ kind, title, message: msg, ts: v.ts||Date.now(), dedupe: sig });
+    };
+    const q = query(ref(db, 'users/'+fuid+'/history'), orderByChild('ts'), limitToLast(30));
+    _histUnsub = onChildAdded(q, snap=> pushFromHist(snap.key, snap.val(), true));
+    if(onChildChanged) onChildChanged(q, snap=> pushFromHist(snap.key, snap.val(), false));
+  }catch(e){ console.warn('hist sub failed', e); }
 }
 
 function updateUserUI() {
@@ -5281,6 +5564,7 @@ function updateUserUI() {
   // Available always = USDT balance from Firebase; Total updated by renderAssetList
   const av = $id('assetsAvail'); if(av) av.textContent = bal;
   try{ renderAssetList && renderAssetList(); }catch(e){}
+  updateNotifBadge();
   // User badges
   const hb = $id('homeUserBadge');
   const ab = $id('assetsUserAvt');
@@ -6500,6 +6784,12 @@ function checkPositionTriggers(){
       const px = hit==='TP'?p.tp : hit==='SL'?p.sl : hit==='LIQ'?p.liq : cur;
       closePositionPartial(p.id, p.qty, px);
       toast(hit+' triggered on '+p.coin+' @ '+px);
+      try{
+        if(hit==='LIQ') addNotif({ kind:'liq', title:'Position Liquidated', message:`Your ${p.side} ${p.lev}x ${p.coin}USDT position was liquidated at ${px}. Margin lost: ${(+p.margin||0).toFixed(2)} USDT.`, ts:Date.now() });
+        else if(hit==='TP') addNotif({ kind:'sys', title:'Take Profit Hit', message:`${p.side} ${p.coin}USDT closed at TP ${px}.`, ts:Date.now() });
+        else if(hit==='SL') addNotif({ kind:'sys', title:'Stop Loss Hit', message:`${p.side} ${p.coin}USDT closed at SL ${px}.`, ts:Date.now() });
+        else if(hit==='TRAIL') addNotif({ kind:'sys', title:'Trailing Stop Hit', message:`${p.side} ${p.coin}USDT closed by trailing stop @ ${px}.`, ts:Date.now() });
+      }catch(e){}
       changed = true;
     }
   }
