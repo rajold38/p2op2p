@@ -6947,9 +6947,9 @@ function renderGrid(){
       : \`\${(min*100).toLocaleString()}.00 - \${(max*100).toLocaleString()}.00 INR\`;
     const featured = i===0;
     const pmList = mode==='BUY'
-      ? ['<div class="pm">Digital eRupee</div>']
+      ? ['<div class="pm">UPI</div>']
       : ['<div class="pm pm-red">IMPS</div>','<div class="pm pm-blue">UPI</div>','<div class="pm pm-red">PhonePe</div>','<div class="pm pm-red">Bank transfer (India)</div>','<div class="pm pm-green">Google Pay</div>'];
-    const pmHtml = featured ? '<div class="ad-paymethods"><div class="pm">Digital eRupee</div></div>' : \`<div class="ad-paymethods">\${pmList.join('')}</div>\`;
+    const pmHtml = featured ? '<div class="ad-paymethods"><div class="pm">UPI</div></div>' : \`<div class="ad-paymethods">\${pmList.join('')}</div>\`;
     g.innerHTML += \`
       <div class="ad-card \${featured?'featured':''}" onclick="prepTrade('\${name}',\${rate},\${min},\${max})">
         <div class="ad-card-row">
