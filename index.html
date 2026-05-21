@@ -2,11 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
 <title>PROP2P</title>
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="mobile-web-app-capable" content="yes">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
 <style>
@@ -102,7 +99,6 @@
 #rwh .rmprog>span{display:block;height:100%;background:var(--orange);border-radius:2px}
 .dw-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;display:none;align-items:flex-end;justify-content:center}
 .dw-bg.show{display:flex}
-.dw-bg:not(.show){visibility:hidden;pointer-events:none;opacity:0}
 .dw-card{background:#0e1015;border-radius:22px 22px 0 0;padding:18px 18px 26px;width:100%;max-width:430px;border:1px solid #1f1f1f;border-bottom:none;max-height:88vh;overflow-y:auto}
 .dw-grip{width:38px;height:4px;background:#333;border-radius:3px;margin:0 auto 14px}
 .dw-title{font-size:18px;font-weight:800;text-align:center}
@@ -180,16 +176,15 @@
 .bb-hitem .hr .hst.ok{color:var(--green)}
 .bb-popup{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:900;display:none;align-items:center;justify-content:center;padding:0 28px}
 .bb-popup.show{display:flex}
-.bb-popup:not(.show){visibility:hidden;pointer-events:none;opacity:0}
 .bb-popup .bb-pop-card{background:#1c1c1c;border-radius:16px;padding:26px 22px;width:100%;max-width:340px;text-align:center}
 .bb-popup .bb-pop-ico{width:54px;height:54px;border-radius:50%;background:rgba(247,166,0,.15);color:var(--orange);display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto 14px}
 .bb-popup .bb-pop-ttl{font-size:17px;font-weight:800;margin-bottom:8px}
 .bb-popup .bb-pop-sub{font-size:13px;color:#999;line-height:1.5;margin-bottom:18px}
 .bb-popup .bb-pop-btn{width:100%;background:var(--orange);color:#000;border:none;border-radius:24px;padding:13px;font-weight:800;font-size:14px;cursor:pointer}
 :root{--bg:#000;--bg2:#0d0d0d;--bg3:#1a1a1a;--bg4:#222;--text:#fff;--text2:#8c8c8c;--text3:#444;--green:#00c087;--red:#f0444b;--orange:#f7a600;--border:#1f1f1f;--card:#111}
-body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;font-size:14px;max-width:430px;margin:0 auto;height:100dvh;display:flex;flex-direction:column;overflow:hidden;position:relative;text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased}
-.screen{display:none;flex:1;flex-direction:column;overflow:hidden;contain:layout paint style}
-.screen.active{display:flex;animation:scrIn .2s cubic-bezier(.22,1,.36,1)}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;font-size:14px;max-width:430px;margin:0 auto;height:100dvh;display:flex;flex-direction:column;overflow:hidden;position:relative}
+.screen{display:none;flex:1;flex-direction:column;overflow:hidden}
+.screen.active{display:flex;animation:scrIn .28s cubic-bezier(.22,1,.36,1)}
 @keyframes scrIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 html{scroll-behavior:smooth}
 .mrow,.crow,.ecsm,.ecard,.hact,.qab,.eact,.pill,.st,.ni,.bstab,.tf,.ibt,.hbm,.hbs,.bybtn,.slbtn,.bbuy,.bsell{transition:background .2s ease,color .2s ease,transform .15s ease,border-color .2s ease,opacity .2s ease}
@@ -206,16 +201,16 @@ html{scroll-behavior:smooth}
 .bnav .ni.active i{transform:translateY(-2px)}
 *{scroll-behavior:smooth}
 ::-webkit-scrollbar{width:0;height:0}
-.scroll{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding-bottom:74px;will-change:scroll-position}
+.scroll{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding-bottom:74px}
 .scroll::-webkit-scrollbar{display:none}
 /* STATUS */
 .sb{background:var(--bg);padding:14px 16px 4px;display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:700;flex-shrink:0}
 .sb-r{display:flex;align-items:center;gap:5px;font-size:12px}
 /* TOP NAV */
-.tnav{padding:calc(8px + env(safe-area-inset-top)) 16px 12px;display:flex;align-items:center;gap:14px;flex-shrink:0}
-.sbar{flex:1;background:#1b1c22;border-radius:23px;padding:10px 16px;display:flex;align-items:center;gap:8px;color:var(--text2);font-size:13px;cursor:pointer;min-height:46px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.02)}
-.ibt{width:34px;height:34px;display:flex;align-items:center;justify-content:center;color:var(--text);font-size:20px;position:relative;cursor:pointer;flex-shrink:0}
-.bdg{position:absolute;top:-3px;right:-7px;background:#f0444b;color:#fff;font-size:12px;font-weight:700;min-width:26px;height:20px;border-radius:12px;display:flex;align-items:center;justify-content:center;padding:0 5px;border:1px solid rgba(255,255,255,.2)}
+.tnav{padding:6px 12px 8px;display:flex;align-items:center;gap:8px;flex-shrink:0}
+.sbar{flex:1;background:var(--bg3);border-radius:20px;padding:9px 14px;display:flex;align-items:center;gap:8px;color:var(--text2);font-size:13px;cursor:pointer}
+.ibt{width:36px;height:36px;display:flex;align-items:center;justify-content:center;color:var(--text);font-size:17px;position:relative;cursor:pointer;flex-shrink:0}
+.bdg{position:absolute;top:2px;right:2px;background:var(--red);color:#fff;font-size:9px;font-weight:700;min-width:15px;height:15px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 3px}
 /* TABS */
 .stabs{display:flex;padding:0 12px;border-bottom:1px solid var(--border);overflow-x:auto;flex-shrink:0}
 .stabs::-webkit-scrollbar{display:none}
@@ -376,18 +371,15 @@ html{scroll-behavior:smooth}
 .etab.dim{color:var(--text2)}
 .etab.gold{color:var(--orange)}
 /* HOME */
-.hamt{font-size:36px;font-weight:800;margin:6px 0 4px;cursor:pointer;letter-spacing:0;line-height:1}
+.hamt{font-size:34px;font-weight:700;margin:5px 0 2px;cursor:pointer}
 .hbtns{display:flex;gap:10px;margin-bottom:18px;align-items:stretch}
-.hbm{flex:1;background:#ff9f2d;color:#000;font-weight:700;font-size:15px;padding:12px 14px;border-radius:24px;border:none;cursor:pointer;min-height:46px;white-space:nowrap}
-.hbs{background:#1b1c22;color:var(--text);font-weight:700;font-size:15px;padding:12px 14px;border-radius:24px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;min-height:46px;white-space:nowrap}
-.hbs-icon{background:#1b1c22;color:var(--text);border:none;border-radius:50%;width:46px;min-width:46px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px}
-.hacts{display:flex;justify-content:space-between;gap:8px;margin-bottom:20px}
-.hact{flex:1;display:flex;flex-direction:column;align-items:center;gap:7px;cursor:pointer;min-width:0}
-.hactc{width:48px;height:48px;border-radius:50%;background:#111216;display:flex;align-items:center;justify-content:center;font-size:20px;color:#fff}
-.hactc i{color:#fff!important}
-.hacts span{font-size:12px;color:#fff;font-weight:600;line-height:1.2;text-align:center;white-space:nowrap}
-.home-event-card{display:none!important}
-.home-market-wrap{padding:0 0 8px!important;border-top:none!important;background:#121315;border-radius:14px 14px 0 0;margin:0;overflow:hidden}.home-tabs-row{display:flex;gap:18px;overflow-x:auto;padding:14px 14px 8px;scrollbar-width:none}.home-tabs-row::-webkit-scrollbar,.home-type-row::-webkit-scrollbar{display:none}.home-tabs-row .st{padding:0!important;border:0!important;font-size:14px;font-weight:800;color:#70737b;white-space:nowrap}.home-tabs-row .st.active{color:#fff;border:0!important}.home-type-row{display:flex;gap:18px;overflow-x:auto;padding:6px 14px 10px;align-items:center}.home-type-row .pill{background:transparent!important;color:#737780!important;padding:0!important;border-radius:0!important;font-size:12px;font-weight:700;white-space:nowrap}.home-type-row .pill.active{background:#22232a!important;color:#fff!important;border-radius:14px!important;padding:5px 12px!important}.home-mini-row{display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:none;cursor:pointer}.home-mini-row .clogo-sm{width:28px;height:28px}.home-mini-name{font-weight:700;font-size:13px;color:#fff}.home-mini-vol{font-size:11px;color:#676b75;margin-top:2px}.home-mini-price{font-weight:700;font-size:13px;color:#fff}.home-mini-row .cpill{font-size:12px;border-radius:10px;width:74px;padding:5px 0;margin-top:0;text-align:center;font-weight:700}
+.hbm{flex:1;background:var(--orange);color:#000;font-weight:700;font-size:15px;padding:14px;border-radius:14px;border:none;cursor:pointer}
+.hbs{background:var(--bg3);color:var(--text);font-weight:600;font-size:13px;padding:14px 16px;border-radius:14px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}
+.hbs-icon{background:var(--bg3);color:var(--text);border:none;border-radius:14px;width:48px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px}
+.hacts{display:flex;gap:8px;margin-bottom:18px}
+.hact{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer}
+.hactc{width:42px;height:42px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:16px}
+.hacts span{font-size:10px;color:var(--text2)}
 /* BOTTOM NAV */
 .bnav{position:absolute;bottom:0;left:0;right:0;max-width:430px;margin:0 auto;background:rgba(0,0,0,0.95);backdrop-filter:blur(10px);border-top:1px solid var(--border);display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom)}
 .ni{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:9px 4px;cursor:pointer;gap:3px}
@@ -442,7 +434,6 @@ select.bysel{background:var(--bg3);border:none;color:var(--text2);font-size:12px
 /* ─── AUTH OVERLAY (Bybit dark theme) ─── */
 #authOverlay{position:fixed;inset:0;z-index:600;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.85);backdrop-filter:blur(16px);padding:18px}
 #authOverlay.show{display:flex;animation:scrIn .25s ease}
-#authOverlay:not(.show){visibility:hidden;pointer-events:none;opacity:0}
 .auth-modal{position:relative;width:100%;max-width:380px;background:var(--bg2);border:1px solid var(--border);border-radius:18px;padding:26px 22px 22px}
 .auth-close{position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;background:var(--bg3);border:none;color:var(--text);cursor:pointer;font-size:14px}
 .auth-title{font-size:20px;font-weight:700;text-align:center;margin-bottom:4px}
@@ -463,7 +454,7 @@ select.bysel{background:var(--bg3);border:none;color:var(--text2);font-size:12px
 #resetPanel.show{display:block}
 .reset-back{font-size:12px;color:var(--orange);cursor:pointer;margin-bottom:10px;display:inline-block}
 /* User badge in top nav */
-.user-badge{width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,#d7f2ff,#8bbad7);color:#000;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;cursor:pointer;flex-shrink:0;overflow:hidden;border:1px solid rgba(255,255,255,.18);box-shadow:0 8px 22px rgba(80,170,220,.2)}
+.user-badge{width:34px;height:34px;border-radius:50%;background:var(--orange);color:#000;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;cursor:pointer;flex-shrink:0;overflow:hidden}
 .user-badge img{width:100%;height:100%;object-fit:cover}
 /* P2P iframe screen */
 #sc-p2p{padding:0}
@@ -592,11 +583,11 @@ onAuthStateChanged(auth, async (fbUser) => {
     </div>
   </div>
   <div class="scroll">
-      <div style="padding:14px 16px 18px;">
-      <div style="color:var(--text2);font-size:15px;display:flex;align-items:center;gap:8px;"><span>Total Assets</span><i class="far fa-eye" style="font-size:13px;"></i></div>
-      <div class="hamt" onclick="openCurrencyPicker('home')"><span id="totalAssetUSD">0.00</span> <span style="font-size:16px;font-weight:500;color:var(--text2);letter-spacing:0;" id="homeCurLabel">USDT ▾</span></div>
-      <div style="color:var(--text2);font-size:11px;display:none;" id="homeBtcEq">≈ 0.00000000 BTC</div>
-      <div style="font-size:14px;margin:4px 0 16px;color:var(--green);font-weight:700;" id="homePnl">Today's P&L +0.00 USD(+0.00%) ∨</div>
+    <div style="padding:14px;">
+      <div style="color:var(--text2);font-size:13px;display:flex;align-items:center;gap:5px;"><i class="far fa-eye"></i>Total Assets</div>
+      <div class="hamt" onclick="openCurrencyPicker('home')"><span id="totalAssetUSD">0.00</span> <span style="font-size:18px;font-weight:500;color:var(--text2);" id="homeCurLabel">USDT ▾</span></div>
+      <div style="color:var(--text2);font-size:12px;" id="homeBtcEq">≈ 0.00000000 BTC</div>
+      <div style="font-size:13px;margin:4px 0 16px;" id="homePnl">Today's P&L +0.00 USD(+0.00%) ∨</div>
       <div class="hbtns">
         <button class="hbm" onclick="openDeposit()">Deposit crypto</button>
         <button class="hbs" onclick="openP2P()" style="flex:1;"><i class="fas fa-arrow-right-arrow-left"></i>P2P trading</button>
@@ -604,28 +595,23 @@ onAuthStateChanged(auth, async (fbUser) => {
       </div>
       <div class="hacts">
         <div class="hact" onclick="toast('Buy Crypto')"><div class="hactc"><i class="fas fa-credit-card" style="color:var(--text2);"></i></div><span>Buy Crypto</span></div>
-        <div class="hact" onclick="toast('Demo Trading')"><div class="hactc"><i class="fas fa-copy" style="color:var(--text2);"></i></div><span>Demo Trading</span></div>
+        <div class="hact" onclick="toast('Demo')"><div class="hactc"><i class="fas fa-copy" style="color:var(--text2);"></i></div><span>Demo</span></div>
         <div class="hact" onclick="toast('Launchpool')"><div class="hactc"><i class="fas fa-circle-dot" style="color:var(--text2);"></i></div><span>Launchpool</span></div>
         <div class="hact" onclick="toast('More')"><div class="hactc"><i class="fas fa-ellipsis" style="color:var(--text2);"></i></div><span>More</span></div>
       </div>
     </div>
     <!-- LIVE MINI MARKET on HOME -->
-    <div class="home-market-wrap">
-      <div>
-        <div class="home-tabs-row" id="home-cat-tabs">
-          <span class="st" onclick="homeTab(this,'Favorites')">Favorites</span>
-          <span class="st" onclick="homeTab(this,'Hot')">Hot</span>
-          <span class="st" onclick="homeTab(this,'New')">New</span>
-          <span class="st active" onclick="homeTab(this,'Gainers')">Gainers</span>
-          <span class="st" onclick="homeTab(this,'Losers')">Losers</span>
-          <span class="st" onclick="homeTab(this,'Turnover')">Turnover</span>
+    <div style="padding:0 14px 8px;border-top:1px solid var(--border);">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0 8px;">
+        <div style="display:flex;gap:12px;overflow-x:auto;" id="home-cat-tabs">
+          <span class="st active" style="padding:0 0 6px;border-bottom:2px solid var(--orange);" onclick="homeTab(this,'Gainers')">Gainers</span>
+          <span class="st" style="padding:0 0 6px;" onclick="homeTab(this,'Losers')">Losers</span>
+          <span class="st" style="padding:0 0 6px;" onclick="homeTab(this,'Hot')">Hot</span>
+          <span class="st" style="padding:0 0 6px;" onclick="homeTab(this,'New')">New</span>
         </div>
-        <div class="home-type-row">
-          <span class="pill active" data-htype="spot" onclick="homeMarketType(this,'spot')">Spot</span>
-          <span class="pill" data-htype="futures" onclick="homeMarketType(this,'futures')">Futures</span>
-          <span class="pill" data-htype="options" onclick="homeMarketType(this,'options')">Options</span>
-          <span class="pill" data-htype="defi" onclick="homeMarketType(this,'defi')">TradFi 🔥</span>
-          <span class="pill" data-htype="alpha" onclick="homeMarketType(this,'alpha')">Alpha</span>
+        <div style="display:flex;gap:8px;">
+          <span class="pill active" style="padding:3px 10px;" id="hspot-pill" onclick="homeMarketType('spot')">Spot</span>
+          <span class="pill" style="padding:3px 10px;" id="hfut-pill" onclick="homeMarketType('futures')">Futures</span>
         </div>
       </div>
       <div id="home-mini-list"><div class="ld"><i class="fas fa-circle-notch"></i>Loading live data…</div></div>
@@ -2565,7 +2551,7 @@ async function bybitGET(path, params={}) {
       return d.retCode === 0 ? d.result : null;
     } catch(e) { clearTimeout(timer); return null; }
   }
-  return await tryOne(BYBIT_REST_FALLBACK) || await tryOne(BYBIT_REST);
+  return await tryOne(BYBIT_REST) || await tryOne(BYBIT_REST_FALLBACK);
 }
 // ─── MARKETS ─────────────────────────────────────────────────────────────────
 async function loadMarkets() {
@@ -2598,9 +2584,8 @@ function renderMarketList(list) {
     const up = chgPct >= 0;
     const fire = parseFloat(t.turnover24h) > 1e8 ? '🔥' : '';
     const coin = t.symbol.replace('USDT','');
-    const logo = bestLogo(coin);
     return `<div class="mrow" onclick="openTrade('${t.symbol}','${mktCategory}')">
-      <img class="clogo" src="${logo.src}" data-sym="${coin}" onerror="logoFallback(this,${logo.step+1})" alt="${coin}" loading="lazy" decoding="async">
+      <img class="clogo" src="https://assets.coincap.io/assets/icons/${coin.toLowerCase()}@2x.png" data-sym="${coin}" onerror="logoFallback(this,1)" alt="${coin}">
       <div>
         <div class="cname">${coin}/USDT ${fire}</div>
         <div class="cvol">${fmtVol(t.turnover24h)}</div>
@@ -2634,21 +2619,6 @@ function setMktFilter(el, filter) {
 let homeTabSel = 'Gainers';
 let homeMktType = 'spot';
 
-let newListingCache = { spot:null, linear:null };
-async function getNewListings(category){
-  if(newListingCache[category]) return newListingCache[category];
-  const d = await bybitGET('/v5/market/instruments-info', { category, limit: 1000 });
-  if(!d||!d.list) return [];
-  const arr = d.list
-    .filter(x => x.symbol && x.symbol.endsWith('USDT') && x.launchTime)
-    .map(x => ({ symbol:x.symbol, t: parseInt(x.launchTime) }))
-    .sort((a,b) => b.t - a.t)
-    .slice(0,80)
-    .map(x => x.symbol);
-  newListingCache[category] = new Set(arr);
-  return newListingCache[category];
-}
-
 async function loadHomeMarket() {
   $('home-mini-list').innerHTML = '<div class="ld"><i class="fas fa-circle-notch"></i>Loading…</div>';
   const category = homeMktType==='spot' ? 'spot' : 'linear';
@@ -2659,16 +2629,7 @@ async function loadHomeMarket() {
   const tab = homeTabSel;
   if(tab==='Gainers') list.sort((a,b) => parseFloat(b.price24hPcnt)-parseFloat(a.price24hPcnt));
   else if(tab==='Losers') list.sort((a,b) => parseFloat(a.price24hPcnt)-parseFloat(b.price24hPcnt));
-  else if(tab==='New') {
-    const newSet = await getNewListings(category);
-    list = list.filter(t => newSet.has(t.symbol));
-    // sort by recency using order in set
-    const order = Array.from(newSet);
-    list.sort((a,b) => order.indexOf(a.symbol)-order.indexOf(b.symbol));
-  }
-  else if(tab==='Hot') list.sort((a,b) => parseFloat(b.turnover24h)-parseFloat(a.turnover24h));
-  else if(tab==='Favorites') list = list.filter(t => ['BTCUSDT','ETHUSDT','SOLUSDT','XRPUSDT','TONUSDT','DOGEUSDT','BNBUSDT','ADAUSDT'].includes(t.symbol));
-  else if(tab==='Turnover') list.sort((a,b) => parseFloat(b.turnover24h)-parseFloat(a.turnover24h));
+  else if(tab==='New') list.sort((a,b) => parseFloat(b.lastPrice)-parseFloat(a.lastPrice));
   else list.sort((a,b) => parseFloat(b.turnover24h)-parseFloat(a.turnover24h));
   list = list.slice(0,8);
 
@@ -2676,16 +2637,15 @@ async function loadHomeMarket() {
     const chg = parseFloat(t.price24hPcnt)*100;
     const up = chg>=0;
     const coin = t.symbol.replace('USDT','');
-    const logo = bestLogo(coin);
-    return `<div class="home-mini-row" onclick="openTrade('${t.symbol}','${category==='spot'?'spot':'linear'}')">
-      <img class="clogo-sm" src="${logo.src}" data-sym="${coin}" onerror="logoFallback(this,${logo.step+1})" alt="${coin}" loading="lazy" decoding="async">
+    return `<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer;" onclick="openTrade('${t.symbol}','${category==='spot'?'spot':'linear'}')">
+      <img class="clogo-sm" src="https://assets.coincap.io/assets/icons/${coin.toLowerCase()}@2x.png" data-sym="${coin}" onerror="logoFallback(this,1)" alt="${coin}">
       <div style="flex:1;min-width:0;">
-        <div class="home-mini-name">${coin}USDT</div>
-        <div class="home-mini-vol">${fmtVol(t.turnover24h)}</div>
+        <div style="font-weight:600;font-size:13px;">${coin}/USDT</div>
+        <div style="font-size:11px;color:var(--text2);">${fmtVol(t.turnover24h)}</div>
       </div>
       <div style="text-align:right;">
-        <div class="home-mini-price">${fmtPrice(t.lastPrice)}</div>
-        <div class="cpill ${up?'up':'dn'}" style="display:inline-block;">${up?'+':''}${chg.toFixed(2)}%</div>
+        <div style="font-weight:600;font-size:13px;">${fmtPrice(t.lastPrice)}</div>
+        <div class="cpill ${up?'up':'dn'}" style="display:inline-block;margin-top:2px;padding:2px 8px;font-size:11px;">${up?'+':''}${chg.toFixed(2)}%</div>
       </div>
     </div>`;
   }).join('');
@@ -2693,15 +2653,15 @@ async function loadHomeMarket() {
 
 function homeTab(el, tab) {
   homeTabSel = tab;
-  document.querySelectorAll('#home-cat-tabs .st').forEach(t => { t.classList.remove('active'); t.style.borderBottomColor=''; t.style.color=''; });
-  el.classList.add('active');
+  document.querySelectorAll('#home-cat-tabs .st').forEach(t => { t.classList.remove('active'); t.style.borderBottomColor='transparent'; t.style.color='var(--text2)'; });
+  el.classList.add('active'); el.style.borderBottomColor='var(--orange)'; el.style.color='var(--text)';
   loadHomeMarket();
 }
 
-function homeMarketType(el, type) {
-  homeMktType = (type==='spot' || type==='futures') ? type : 'futures';
-  document.querySelectorAll('.home-type-row .pill').forEach(p => p.classList.remove('active'));
-  if(el && el.classList) el.classList.add('active');
+function homeMarketType(type) {
+  homeMktType = type;
+  $('hspot-pill').classList.toggle('active', type==='spot');
+  $('hfut-pill').classList.toggle('active', type==='futures');
   loadHomeMarket();
 }
 
@@ -3342,9 +3302,6 @@ setTimeout(loadMarkets, 1000);
 // ─── COIN LOGO FALLBACK CHAIN ──────────────────────────────────────
 // Sources (in order): Bybit CDN → CoinIcons → coinwink → coincap → atomiclabs → spothq → letter avatar
 LOGO_SOURCES = [
-  s => `https://s1.bycsi.com/app/assets/token/${s.toLowerCase()}.svg`,
-  s => `https://s1.bycsi.com/app/assets/token/${s.toLowerCase()}.png`,
-  s => `https://api.bybit.com/v5/public/coin-icon?coin=${s.toUpperCase()}`,
   s => `https://assets.coincap.io/assets/icons/${s.toLowerCase()}@2x.png`,
   s => (COIN_CMC_ID && COIN_CMC_ID[s.toLowerCase()]) ? `https://s2.coinmarketcap.com/static/img/coins/64x64/${COIN_CMC_ID[s.toLowerCase()]}.png` : '',
   s => `https://raw.githubusercontent.com/coinwink/cryptocurrency-logos/master/coins/128x128/${s.toLowerCase()}.png`,
@@ -3374,40 +3331,6 @@ function logoSrc(sym, step){
   const f = sources[step] || sources[0];
   return f ? f(sym) : '';
 }
-var __cgCache = window.__cgCache || (window.__cgCache = {});
-var __cgQueue = window.__cgQueue || (window.__cgQueue = []);
-var __cgRunning = window.__cgRunning || (window.__cgRunning = { n: 0 });
-var __cgDisabledUntil = 0;
-function __cgPump(){
-  while(__cgRunning.n < 2 && __cgQueue.length){
-    const job = __cgQueue.shift();
-    __cgRunning.n++;
-    job().finally(() => { __cgRunning.n--; setTimeout(__cgPump, 350); });
-  }
-}
-async function resolveCoinGeckoLogo(sym){
-  const k = String(sym||'').toLowerCase();
-  if(!k) return '';
-  if(__cgCache[k] !== undefined) return __cgCache[k];
-  if(Date.now() < __cgDisabledUntil) return '';
-  return new Promise(resolve => {
-    __cgQueue.push(async () => {
-      try{
-        const r = await fetch('https://api.coingecko.com/api/v3/search?query='+encodeURIComponent(k));
-        if(r.status === 429){ __cgDisabledUntil = Date.now() + 60000; __cgCache[k]=''; resolve(''); return; }
-        const j = await r.json();
-        const hit = (j.coins||[]).find(c => (c.symbol||'').toLowerCase() === k) || (j.coins||[])[0];
-        __cgCache[k] = hit && hit.large ? hit.large : '';
-      }catch(e){ __cgCache[k] = ''; }
-      resolve(__cgCache[k]);
-    });
-    __cgPump();
-  });
-}
-function setSvgFallback(img){
-  img.onerror = null;
-  img.src = 'data:image/svg+xml;utf8,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><defs><linearGradient id="g" x1="12" y1="6" x2="52" y2="58"><stop stop-color="#fff"/><stop offset=".38" stop-color="#d7d9df"/><stop offset="1" stop-color="#7f858f"/></linearGradient></defs><circle cx="32" cy="32" r="30" fill="url(#g)"/><circle cx="32" cy="32" r="22" fill="#111318" opacity=".92"/><path d="M20 35c7-1 8-12 16-12 5 0 8 3 8 8 0 8-8 13-18 12" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round"/><circle cx="43" cy="21" r="4" fill="#ff9f2d"/></svg>`);
-}
 function logoFallback(img, step){
   const sym = img.dataset.sym || img.alt || '?';
   const sources = (Array.isArray(LOGO_SOURCES) && LOGO_SOURCES.length) ? LOGO_SOURCES : [s => `https://assets.coincap.io/assets/icons/${String(s).toLowerCase()}@2x.png`];
@@ -3421,15 +3344,14 @@ function logoFallback(img, step){
     }
     next++;
   }
-  // last resort: CoinGecko search
-  resolveCoinGeckoLogo(sym).then(url => {
-    if(url){ img.onerror = function(){ setSvgFallback(img); }; img.src = url; }
-    else setSvgFallback(img);
-  });
+  img.onerror = null;
+  img.src = 'https://ui-avatars.com/api/?name='+encodeURIComponent(sym)+'&background=1a1a1a&color=f7a600&bold=true&size=64&rounded=true';
 }
 // helper: kick off chain with smartest first source (CMC if known, else coincap)
 function bestLogo(sym){
-  return { src: logoSrc(sym,3), step: 3 };
+  const s = String(sym||'').toLowerCase();
+  if(COIN_CMC_ID && COIN_CMC_ID[s] && LOGO_SOURCES[1]) return { src: LOGO_SOURCES[1](sym), step: 1 };
+  return { src: logoSrc(sym,2), step: 2 };
 }
 
 // ─── BOTTOM SHEETS ─────────────────────────────────────────────────
@@ -5343,12 +5265,11 @@ main{padding:14px 16px 30px;animation:fadeUp .4s var(--ease);}
 
 /* ─── OVERLAYS ──────────────────────────────────── */
 .overlay{
-  position:fixed;inset:0;z-index:200;display:flex;align-items:flex-end;justify-content:center;
+  position:fixed;inset:0;z-index:200;display:none;align-items:flex-end;justify-content:center;
   background:rgba(0,0,0,.78);backdrop-filter:blur(14px) saturate(1.2);
-  opacity:0;visibility:hidden;pointer-events:none;
 }
 .overlay.ctr{align-items:center;}
-.overlay.show{opacity:1;visibility:visible;pointer-events:auto;animation:fadeIn .18s var(--ease);}
+.overlay.show{display:flex!important;animation:fadeIn .25s var(--ease);}
 .sheet{
   width:100%;max-width:480px;padding:22px;max-height:90vh;overflow-y:auto;
   background:linear-gradient(180deg,rgba(28,30,40,.92),rgba(14,16,22,.96));
@@ -5827,11 +5748,9 @@ main{padding:0 0 90px!important;}
 
 /* ─── Bybit Buy/Sell Action Overlay ─── */
 .byt-act-ov{align-items:stretch!important;justify-content:stretch!important;background:#000!important;backdrop-filter:none!important;padding:0!important;}
-.byt-act-ov:not(.show) .byt-act{transform:translateY(100%);}
-.byt-act-ov.show .byt-act{transform:none;animation:slideUp .24s var(--ease);}
 .byt-act{
   position:fixed;inset:0;width:100%;max-width:100%;background:#000;display:flex;flex-direction:column;
-  height:100vh;height:100dvh;
+  height:100vh;height:100dvh;animation:slideUp .3s var(--ease);
   font-family:'Plus Jakarta Sans',sans-serif;overflow:hidden;
 }
 .byt-act-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 6px;}
@@ -7851,19 +7770,8 @@ function selNet(net,pfx){
   if(pfx==='dep') depNet=net; else witNet=net;
 }
 
-function openOverlay(id) {
-  const el=document.getElementById(id); if(!el) return;
-  el.classList.remove('show');
-  void el.offsetHeight;
-  el.classList.add('show');
-}
-function closeOverlay(id){
-  const el=document.getElementById(id); if(!el) return;
-  el.classList.remove('show');
-  if(id==='actionOverlay'){
-    const inp=document.getElementById('actInp'); if(inp) inp.blur();
-  }
-}
+function openOverlay(id) { document.getElementById(id).classList.add('show'); }
+function closeOverlay(id){ document.getElementById(id).classList.remove('show'); }
 
 function showAlert(type,title,msg){
   const icons={success:'<span style="color:var(--g);font-size:50px;">✓</span>',error:'<span style="color:var(--r);font-size:50px;">✕</span>',info:'<span style="color:var(--y);font-size:50px;">!</span>'};
