@@ -282,8 +282,8 @@ html{scroll-behavior:smooth}
 .irow{display:flex;align-items:center;justify-content:space-between}
 .irow input{background:none;border:none;color:var(--text);font-size:14px;font-weight:600;width:75%;outline:none}
 .irow span{color:var(--text2);font-size:12px}
-.islider{width:100%;-webkit-appearance:none;height:3px;background:var(--bg4);border-radius:2px;outline:none;margin:8px 0}
-.islider::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--text);border:2px solid var(--orange);cursor:pointer}
+.islider{width:100%;-webkit-appearance:none;height:24px;background:transparent;outline:none;margin:8px 0;cursor:pointer;touch-action:manipulation}.islider::-webkit-slider-runnable-track{height:3px;background:var(--bg4);border-radius:2px}.islider::-moz-range-track{height:3px;background:var(--bg4);border-radius:2px}
+.islider::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--text);border:2px solid var(--orange);cursor:pointer;margin-top:-8px}.islider::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:var(--text);border:2px solid var(--orange);cursor:pointer}
 .cbrow{display:flex;align-items:center;gap:7px;margin-bottom:7px;font-size:12px;color:var(--text2)}
 .cb{width:15px;height:15px;border:1.5px solid var(--border2,#333);border-radius:3px;flex-shrink:0}
 .bybtn{width:100%;background:var(--green);color:#fff;font-weight:700;font-size:14px;padding:13px;border-radius:12px;border:none;cursor:pointer;margin-top:4px}
@@ -299,8 +299,8 @@ html{scroll-behavior:smooth}
 .pbtn{flex:1;background:transparent;border:1px solid #2a2a2a;color:var(--text);padding:7px 4px;border-radius:18px;font-size:11px;font-weight:600;cursor:pointer}
 .pbtn:hover{background:var(--bg3)}
 .slider-wrap{position:relative;padding:8px 4px 18px;margin:2px 0}
-.slider-wrap .islider{margin:6px 0 0}
-.slider-dots{position:absolute;top:13px;left:0;right:0;display:flex;justify-content:space-between;pointer-events:none;padding:0 7px}
+.slider-wrap .islider{margin:6px 0 0;position:relative;z-index:2}
+.slider-dots{position:absolute;top:18px;left:0;right:0;display:flex;justify-content:space-between;pointer-events:none;padding:0 7px;z-index:0}
 .slider-dots span{width:8px;height:8px;border-radius:50%;background:var(--bg3);border:1.5px solid var(--text3)}
 .sheet-row{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;cursor:pointer;font-size:14px}
 .sheet-row.active{color:var(--orange)}
@@ -503,7 +503,26 @@ onAuthStateChanged(auth, async (fbUser) => {
 </script>
 </head>
 <body>
-
+</head>
+<body>
+<div id="__diag" style="position:fixed;top:0;left:0;right:0;z-index:99999;background:#400;color:#fff;font:12px monospace;padding:8px;display:none;white-space:pre-wrap;max-height:50vh;overflow:auto"></div>
+<script>
+(function(){
+  function show(msg){
+    var d=document.getElementById('__diag'); if(!d) return;
+    d.style.display='block'; d.textContent += msg + '\n';
+  }
+  window.addEventListener('error', function(e){
+    show('[JS ERROR] '+(e.message||'')+' @ '+(e.filename||'')+':'+(e.lineno||'')+':'+(e.colno||''));
+  });
+  window.addEventListener('unhandledrejection', function(e){
+    show('[PROMISE] '+(e.reason && (e.reason.message||e.reason) || 'unknown'));
+  });
+  setTimeout(function(){
+    if(!window._fb) show('[DIAG] Firebase SDK did not load after 8s. Likely blocked by sandbox/CSP. Open this file from your server.js or actual domain.');
+  }, 8000);
+})();
+</script>
 <!-- ─── AUTH OVERLAY ─── -->
 <div id="authOverlay" onclick="if(event.target===this)closeAuth()">
   <div class="auth-modal">
@@ -1327,7 +1346,8 @@ onAuthStateChanged(auth, async (fbUser) => {
     <div class="bb-ttl" id="bbDtlTitle">Withdrawal Details</div>
     <span style="width:24px"></span>
   </div>
-  <div class="bb-body" style="display:flex;flex-direction:column;height:100%;">
+  <div class="bb-body" style="display:flex;flex-direction:column;height:100%;padding:0;">
+   <div style="max-width:420px;width:100%;margin:0 auto;padding:0 24px;display:flex;flex-direction:column;flex:1;">
     <div style="text-align:center;padding:18px 0 28px;">
       <div style="color:#8c8c8c;font-size:14px;">Quantity</div>
       <div style="font-size:30px;font-weight:800;color:#fff;margin:8px 0;"><span id="bbDtlQty">0</span> <span id="bbDtlSym">USDT</span></div>
@@ -1340,7 +1360,8 @@ onAuthStateChanged(auth, async (fbUser) => {
     <div class="bb-kv" style="align-items:flex-start;"><span class="k" id="bbDtlAddrK">Withdrawal Address</span><span class="v" style="text-align:right;word-break:break-all;max-width:62%;font-size:12px;display:flex;align-items:flex-start;gap:6px;justify-content:flex-end;"><span id="bbDtlAddr">—</span><i class="far fa-copy" style="cursor:pointer;color:#888;font-size:13px;flex-shrink:0;" onclick="copyText(document.getElementById('bbDtlAddr').textContent)"></i></span></div>
     <div class="bb-kv" style="align-items:flex-start;"><span class="k">Transaction Hash</span><span class="v" style="text-align:right;word-break:break-all;max-width:62%;font-size:12px;display:flex;align-items:flex-start;gap:6px;justify-content:flex-end;"><span id="bbDtlTx">—</span><i class="far fa-copy" style="cursor:pointer;color:#888;font-size:13px;flex-shrink:0;" onclick="copyText(document.getElementById('bbDtlTx').textContent)"></i></span></div>
     <div style="flex:1;"></div>
-    <button onclick="bbExplorer()" style="margin:18px 0 8px;width:100%;background:transparent;border:1px solid #2a2a2a;color:#fff;border-radius:30px;padding:14px;font-size:15px;font-weight:600;cursor:pointer;">View in Blockchain Explorer</button>
+    <button onclick="bbExplorer()" style="margin:18px 0 18px;width:100%;background:transparent;border:1px solid #2a2a2a;color:#fff;border-radius:30px;padding:14px;font-size:15px;font-weight:600;cursor:pointer;">View in Blockchain Explorer</button>
+   </div>
   </div>
 </div>
 
@@ -1554,17 +1575,12 @@ onAuthStateChanged(auth, async (fbUser) => {
   <div class="ni" id="ni-assets" onclick="go('assets')"><i class="fas fa-wallet"></i><span>Assets</span></div>
 </nav>
 <div class="toast" id="toast-el"></div>
-
 <script>
 'use strict';
 // ─── GLOBALS ──────────────────────────────────────────────────────────────────
-// When opened as a local file (file://) or any non-http origin, call Bybit directly.
-// When served from our app, use the proxy to avoid CORS.
-// Use Lovable proxy only when running inside Lovable preview/published host.
-// Anywhere else (GitHub Pages, file://, custom domains) → call Bybit directly.
-const BYBIT_REST  = (location.hostname.endsWith('lovable.app') || location.hostname.endsWith('lovableproject.com'))
-  ? '/api/bybit'
-  : 'https://api.bybit.com';
+// Direct Bybit first so downloaded/local HTML keeps working; app proxy is fallback only.
+const BYBIT_REST  = 'https://api.bybit.com';
+const BYBIT_REST_FALLBACK = (location.protocol === 'http:' || location.protocol === 'https:') ? '/api/bybit' : '';
 const BYBIT_WS    = 'wss://stream.bybit.com/v5/public';
 let mktCategory   = 'linear';   // linear=futures, spot=spot
 let mktFilter     = 'hot';
@@ -1856,6 +1872,11 @@ async function claimMission(id){
 // DEPOSIT / WITHDRAW (native, writes Firebase)
 // ═══════════════════════════════════════════
 let _dwNet = { dep:'BEP20', wit:'BEP20' };
+// Early globals: prevents inline image/socket events from hitting TDZ while the single-file app is still parsing.
+var obAsks = window.obAsks || [], obBids = window.obBids || [];
+var FUT = window.FUT || { margin:'Cross', lev:10, otype:'Market', unit:'USDT', dir:'Long' };
+var LOGO_SOURCES = window.LOGO_SOURCES || [];
+var COIN_CMC_ID = window.COIN_CMC_ID || {};
 function dwNet(kind, net){
   _dwNet[kind] = net;
   ['BEP20','ERC20'].forEach(n=>{
@@ -1906,10 +1927,57 @@ function bbOpen(id){ document.getElementById(id).classList.add('show'); }
 function bbClose(id){ document.getElementById(id).classList.remove('show'); }
 function bbClosePopup(){ document.getElementById('bbPopup').classList.remove('show'); }
 
-// Read coin balance — USDT comes from window.userBalance, everything else 0
+// Universal date formatter — DD/MM/YYYY, HH:MM:SS (24h, IST). Accepts ts(ms), ISO, or pre-formatted string.
+function bbFmtTime(h){
+  try{
+    let d=null;
+    if(h && typeof h==='object'){
+      if(h.ts){ d=new Date(Number(h.ts)); }
+      else if(h.date){
+        const s=String(h.date);
+        // try ISO / native parse
+        const p=new Date(s);
+        if(!isNaN(p.getTime())) d=p;
+        else{
+          // DD/MM/YYYY[, HH:MM[:SS]]
+          const m=s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})(?:[, ]+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
+          if(m){ const y=m[3].length===2?2000+Number(m[3]):Number(m[3]); d=new Date(Date.UTC(y,Number(m[2])-1,Number(m[1]),(Number(m[4]||0))-5,(Number(m[5]||0))-30,Number(m[6]||0))); }
+        }
+      }
+    } else if(h){ d=new Date(h); }
+    if(!d || isNaN(d.getTime())) return (h && h.date)||'—';
+    const pad=n=>String(n).padStart(2,'0');
+    const parts=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Kolkata',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).formatToParts(d);
+    const o={}; parts.forEach(p=>o[p.type]=p.value);
+    return `${o.day}/${o.month}/${o.year} ${o.hour}:${o.minute}:${o.second}`;
+  }catch(e){ return (h&&h.date)||'—'; }
+}
+function bbFmtChain(h){
+  const c = (h&&(h.chain||h.network))||'';
+  if(c && c!=='—') return String(c).toUpperCase();
+  return 'BEP20';
+}
+// Read coin balance — derived from approved history (per-coin), USDT from window.userBalance
+window._coinBalCache = {};
+function bbRecalcCoinBals(){
+  const bals = {};
+  (_bbHistCache||[]).forEach(h=>{
+    const c = (h.coin||'USDT').toUpperCase();
+    const ok = (h.status==='SUCCESS'||h.status==='APPROVED'||h.status==='COMPLETED'||h.status==='Succeeded');
+    if(!ok) return;
+    const amt = parseFloat(h.amt||0) || 0;
+    if(!bals[c]) bals[c]=0;
+    if(h.type==='WITHDRAW') bals[c] -= amt;
+    else if(h.type==='DEPOSIT') bals[c] += amt;
+  });
+  window._coinBalCache = bals;
+  return bals;
+}
 function bbBal(sym){
+  sym = (sym||'').toUpperCase();
   if(sym==='USDT') return parseFloat(window.userBalance||0);
-  return 0;
+  const b = (window._coinBalCache||{})[sym];
+  return b>0 ? b : 0;
 }
 function bbFmtBal(n){
   if(!n) return '0';
@@ -1918,15 +1986,15 @@ function bbFmtBal(n){
   return n.toFixed(4).replace(/0+$/,'').replace(/\.$/,'');
 }
 
-function bbStart(mode){
+async function bbStart(mode){
   if(!needLogin()) return;
   _bbMode = mode || 'DEPOSIT';
   document.getElementById('bbCoinSrch').value='';
-  // Update header title
   const ttl = document.querySelector('#bbCoin .bb-ttl');
   if(ttl) ttl.textContent = 'Select Coin';
-  bbRenderCoins();
   bbOpen('bbCoin');
+  bbRenderCoins();
+  try{ await bbLoadHistFromFb(); bbRecalcCoinBals(); bbRenderCoins(); }catch(e){}
 }
 function bbStartDeposit(){ bbStart('DEPOSIT'); }
 function bbStartWithdraw(){ bbStart('WITHDRAW'); }
@@ -2065,7 +2133,6 @@ function bbFaqDetail(title, body){
      <div style="color:#bbb;font-size:14px;line-height:1.7;white-space:pre-wrap;">${body}</div>
      <button class="bb-pop-btn" style="margin-top:22px;" onclick="bbClose('bbFaq')">Back</button>`;
 }
-
 let _bbHistTab='DEPOSIT';
 async function bbOpenHistory(){
   _bbHistTab='DEPOSIT';
@@ -2078,12 +2145,13 @@ async function bbOpenHistory(){
 let _bbHistCache = [];
 async function bbLoadHistFromFb(){
   try{
-    if(!window._fb || !window.currentFbUser){ _bbHistCache=[]; return; }
+    if(!window._fb || !window.currentFbUser){ _bbHistCache=[]; bbRecalcCoinBals(); return; }
     const { db, ref, get } = window._fb;
     const snap = await get(ref(db, 'users/'+window.currentFbUser.firebaseUid+'/history'));
     const v = snap.exists() ? snap.val() : null;
     _bbHistCache = v ? Object.values(v).sort((a,b)=>(b.ts||0)-(a.ts||0)) : [];
-  }catch(e){ _bbHistCache=[]; }
+    bbRecalcCoinBals();
+  }catch(e){ _bbHistCache=[]; bbRecalcCoinBals(); }
 }
 document.addEventListener('click',(e)=>{
   const s = e.target.closest('#bbHistTabs span'); if(!s) return;
@@ -2149,8 +2217,8 @@ function bbShowHistDetail(h){
   document.getElementById('bbDtlAddrK').textContent = isWit?'Withdrawal Address':'Deposit Address';
   document.getElementById('bbDtlFeesRow').style.display = isWit?'flex':'none';
   document.getElementById('bbDtlFees').textContent = isWit?(h.fees||'0'):'0';
-  document.getElementById('bbDtlChain').textContent = h.chain||'—';
-  document.getElementById('bbDtlTime').textContent = h.date || (h.ts? new Date(h.ts).toLocaleString('en-IN',{hour12:false}).replace(',',''):'—');
+  document.getElementById('bbDtlChain').textContent = bbFmtChain(h);
+  document.getElementById('bbDtlTime').textContent = bbFmtTime(h);
   document.getElementById('bbDtlAddr').textContent = h.addr||'—';
   document.getElementById('bbDtlTx').textContent = h.hash||h.txid||'—';
   bbOpen('bbDtl');
@@ -2173,7 +2241,6 @@ function _withP2P(cb, attempt=0){
   if(attempt < 20) return setTimeout(()=>_withP2P(cb, attempt+1), 300);
   toast('Backend not ready — try again in a moment');
 }
-
 async function depConfirm(){
   const amt = parseFloat(document.getElementById('depAmt').value)||0;
   if(amt<=0) return toast('Invalid amount');
@@ -2227,6 +2294,42 @@ async function writeBalance(newVal){
 }
 
 // Unified balance — listen for P2P iframe broadcast and mirror to header
+// [FIXED] P2P iframe auth bridge: when iframe requests auth, broadcast parent's current Firebase user
+function _broadcastAuthToP2P(){
+  try{
+    const fr = document.getElementById('p2pFrame');
+    if(!fr || !fr.contentWindow) return;
+    const u = window.currentFbUser;
+    fr.contentWindow.postMessage({
+      source:'parent', type:'auth-state',
+      user: u ? { uid: u.firebaseUid || u.uid, email: u.email||'', displayName: u.displayName||u.name||'' } : null
+    }, '*');
+  }catch(e){}
+}
+window.addEventListener('message', e => {
+  const d = e.data || {};
+  if(d.source === 'p2p-iframe' && d.type === 'request-auth'){ _broadcastAuthToP2P(); }
+  if(d.source === 'p2p-iframe' && d.type === 'open-login'){
+    // iframe needs login — open parent's auth flow if not signed in, else just rebroadcast
+    if(window.currentFbUser){ _broadcastAuthToP2P(); }
+    else { try{ if(typeof openAuth==='function') openAuth('signin'); }catch(e){} }
+  }
+});
+// Auto-broadcast whenever parent's auth changes
+(function(){
+  let _lastUid = null;
+  setInterval(()=>{
+    const u = window.currentFbUser;
+    const uid = u ? (u.firebaseUid||u.uid) : null;
+    if(uid !== _lastUid){ _lastUid = uid; _broadcastAuthToP2P(); }
+  }, 800);
+})();
+// Also broadcast when p2p iframe finishes loading
+window.addEventListener('load', ()=>{
+  const fr = document.getElementById('p2pFrame');
+  if(fr){ fr.addEventListener('load', ()=> setTimeout(_broadcastAuthToP2P, 150)); }
+});
+
 window.addEventListener('message',(ev)=>{
   const d = ev.data || {};
   if(d && d.source === 'p2p-iframe' && d.type === 'balance'){
@@ -2411,21 +2514,23 @@ async function doLogout() {
   await window._fb.signOut(window._fb.auth);
   toast('Signed out');
 }
-
-// ─── REST FETCH ───────────────────────────────────────────────────────────────
 async function bybitGET(path, params={}) {
   const qs = new URLSearchParams(params).toString();
-  const url = `${BYBIT_REST}${path}${qs?'?'+qs:''}`;
-  const ctrl = new AbortController();
-  const timer = setTimeout(()=>ctrl.abort(), 8000);
-  try {
-    const r = await fetch(url, { signal: ctrl.signal });
-    clearTimeout(timer);
-    const d = await r.json();
-    return d.retCode === 0 ? d.result : null;
-  } catch(e) { clearTimeout(timer); return null; }
+  const suffix = `${path}${qs?'?'+qs:''}`;
+  async function tryOne(base){
+    if(!base) return null;
+    const ctrl = new AbortController();
+    const timer = setTimeout(()=>ctrl.abort(), 8000);
+    try {
+      const r = await fetch(base+suffix, { signal: ctrl.signal, mode: 'cors', cache: 'no-store' });
+      clearTimeout(timer);
+      if(!r.ok) return null;
+      const d = await r.json();
+      return d.retCode === 0 ? d.result : null;
+    } catch(e) { clearTimeout(timer); return null; }
+  }
+  return await tryOne(BYBIT_REST) || await tryOne(BYBIT_REST_FALLBACK);
 }
-
 // ─── MARKETS ─────────────────────────────────────────────────────────────────
 async function loadMarkets() {
   $('mkt-list').innerHTML = '<div class="ld"><i class="fas fa-circle-notch"></i>Loading…</div>';
@@ -2550,7 +2655,7 @@ async function openTrade(symbol, category) {
   const coin = resolvedSymbol.replace('USDT','');
   $('trade-pair-name').textContent = coin+'/USDT';
   const logo = $('trade-pair-logo');
-  if(logo){ logo.dataset.sym=coin; logo.onerror=function(){logoFallback(this,1)}; logo.src=LOGO_SOURCES[0](coin); }
+  if(logo){ logo.dataset.sym=coin; logo.onerror=function(){logoFallback(this,1)}; logo.src=logoSrc(coin,0); }
   $('cb-coin').textContent = coin;
   $('cb-buy-price').textContent = '--';
   $('cb-sell-price').textContent = '--';
@@ -2783,7 +2888,7 @@ function connectKlineWS() {
 }
 
 // ─── ORDER BOOK WEBSOCKET ─────────────────────────────────────────────────────
-let obAsks = [], obBids = [];
+obAsks = obAsks || []; obBids = obBids || [];
 
 function applyOBDelta(existing, updates){
   const m = new Map(existing.map(r=>[r[0], r[1]]));
@@ -2994,7 +3099,7 @@ function spotSliderChange(v){
   updateOrderValue();
 }
 // ─── FUTURES STATE & HELPERS ──────────────────────────────────────
-const FUT = { margin:'Cross', lev:10, otype:'Market', unit:'USDT', dir:'Long' };
+FUT = FUT || { margin:'Cross', lev:10, otype:'Market', unit:'USDT', dir:'Long' };
 function setFutMargin(m){ FUT.margin=m; closeSheet('margin-sheet'); buildTradePanel(); }
 function setFutLev(v){
   FUT.lev=v;
@@ -3174,16 +3279,16 @@ setTimeout(loadMarkets, 1000);
 
 // ─── COIN LOGO FALLBACK CHAIN ──────────────────────────────────────
 // Sources (in order): Bybit CDN → CoinIcons → coinwink → coincap → atomiclabs → spothq → letter avatar
-const LOGO_SOURCES = [
+LOGO_SOURCES = [
   s => `https://assets.coincap.io/assets/icons/${s.toLowerCase()}@2x.png`,
-  s => COIN_CMC_ID[s.toLowerCase()] ? `https://s2.coinmarketcap.com/static/img/coins/64x64/${COIN_CMC_ID[s.toLowerCase()]}.png` : '',
+  s => (COIN_CMC_ID && COIN_CMC_ID[s.toLowerCase()]) ? `https://s2.coinmarketcap.com/static/img/coins/64x64/${COIN_CMC_ID[s.toLowerCase()]}.png` : '',
   s => `https://raw.githubusercontent.com/coinwink/cryptocurrency-logos/master/coins/128x128/${s.toLowerCase()}.png`,
   s => `https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@1a63530be6e374711a8554f31b17e4cb92c25fa5/128/color/${s.toLowerCase()}.png`,
   s => `https://cdn.jsdelivr.net/gh/spothq/cryptocurrency-icons@master/128/color/${s.toLowerCase()}.png`,
   s => `https://cryptoicon-api.pages.dev/api/icon/${s.toLowerCase()}`,
 ];
 // CMC IDs for top + newer coins (extends real logo coverage)
-const COIN_CMC_ID = {
+COIN_CMC_ID = {
   btc:1,eth:1027,usdt:825,usdc:3408,bnb:1839,xrp:52,sol:5426,ada:2010,doge:74,trx:1958,
   ton:11419,dot:6636,matic:3890,ltc:2,bch:1831,link:1975,uni:7083,atom:3794,xlm:512,etc:1321,
   near:6535,apt:21794,arb:11841,op:11840,fil:2280,inj:7226,sui:20947,sei:23149,tia:22861,
@@ -3200,14 +3305,16 @@ const COIN_CMC_ID = {
 };
 function logoSrc(sym, step){
   step = step||0;
-  const f = LOGO_SOURCES[step];
+  const sources = (Array.isArray(LOGO_SOURCES) && LOGO_SOURCES.length) ? LOGO_SOURCES : [s => `https://assets.coincap.io/assets/icons/${String(s).toLowerCase()}@2x.png`];
+  const f = sources[step] || sources[0];
   return f ? f(sym) : '';
 }
 function logoFallback(img, step){
   const sym = img.dataset.sym || img.alt || '?';
-  let next = step;
-  while(next < LOGO_SOURCES.length){
-    const src = LOGO_SOURCES[next](sym);
+  const sources = (Array.isArray(LOGO_SOURCES) && LOGO_SOURCES.length) ? LOGO_SOURCES : [s => `https://assets.coincap.io/assets/icons/${String(s).toLowerCase()}@2x.png`];
+  let next = step || 0;
+  while(next < sources.length){
+    const src = sources[next](sym);
     if(src){
       img.onerror = function(){ logoFallback(img, next+1); };
       img.src = src;
@@ -3220,9 +3327,9 @@ function logoFallback(img, step){
 }
 // helper: kick off chain with smartest first source (CMC if known, else coincap)
 function bestLogo(sym){
-  const s = sym.toLowerCase();
-  if(COIN_CMC_ID[s]) return { src: LOGO_SOURCES[1](sym), step: 1 };
-  return { src: LOGO_SOURCES[2](sym), step: 2 };
+  const s = String(sym||'').toLowerCase();
+  if(COIN_CMC_ID && COIN_CMC_ID[s] && LOGO_SOURCES[1]) return { src: LOGO_SOURCES[1](sym), step: 1 };
+  return { src: logoSrc(sym,2), step: 2 };
 }
 
 // ─── BOTTOM SHEETS ─────────────────────────────────────────────────
@@ -3832,8 +3939,8 @@ async function initConvertUI(){
 function updateConvertLogos(){
   const f = $('cv-from').value, t = $('cv-to').value;
   const fL = $('cv-from-logo'), tL = $('cv-to-logo');
-  fL.dataset.sym = f; fL.onerror = function(){logoFallback(this,1)}; fL.src = LOGO_SOURCES[0](f);
-  tL.dataset.sym = t; tL.onerror = function(){logoFallback(this,1)}; tL.src = LOGO_SOURCES[0](t);
+  fL.dataset.sym = f; fL.onerror = function(){logoFallback(this,1)}; fL.src = logoSrc(f,0);
+  tL.dataset.sym = t; tL.onerror = function(){logoFallback(this,1)}; tL.src = logoSrc(t,0);
   updateConvertPreview();
 }
 function getCoinUsdPrice(c){
@@ -4534,6 +4641,37 @@ function pnlShareAction(kind){
       window.onFirebaseLogout();
     }
   });
+
+  // [FIXED] In-iframe auth bridge — accept parent's signed-in user so user doesn't see login twice.
+  if (window.parent && window.parent !== window) {
+    try { window.parent.postMessage({ source:'p2p-iframe', type:'request-auth' }, '*'); } catch(e){}
+    window.addEventListener('message', (e) => {
+      const d = e.data || {};
+      if (d.source !== 'parent' || d.type !== 'auth-state') return;
+      // Hide our own login overlay if parent confirms a signed-in user and we don't have one yet
+      if (d.user && !window.currentUser) {
+        try { document.getElementById('authOverlay').classList.remove('show'); } catch(_){}
+        try { document.getElementById('fbLoadingScreen').style.display = 'none'; } catch(_){}
+        // Wait briefly for shared Firebase Auth (same-origin IndexedDB) to populate our own currentUser.
+        // If it still hasn't, manually seed a minimal user object so UI unblocks.
+        setTimeout(() => {
+          if (!window.currentUser && d.user.uid) {
+            try {
+              window.onFirebaseUser({
+                uid: d.user.uid,
+                email: d.user.email || '',
+                displayName: d.user.displayName || '',
+                // mark as bridged so downstream code can skip signOut etc. if it checks
+                _bridgedFromParent: true,
+                getIdToken: async () => ''
+              });
+            } catch(_){}
+          }
+        }, 600);
+      }
+    });
+  }
+
 <\/script>
 
 <style>
@@ -6079,8 +6217,11 @@ function subscribeUserData(firebaseUid) {
   if (fbUnsubBalance) fbUnsubBalance();
   fbUnsubBalance = onValue(ref(db, 'users/' + firebaseUid + '/balance'), snap => {
     balance = parseFloat(snap.val() || 0);
+    window.userBalance = balance; // [FIXED] keep both balance sources in sync
     document.getElementById('navBal').innerText  = balance.toFixed(2);
     document.getElementById('witBal').innerText  = balance.toFixed(2);
+    try { if (typeof STATE === 'object') STATE.balance = balance; } catch(e){}
+    try { if (typeof updateUserUI === 'function') updateUserUI(); } catch(e){}
   });
 
   if (fbUnsubHist) fbUnsubHist();
@@ -6287,7 +6428,14 @@ function switchLoginTab(m) {
   document.getElementById('loginSubmitBtn').innerText  = m==='signup'?'CREATE ACCOUNT':'SIGN IN';
   document.getElementById('loginSubmitBtn').onclick    = m==='signup'?emailSignUp:emailSignIn;
 }
-function openAuth(tab) { switchLoginTab(tab||'signin'); document.getElementById('authOverlay').classList.add('show'); hideResetPanel(); }
+function openAuth(tab) {
+  // [FIXED] If running inside parent app iframe, never show our own login — ask parent instead.
+  if (window.parent && window.parent !== window) {
+    try { window.parent.postMessage({ source:'p2p-iframe', type:'open-login' }, '*'); } catch(e){}
+    return;
+  }
+  switchLoginTab(tab||'signin'); document.getElementById('authOverlay').classList.add('show'); hideResetPanel();
+}
 function closeAuth()   { document.getElementById('authOverlay').classList.remove('show'); }
 document.getElementById('authOverlay').addEventListener('click', function(e){ if(e.target===this) closeAuth(); });
 function requireLogin(action) { if(currentUser){ if(action) action(); return true; } openAuth('signin'); return false; }
@@ -6599,7 +6747,7 @@ async function masterPollTick() {
         const dep = depMatch;
         if (depAction === 'approve') {
           await tgAnswerCb(cb.id,'✅ Approved!');
-          balance += dep.amt; updateBal();
+          // [FIXED] balance credit removed — server bot is sole authority. Firebase listener will sync.
           await fbUpdateHistStatus(dep.hid,'COMPLETED');
           if(dep.msgId) tgEdit(dep.msgId,\`✅ *DEPOSIT APPROVED*\\n\\nUID: \\\`\${userUID}\\\`\\nAmount: *\${dep.amt} USDT*\\nNew Balance: *\${balance.toFixed(2)} USDT*\`).catch(()=>{});
           await fbClearPendingReq('dep', dep.cbId);
@@ -6639,7 +6787,7 @@ async function masterPollTick() {
           tgLog(\`✅ Withdrawal \${wit.amt} USDT approved for UID \${userUID}\`);
         } else {
           await tgAnswerCb(cb.id,'❌ Rejected!');
-          balance += wit.amt; updateBal();
+          // [FIXED] refund credit removed — server bot handles refund. Firebase listener will sync.
           await fbUpdateHistStatus(wit.hid,'REJECTED');
           if(wit.msgId) tgEdit(wit.msgId,\`❌ *WITHDRAWAL REJECTED*\\n\\nUID: \\\`\${userUID}\\\`\\n🔴 Funds returned\`).catch(()=>{});
           await fbClearPendingReq('wit', wit.cbId);
