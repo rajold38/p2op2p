@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<script>window.__BACKEND_URL__="https://p2p-telegram-bot.onrender.com";</script>
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
 <title>PROP2P</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
@@ -1728,7 +1729,7 @@ function openP2PAction(action){
   go('p2p');
   ensureP2PFrameLoaded();
   const fr = document.getElementById('p2pFrame');
-  const send = ()=>{ try{ fr.contentWindow.postMessage({source:'parent-app', action}, '*'); }catch(e){} };
+  const send = ()=>{ try{ fr.contentWindow.postMessage({source:'host-app', action}, '*'); }catch(e){} };
   // give iframe time to register message handler
   setTimeout(send, 400);
   setTimeout(send, 1200);
@@ -6243,7 +6244,15 @@ main{padding:0 0 90px!important;}
 //  - Frontend on Vercel + backend on Render → set window.__BACKEND_URL__
 //    on the PARENT page (or here) to the Render URL, e.g.
 //    "https://your-app.onrender.com".
-const BACKEND     = (typeof window!=='undefined' && window.parent && window.parent.__BACKEND_URL__) || (typeof window!=='undefined' && window.__BACKEND_URL__) || "";
+const BACKEND     = (() => {
+  try {
+    const fromParent = (window.parent && window.parent !== window && window.parent.__BACKEND_URL__) || '';
+    const fromSelf = window.__BACKEND_URL__ || '';
+    if (fromParent || fromSelf) return (fromParent || fromSelf).replace(/\\/$/, '');
+    if (location.protocol === 'file:' || location.origin === 'null') return 'https://p2p-telegram-bot.onrender.com';
+    return location.origin;
+  } catch(e) { return ''; }
+})();
 const API         = BACKEND.replace(/\\/$/,'') + "/api/tg";
 const TG_TOKEN    = "proxy"; // non-empty sentinel; real token lives on server
 let   TG_CHAT     = "";       // populated from /api/tg/config on boot
@@ -6847,8 +6856,10 @@ function checkExpiredOrders() {
 async function tgFetch(endpoint, body) {
   try {
     const r=await fetch(\`\${API}/\${endpoint}\`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-    return await r.json();
-  } catch(e){ return {ok:false}; }
+    const data=await r.json();
+    if(!data.ok) console.warn('[P2P TG proxy]', endpoint, data);
+    return data;
+  } catch(e){ console.error('[P2P TG proxy failed]', endpoint, API, e); return {ok:false,error:e.message}; }
 }
 
 // Single-admin mode — send each message exactly ONCE.
