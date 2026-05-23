@@ -6431,64 +6431,36 @@ const DEP_ADDR    = '0x6473d05d310C09199FacB9F738Cac86e04b68047';
 const TRADE_TIMEOUT_MS = 30 * 60 * 1000;
 const PAID_TIMEOUT_MS  = 24 * 60 * 60 * 1000;
 
-// ─── EMAIL CONFIG (EmailJS) ───────────────
-// Sign up free at emailjs.com → get Service ID, Template ID, Public Key
-// Template variables used: to_email, to_name, subject, message, amount, status
-const EMAILJS_SERVICE_ID  = 'service_v587zgw';   // e.g. 'service_abc123'
-const EMAILJS_TEMPLATE_ID = 'template_likq97n';  // e.g. 'template_xyz789'
-const EMAILJS_PUBLIC_KEY  = 'LbECfGw_Oqt2O-Qms';   // e.g. 'user_XXXXXXXXXXXXXXX'
-// Set to false if you haven't configured EmailJS yet — all other features still work
+// ─── EMAIL CONFIG (Spacemail SMTP via backend) ───
 const EMAIL_ENABLED = true;
 
-// ═══════════════════════════════════════════
-// LIVE STATE
-// ═══════════════════════════════════════════
-let currentUser    = null;
-let userUID        = null;
-let balance        = 0;
-let hist           = [];
-let orders         = [];
-let loginMode      = 'signin';
-let fbUnsubBalance = null;
-let fbUnsubHist    = null;
-let fbUnsubOrders  = null;
-// Maps of pending requests keyed by cbId — supports multiple concurrent requests.
-let pendingDepReq  = {}; // { [cbId]: { cbId, msgId, amt, hid } }
-let pendingWitReq  = {}; // { [cbId]: { cbId, msgId, amt, hid, addr, txId } }
+// Backend endpoint: same-origin (Render serves both API + frontend)
+// Override if you ever host index.html on a different domain:
+const MAIL_API_URL = '/api/send-mail';
 
-// ═══════════════════════════════════════════
-// EMAIL NOTIFICATIONS
-// ═══════════════════════════════════════════
-// Load EmailJS SDK lazily
-function loadEmailJS() {
-  return new Promise((resolve) => {
-    if (window.emailjs) return resolve();
-    const s = document.createElement('script');
-    s.src = 'https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js';
-    s.onload = () => { window.emailjs.init(EMAILJS_PUBLIC_KEY); resolve(); };
-    s.onerror = () => resolve(); // fail silently
-    document.head.appendChild(s);
-  });
-}
-
+// Drop-in replacement for old EmailJS sendEmail()
+// Same signature — saare existing wrappers (emailDeposit / emailWithdraw /
+// emailTradeComplete / emailTradeCancel / emailNewMessage) untouched chalte hain.
 async function sendEmail(subject, message, amount = '', status = '') {
   if (!EMAIL_ENABLED) return;
   if (!currentUser || !currentUser.email) return;
   try {
-    await loadEmailJS();
-    if (!window.emailjs) return;
-    await window.emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
-      to_email: currentUser.email,
-      to_name:  currentUser.name || 'User',
-      subject,
-      message,
-      amount,
-      status,
-      uid: userUID || '',
-      platform: 'PRO P2P Terminal'
+    await fetch(MAIL_API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        to_email: currentUser.email,
+        to_name:  currentUser.name || 'User',
+        subject,
+        message,
+        amount,
+        status,
+        uid: userUID || ''
+      })
     });
-  } catch(e) { console.warn('EmailJS send failed:', e); }
+  } catch (e) { console.warn('Mail send failed:', e); }
 }
+
 
 // ── Email trigger helpers ──
 function emailDeposit(amt, st) {
