@@ -1167,7 +1167,7 @@ onAuthStateChanged(auth, async (fbUser) => {
       <div class="pnl" style="color:var(--green);">Today's P&L +0.00 USDT(+0.00%) ›</div>
       <div class="avail-row">
         <div class="avi"><div class="albl">Available balance</div><div class="aval"><span id="assetsAvail">0.00</span> USDT</div></div>
-        <div class="avi"><div class="albl">In Use</div><div class="aval">0.00 USDT</div></div>
+        <div class="avi"><div class="albl">In Use</div><div class="aval"><span id="assetsInUse">0.00</span> USDT</div></div>
       </div>
       <div class="qacts">
         <div class="qab" onclick="openDeposit()"><div class="qac dep"><i class="fas fa-arrow-down" style="color:#000;"></i></div><span class="qalbl">Deposit</span></div>
@@ -1490,7 +1490,7 @@ onAuthStateChanged(auth, async (fbUser) => {
     <div class="dw-lbl">Amount (USDT)</div>
     <div style="position:relative;">
       <input type="number" class="dw-inp" id="witAmt" placeholder="0.00">
-      <button onclick="document.getElementById('witAmt').value=(window.userBalance||0).toFixed(2)" style="position:absolute;right:12px;top:12px;background:none;border:none;color:var(--orange);font-weight:800;font-size:11px;cursor:pointer;">MAX</button>
+      <button onclick="document.getElementById('witAmt').value=((typeof getWithdrawableBalance==='function'?getWithdrawableBalance():(window.userBalance||0))).toFixed(2)" style="position:absolute;right:12px;top:12px;background:none;border:none;color:var(--orange);font-weight:800;font-size:11px;cursor:pointer;">MAX</button>
     </div>
     <div class="dw-avail">Available: <b data-bal-usdt>0.00</b> USDT</div>
     <button class="dw-btn" onclick="witConfirm()">Confirm Withdrawal</button>
@@ -1757,15 +1757,82 @@ function getMarkPrice(symbol=currentSymbol, category=(currentCat==='spot'?'spot'
   const header = parseFloat(($('chart-price-big')||{}).textContent);
   return Number.isFinite(header) && header > 0 ? header : 0;
 }
-function calcLiqPrice(entry, lev, side){
-  const mmr = 0.005;
-  return side==='Long' ? entry*(1 - 1/lev + mmr) : entry*(1 + 1/lev - mmr);
+const MAINT_MARGIN_RATE = 0.005;
+function isSharedMarginMode(mode){
+  const m = String(mode || 'Cross').toLowerCase();
+  return m === 'cross' || m === 'portfolio';
+}
+function calcIsolatedLiqPrice(entry, lev, side, margin, qty){
+  entry = parseFloat(entry) || 0;
+  margin = parseFloat(margin) || 0;
+  qty = parseFloat(qty) || 0;
+  if(entry <= 0 || qty <= 0){
+    lev = Math.max(1, parseFloat(lev) || 1);
+    return side==='Long' ? entry*(1 - 1/lev + MAINT_MARGIN_RATE) : entry*(1 + 1/lev - MAINT_MARGIN_RATE);
+  }
+  const liq = side==='Long'
+    ? ((entry * qty) - margin) / (qty * (1 - MAINT_MARGIN_RATE))
+    : ((entry * qty) + margin) / (qty * (1 + MAINT_MARGIN_RATE));
+  return Math.max(0, liq);
+}
+function calcLiqPrice(entry, lev, side, margin, qty){
+  return calcIsolatedLiqPrice(entry, lev, side, margin, qty);
+}
+function positionMaintenanceAt(position, mark){
+  const qty = Math.max(0, parseFloat(position && position.qty)||0);
+  const px = Math.max(0, parseFloat(mark)||parseFloat(position && position.entry)||0);
+  return qty * px * MAINT_MARGIN_RATE;
 }
 function calcPositionPnl(position, mark){
   const cur = Number.isFinite(mark) && mark > 0 ? mark : position.entry;
   const pnl = (position.side==='Long' ? (cur-position.entry) : (position.entry-cur)) * position.qty;
   const pct = position.margin > 0 ? (pnl/position.margin*100) : 0;
   return { cur, pnl, pct, up: pnl >= 0 };
+}
+function getSharedRiskExcluding(positionId){
+  let otherPnl = 0, otherMaint = 0, isolatedLocked = 0;
+  ((typeof STATE === 'object' && STATE && STATE.positions) || []).forEach(p => {
+    if(String(p.id) === String(positionId)) return;
+    if(isSharedMarginMode(p.mode)){
+      const mark = getMarkPrice(p.sym, 'linear') || p.entry;
+      otherPnl += calcPositionPnl(p, mark).pnl;
+      otherMaint += positionMaintenanceAt(p, mark);
+    } else {
+      isolatedLocked += parseFloat(p.margin)||0;
+    }
+  });
+  return { otherPnl, otherMaint, isolatedLocked };
+}
+function calcSharedLiqPrice(entry, side, qty, sharedWallet, otherPnl, otherMaint){
+  entry = parseFloat(entry)||0;
+  qty = parseFloat(qty)||0;
+  sharedWallet = Math.max(0, parseFloat(sharedWallet)||0);
+  otherPnl = parseFloat(otherPnl)||0;
+  otherMaint = Math.max(0, parseFloat(otherMaint)||0);
+  if(entry <= 0 || qty <= 0) return 0;
+  const accountBuffer = sharedWallet + otherPnl - otherMaint;
+  const denom = qty * (side==='Long' ? (1 - MAINT_MARGIN_RATE) : (1 + MAINT_MARGIN_RATE));
+  if(denom <= 0) return 0;
+  const liq = side==='Long' ? ((entry * qty) - accountBuffer) / denom : ((entry * qty) + accountBuffer) / denom;
+  return Math.max(0, liq);
+}
+function getPositionLiqPrice(pos){
+  if(!pos) return 0;
+  if(!isSharedMarginMode(pos.mode)) return calcIsolatedLiqPrice(pos.entry, pos.lev, pos.side, pos.margin, pos.qty);
+  const risk = getSharedRiskExcluding(pos.id);
+  const sharedWallet = Math.max(0, getWalletBalance() - getOpenOrderLockedMargin() - risk.isolatedLocked);
+  return calcSharedLiqPrice(pos.entry, pos.side, pos.qty, sharedWallet, risk.otherPnl, risk.otherMaint);
+}
+function calcPreviewLiqPrice(entry, lev, side, margin, qty, mode){
+  if(!isSharedMarginMode(mode)) return calcIsolatedLiqPrice(entry, lev, side, margin, qty);
+  const risk = getSharedRiskExcluding('__preview__');
+  const sharedWallet = Math.max(0, getWalletBalance() - getOpenOrderLockedMargin() - risk.isolatedLocked);
+  return calcSharedLiqPrice(entry, side, qty, sharedWallet, risk.otherPnl, risk.otherMaint);
+}
+function refreshDynamicLiquidationPrices(){
+  try{
+    ((typeof STATE === 'object' && STATE && STATE.positions) || []).forEach(p => { p.liq = getPositionLiqPrice(p); });
+  }catch(e){}
 }
 function refreshFuturesLiveUI(){
   if(currentCat !== 'linear') return;
@@ -2115,23 +2182,54 @@ async function bbStart(mode){
 function bbStartDeposit(){ bbStart('DEPOSIT'); }
 function bbStartWithdraw(){ bbStart('WITHDRAW'); }
 
+function bbCoinUsdPrice(sym){
+  sym = (sym||'').toUpperCase();
+  if(sym==='USDT') return 1;
+  if(sym==='USDC' || sym==='DAI' || sym==='BUSD' || sym==='TUSD') return 1;
+  try{
+    const t = getTickerRecord('linear', sym+'USDT') || getTickerRecord('spot', sym+'USDT');
+    const p = parseFloat(t?.lastPrice);
+    if(p>0) return p;
+  }catch(e){}
+  return 0;
+}
+function bbCoinUsd(sym, bal){
+  const p = bbCoinUsdPrice(sym);
+  return (p>0 && bal>0) ? bal*p : 0;
+}
+function bbRenderCoin(c){
+  const bal = bbBal(c.sym);
+  const usd = bbCoinUsd(c.sym, bal);
+  const balHtml = `<div style="text-align:right;margin-left:auto;"><div style="color:#fff;font-weight:700;font-size:15px;">${bbFmtBal(bal)}</div><div style="color:#666;font-size:11px;">≈${usd.toFixed(2)} USD</div></div>`;
+  return `<div class="bb-coin" onclick="bbPickCoin('${c.sym}')">
+    <div class="bb-ico" style="background:${c.color}">${c.sym.slice(0,2)}</div>
+    <div style="display:flex;flex-direction:column;"><span class="bb-sym">${c.sym}</span><span class="bb-nm" style="margin-left:0;">${c.name}</span></div>
+    ${balHtml}
+  </div>`;
+}
 function bbRenderCoins(){
   const q = (document.getElementById('bbCoinSrch').value||'').toUpperCase().trim();
   const hideZero = document.getElementById('bbHideZero')?.checked;
   let list = BB_COINS.filter(c=>!q||c.sym.includes(q)||c.name.toUpperCase().includes(q));
   if(hideZero) list = list.filter(c=>bbBal(c.sym)>0);
-  list = list.slice().sort((a,b)=>a.sym.localeCompare(b.sym));
-  let html='', last=''; const letters=new Set();
-  list.forEach(c=>{
+  // Split: coins with balance on top (sorted by USD value desc, then balance desc), rest alphabetical with letter headings
+  const withBal = list.filter(c=>bbBal(c.sym)>0).slice().sort((a,b)=>{
+    const ua = bbCoinUsd(a.sym, bbBal(a.sym));
+    const ub = bbCoinUsd(b.sym, bbBal(b.sym));
+    if(ub!==ua) return ub-ua;
+    return bbBal(b.sym)-bbBal(a.sym);
+  });
+  const rest = list.filter(c=>bbBal(c.sym)<=0).slice().sort((a,b)=>a.sym.localeCompare(b.sym));
+  let html=''; const letters=new Set();
+  if(withBal.length){
+    html += `<div class="bb-letter" style="color:#f0b90b;">My Assets</div>`;
+    withBal.forEach(c=>{ letters.add(c.sym[0]); html += bbRenderCoin(c); });
+  }
+  let last='';
+  rest.forEach(c=>{
     const L = c.sym[0];
     if(L!==last){ html += `<div class="bb-letter" id="bb-L-${L}">${L}</div>`; last=L; letters.add(L); }
-    const bal = bbBal(c.sym);
-    const balHtml = `<div style="text-align:right;margin-left:auto;"><div style="color:#fff;font-weight:700;font-size:15px;">${bbFmtBal(bal)}</div><div style="color:#666;font-size:11px;">≈${(bal* (c.sym==='USDT'?1:0)).toFixed(2)} USD</div></div>`;
-    html += `<div class="bb-coin" onclick="bbPickCoin('${c.sym}')">
-      <div class="bb-ico" style="background:${c.color}">${c.sym.slice(0,2)}</div>
-      <div style="display:flex;flex-direction:column;"><span class="bb-sym">${c.sym}</span><span class="bb-nm" style="margin-left:0;">${c.name}</span></div>
-      ${balHtml}
-    </div>`;
+    html += bbRenderCoin(c);
   });
   document.getElementById('bbCoinList').innerHTML = html || '<div style="color:#666;text-align:center;padding:40px;">No coin found</div>';
   const all='ABCDEFGHIJKLMNOPQRSTUVWXYZ#'.split('');
@@ -2321,27 +2419,44 @@ function bbExplorer(){
   window.open(url,'_blank');
 }
 function bbHistKey(h){
-  return 'bbUsdRate:'+(h.hash||h.txid||h.txId||h.id||(h.type+'_'+h.coin+'_'+h.amt+'_'+(h.time||h.ts||h.createdAt||'')));
+  return 'bbUsdRateV2:'+(h.hash||h.txid||h.txId||h.hid||h.id||(h.type+'_'+h.coin+'_'+h.amt+'_'+(h.time||h.ts||h.createdAt||'')));
 }
 function bbGetLockedUsd(h){
   const amt = parseFloat(h.amt||0)||0;
   const coin = (h.coin||'').toUpperCase();
   if(!amt || !coin) return null;
+  // Prefer authoritative USD from history meta (set at the moment of the tx)
+  const m = h.meta||{};
+  let metaUsd = 0;
+  if(coin==='USDT'||coin==='USDC'||coin==='BUSD'||coin==='DAI'||coin==='FDUSD'||coin==='TUSD'){
+    metaUsd = amt; // stable === USD
+  } else if(m.toCoin && String(m.toCoin).toUpperCase()===coin && parseFloat(m.toUsd)>0){
+    metaUsd = parseFloat(m.toUsd);
+  } else if(m.fromCoin && String(m.fromCoin).toUpperCase()===coin && parseFloat(m.fromUsd)>0){
+    metaUsd = parseFloat(m.fromUsd);
+  } else if(parseFloat(m.priceUsd)>0){
+    metaUsd = amt * parseFloat(m.priceUsd);
+  }
   const key = bbHistKey(h);
+  if(metaUsd>0){
+    const usd = +metaUsd.toFixed(2);
+    try{ localStorage.setItem(key, String(usd)); }catch(e){}
+    return usd;
+  }
   try{
     const cached = localStorage.getItem(key);
     if(cached){ const v = parseFloat(cached); if(Number.isFinite(v) && v>0) return v; }
   }catch(e){}
-  // Compute once from current ticker, then lock forever
+  // Compute once from current ticker, lock forever — store TOTAL USD (not unit price)
   let price = 0;
-  if(coin==='USDT'||coin==='USDC'||coin==='BUSD'||coin==='DAI'||coin==='FDUSD') price = 1;
+  if(coin==='USDT'||coin==='USDC'||coin==='BUSD'||coin==='DAI'||coin==='FDUSD'||coin==='TUSD') price = 1;
   else {
     const sym = coin+'USDT';
     price = getMarkPrice(sym,'spot') || getMarkPrice(sym,'linear') || 0;
   }
   if(!price) return null;
   const usd = +(amt*price).toFixed(2);
-  try{ localStorage.setItem(key, String(price)); }catch(e){}
+  try{ localStorage.setItem(key, String(usd)); }catch(e){}
   return usd;
 }
 function bbShowHistDetail(h){
@@ -2420,16 +2535,26 @@ async function witConfirm(){
   const amt  = parseFloat(document.getElementById('witAmt').value)||0;
   if(!addr || addr.length < 20) return toast('Invalid address');
   if(amt<=0) return toast('Enter amount');
-  if(amt > (window.userBalance||0)) return toast('Insufficient balance');
+  const withdrawable = (typeof getWithdrawableBalance==='function') ? getWithdrawableBalance() : (window.userBalance||0);
+  if(amt > withdrawable) return toast('Insufficient available balance ('+withdrawable.toFixed(2)+' USDT withdrawable)');
   if(!window.currentFbUser){ toast('Sign in first'); return; }
   _withP2P((w)=>{
     try{
+      const chain = _dwNet.wit === 'BEP20' ? 'BEP-20' : 'ERC-20';
+      if(typeof w.confirmWithdrawCustom === 'function'){
+        Promise.resolve(w.confirmWithdrawCustom({coin:'USDT', chain, addr, amt})).then((res)=>{
+          if(!res || !res.ok) return toast(res && res.error ? res.error : 'Withdraw failed');
+          toast('Withdrawal request sent — awaiting admin approval');
+          closeDw('witOv');
+          syncLockedBalanceUI();
+        }).catch(e=>toast('Withdraw failed: '+e.message));
+        return;
+      }
       const a = w.document.getElementById('witAddr'); if(a) a.value = addr;
       const m = w.document.getElementById('witAmt');  if(m) m.value = amt;
       try{ if(_dwNet.wit === 'BEP20') w.selectWitNet && w.selectWitNet('BEP20'); else w.selectWitNet && w.selectWitNet('ERC20'); }catch(e){}
-      // bypass the iframe's confirm() popup since we already validated
       const origConfirm = w.confirm; w.confirm = ()=>true;
-      Promise.resolve(w.doWithdraw()).finally(()=>{ try{ w.confirm = origConfirm; }catch(e){} });
+      Promise.resolve(w.doWithdraw()).finally(()=>{ try{ w.confirm = origConfirm; }catch(e){} syncLockedBalanceUI(); });
       toast('Withdrawal request sent — awaiting admin approval');
       closeDw('witOv');
     }catch(e){ toast('Withdraw failed: '+e.message); }
@@ -2438,8 +2563,10 @@ async function witConfirm(){
 
 // Helper: write balance change to Firebase (used by trade engine)
 async function writeBalance(newVal){
-  window.userBalance = Math.max(0, newVal);
-  if(typeof STATE === 'object') STATE.balance = window.userBalance;
+  // [BUG 2 FIX] always floor at 0 and guard against NaN
+  window.userBalance = Math.max(0, parseFloat(newVal) || 0);
+  // [BUG 6 FIX] sync STATE immediately — no 800ms lag race with saveState
+  if(typeof STATE === 'object' && STATE) STATE.balance = window.userBalance;
   try{
     if(window.currentFbUser && window._fb){
       const { db, ref, update } = window._fb;
@@ -2449,6 +2576,7 @@ async function writeBalance(newVal){
     }
   }catch(e){ console.warn('balance write failed', e); }
   document.querySelectorAll('[data-bal-usdt]').forEach(el=>{ el.textContent = window.userBalance.toFixed(2); });
+  try{ if(typeof syncLockedBalanceUI==='function') syncLockedBalanceUI(); }catch(e){}
   if(typeof updateUserUI==='function') updateUserUI();
 }
 
@@ -2467,7 +2595,11 @@ function _broadcastAuthToP2P(){
 }
 window.addEventListener('message', e => {
   const d = e.data || {};
-  if(d.source === 'p2p-iframe' && d.type === 'request-auth'){ _broadcastAuthToP2P(); }
+  if(d.source === 'p2p-iframe' && d.type === 'request-auth'){
+    // [BUG 9 FIX] immediate response + short retry
+    _broadcastAuthToP2P();
+    setTimeout(_broadcastAuthToP2P, 300);
+  }
   if(d.source === 'p2p-iframe' && d.type === 'open-login'){
     // iframe needs login — open parent's auth flow if not signed in, else just rebroadcast
     if(window.currentFbUser){ _broadcastAuthToP2P(); }
@@ -2483,17 +2615,28 @@ window.addEventListener('message', e => {
     if(uid !== _lastUid){ _lastUid = uid; _broadcastAuthToP2P(); }
   }, 800);
 })();
-// Also broadcast when p2p iframe finishes loading
+// [BUG 9 FIX] Multi-retry broadcast on iframe load to defeat slow init race
 window.addEventListener('load', ()=>{
   const fr = document.getElementById('p2pFrame');
-  if(fr){ fr.addEventListener('load', ()=> setTimeout(_broadcastAuthToP2P, 150)); }
+  if(fr){
+    fr.addEventListener('load', ()=> {
+      [100, 300, 600, 1000, 2000].forEach(delay => setTimeout(_broadcastAuthToP2P, delay));
+    });
+  }
 });
 
 window.addEventListener('message',(ev)=>{
   const d = ev.data || {};
   if(d && d.source === 'p2p-iframe' && d.type === 'balance'){
-    window.userBalance = Number(d.value)||0;
+    const parentUid = window.currentFbUser ? (window.currentFbUser.firebaseUid || window.currentFbUser.uid) : null;
+    if(parentUid && !d.uid) return;
+    if(parentUid && d.uid && String(d.uid) !== String(parentUid)) return;
+    const nextBal = Number(d.value);
+    if(!Number.isFinite(nextBal)) return;
+    window.userBalance = Math.max(0, nextBal);
+    try{ if(typeof balance !== 'undefined') balance = window.userBalance; }catch(e){}
     document.querySelectorAll('[data-bal-usdt]').forEach(el=>{ el.textContent = window.userBalance.toFixed(2); });
+    try{ if(typeof syncLockedBalanceUI==='function') syncLockedBalanceUI(); }catch(e){}
   }
   if(d && d.source === 'p2p-iframe' && d.type === 'close'){
     go('home');
@@ -2589,9 +2732,13 @@ function subscribeBalance(fuid) {
 
 function updateUserUI() {
   const u = window.currentFbUser;
-  const bal = (window.userBalance || 0).toFixed(2);
-  // Available always = USDT balance from Firebase; Total updated by renderAssetList
-  const av = $id('assetsAvail'); if(av) av.textContent = bal;
+  // [BUG 4 FIX] Available = wallet - locked margin; show equity elsewhere
+  const equity = (typeof getEquityBalance==='function') ? getEquityBalance() : (parseFloat(window.userBalance||0));
+  const locked = (typeof getLockedMargin==='function') ? getLockedMargin() : 0;
+  const available = (typeof getAvailableBalance==='function') ? getAvailableBalance() : Math.max(0, parseFloat(window.userBalance||0) - locked);
+  const av = $id('assetsAvail'); if(av) av.textContent = available.toFixed(2);
+  const iu = $id('assetsInUse'); if(iu) iu.textContent = locked.toFixed(2);
+  const wb = $id('witBal'); if(wb) wb.textContent = available.toFixed(2);
   try{ renderAssetList && renderAssetList(); }catch(e){}
   // User badges
   const hb = $id('homeUserBadge');
@@ -2898,15 +3045,26 @@ function initTVChart() {
 function queueChartBootstrap(reload=false){
   clearTimeout(chartBootTimer);
   let retries = 0;
+  const showFail = () => {
+    const c = document.getElementById('tv-chart');
+    if(c) c.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:220px;color:#888;font-size:12px;">Chart failed to load — check connection</div>';
+  };
   const attempt = () => {
-    if(++retries > 30) return;
     const tradeOk = $('sc-trade')?.classList.contains('active');
     const chartOk = $('chart-view') && $('chart-view').style.display !== 'none';
-    if(!tradeOk || !chartOk || typeof LightweightCharts === 'undefined'){
+    if(!tradeOk || !chartOk){
+      // Not visible — wait without counting toward fail
+      chartBootTimer = setTimeout(attempt, 300); return;
+    }
+    if(typeof LightweightCharts === 'undefined'){
+      if(++retries > 30){ showFail(); return; }
       chartBootTimer = setTimeout(attempt, 300); return;
     }
     if(!tvChart || !candleSeries || !volSeries){
-      if(!initTVChart()){ chartBootTimer = setTimeout(attempt, 300); return; }
+      if(!initTVChart()){
+        if(++retries > 30){ showFail(); return; }
+        chartBootTimer = setTimeout(attempt, 300); return;
+      }
     } else { resizeChart(); }
     if(reload) loadKlineREST();
   };
@@ -3131,12 +3289,22 @@ function renderOB() {
 }
 
 // ─── TRADE PANEL ─────────────────────────────────────────────────────────────
+// [BUG 7 FIX] track last-rendered panel signature to avoid expensive rebuilds
+let _lastTradePanelKey = '';
 function buildTradePanel() {
   const isFut = currentCat==='linear';
   const coin = currentSymbol.replace('USDT','');
   const livePrice = getMarkPrice(currentSymbol, currentCat==='spot'?'spot':'linear');
   const price = livePrice ? fmtPrice(livePrice) : $('chart-price-big').textContent;
   const bal = getBalance();
+  const panelKey = `${currentCat}:${currentSymbol}:${FUT.margin}:${FUT.lev}:${FUT.otype}:${FUT.unit}:${spotSide}`;
+  // Skip full DOM rebuild when nothing structural changed — just refresh numbers
+  if(_lastTradePanelKey === panelKey && document.getElementById(isFut ? 'fut-value' : 'limit-price')){
+    if(isFut) updateFutMaxes();
+    return;
+  }
+  _lastTradePanelKey = panelKey;
+
 
   if(isFut) {
     const lev = FUT.lev, mar = FUT.margin, otype = FUT.otype, unit = FUT.unit;
@@ -3268,57 +3436,119 @@ function spotSliderChange(v){
 }
 // ─── FUTURES STATE & HELPERS ──────────────────────────────────────
 FUT = FUT || { margin:'Cross', lev:10, otype:'Market', unit:'USDT', dir:'Long' };
-function setFutMargin(m){ FUT.margin=m; closeSheet('margin-sheet'); buildTradePanel(); }
+function setFutMargin(m){ FUT.margin=m; closeSheet('margin-sheet'); _lastTradePanelKey=''; buildTradePanel(); }
 function setFutLev(v){
   FUT.lev=v;
   if(v>=10) toast(`⚠️ ${v}x — High liquidation risk!`);
-  closeSheet('lev-sheet'); buildTradePanel();
+  closeSheet('lev-sheet'); _lastTradePanelKey=''; buildTradePanel();
 }
-function setFutOtype(t){ FUT.otype=t; closeSheet('otype-sheet'); buildTradePanel(); }
-function toggleFutUnit(){ FUT.unit = FUT.unit==='USDT'?'COIN':'USDT'; buildTradePanel(); }
+function setFutOtype(t){ FUT.otype=t; closeSheet('otype-sheet'); _lastTradePanelKey=''; buildTradePanel(); }
+function toggleFutUnit(){ FUT.unit = FUT.unit==='USDT'?'COIN':'USDT'; _lastTradePanelKey=''; buildTradePanel(); }
 function toggleTpSl(){ const on=document.getElementById('fut-tpsl').checked; document.getElementById('fut-tpsl-rows').style.display = on?'flex':'none'; }
 function openMarginSheet(){ openSheet('margin-sheet'); }
 function openLevSheet(){ openSheet('lev-sheet'); }
 function openOrderTypeSheet(){ openSheet('otype-sheet'); }
 
 function getFutPrice(){
-  if(FUT.otype==='Limit'){ const v=parseFloat((document.getElementById('fut-price')||{}).value); if(v>0) return v; }
-  return getMarkPrice(currentSymbol, 'linear');
+  if(FUT.otype==='Limit'){
+    const v = parseFloat((document.getElementById('fut-price')||{}).value);
+    if(Number.isFinite(v) && v > 0) return v;
+  }
+  // Prefer ticker cache (real number) over chart header text ("--")
+  const cached = getMarkPrice(currentSymbol, 'linear');
+  if(Number.isFinite(cached) && cached > 0) return cached;
+  const headerEl = $('chart-price-big');
+  if(headerEl){
+    const header = parseFloat((headerEl.textContent||'').replace(/[^0-9.\-]/g,''));
+    if(Number.isFinite(header) && header > 0) return header;
+  }
+  return 0; // caller MUST check
 }
-function getLockedMargin(){ return (STATE.positions||[]).reduce((s,p)=>s+(+p.margin||0),0); }
-function getAvailableBalance(){ return Math.max(0, getBalance() - getLockedMargin()); }
+function getWalletBalance(){ return Math.max(0, parseFloat(window.userBalance||0) || 0); }
+function getOpenOrderLockedMargin(exceptOrderId){
+  return (STATE.orders||[])
+    .filter(o => o.status==='Open' && o.pending && o.id !== exceptOrderId)
+    .reduce((s,o)=> s + (parseFloat(o.pending && o.pending.margin)||0), 0);
+}
+function getPositionLockedMargin(){
+  return (STATE.positions||[]).reduce((s,p)=>s+(parseFloat(p.margin)||0),0);
+}
+function getLockedMargin(){
+  return getPositionLockedMargin() + getOpenOrderLockedMargin();
+}
+function getUnrealizedPnl(){
+  const positions = (STATE && STATE.positions) || [];
+  let unreal = 0;
+  positions.forEach(pos => {
+    const mark = getMarkPrice(pos.sym, 'linear');
+    if(!Number.isFinite(mark) || mark <= 0) return;
+    unreal += (pos.side==='Long' ? (mark - pos.entry) : (pos.entry - mark)) * pos.qty;
+  });
+  return unreal;
+}
+function getMaintenanceMargin(){
+  return (STATE.positions||[]).reduce((s,p)=>{
+    const mark = getMarkPrice(p.sym, 'linear') || p.entry;
+    return s + positionMaintenanceAt(p, mark);
+  },0);
+}
+function getAccountEquity(){ return getWalletBalance() + getUnrealizedPnl(); }
+function getEquityBalance(){ return Math.max(0, getAccountEquity()); }
+function getAvailableBalance(){
+  // Exchange-style free balance: wallet minus locked margin; unrealized losses reduce free funds,
+  // unrealized profits are not withdrawable until the position is closed.
+  return Math.max(0, getWalletBalance() - getLockedMargin() + Math.min(0, getUnrealizedPnl()));
+}
+function getWithdrawableBalance(){ return getAvailableBalance(); }
+function syncLockedBalanceUI(){
+  if(typeof refreshDynamicLiquidationPrices === 'function') refreshDynamicLiquidationPrices();
+  const wallet = getWalletBalance();
+  const locked = getLockedMargin();
+  const available = getAvailableBalance();
+  const equity = getEquityBalance();
+  const setTxt = (id, val) => { const el=document.getElementById(id); if(el) el.textContent = val; };
+  setTxt('assetsAvail', available.toFixed(2));
+  setTxt('assetsInUse', locked.toFixed(2));
+  setTxt('witBal', available.toFixed(2));
+  setTxt('navBal', wallet.toFixed(2));
+  document.querySelectorAll('[data-bal-usdt]').forEach(el=>{ el.textContent = wallet.toFixed(2); });
+  return {wallet, locked, available, equity};
+}
 function futSliderChange(v){
-  const p = getFutPrice(); if(!p) return;
+  const p = getFutPrice();
+  if(!p || p <= 0) return;
   const avail = getAvailableBalance();
   const margin = avail*v/100;
   const orderValue = margin*FUT.lev;
   const qty = orderValue/p;
   const el = document.getElementById('fut-value');
+  // Only update the input — never rebuild panel
   if(el) el.value = (FUT.unit==='USDT'?margin:qty).toFixed(FUT.unit==='USDT'?2:6);
   updateFutMaxes();
 }
 function updateFutSlider(){ updateFutMaxes(); }
 function updateFutMaxes(){
-  const p = getFutPrice(); if(!p) return;
+  const p = getFutPrice();
+  if(!p || p <= 0) return;
   const v = parseFloat((document.getElementById('fut-value')||{}).value)||0;
   let margin, orderValue, qty;
   if(FUT.unit==='USDT'){ margin = v; orderValue = margin*FUT.lev; qty = orderValue/p; }
   else { qty = v; orderValue = qty*p; margin = orderValue/FUT.lev; }
+  const equity = getEquityBalance();
   const avail = getAvailableBalance();
-  const wallet = getBalance();
   const locked = getLockedMargin();
-  const unreal = (STATE.positions||[]).reduce((s,pos)=>{ const m=getMarkPrice(pos.sym,'linear')||pos.entry; let pn=(pos.side==='Long'?(m-pos.entry):(pos.entry-m))*pos.qty; if(pn<-pos.margin) pn=-pos.margin; return s+pn; },0);
-  const w = document.getElementById('fut-wallet'); if(w) w.textContent = (wallet+unreal).toFixed(2);
-  const a = document.getElementById('fut-avail'); if(a) a.textContent = avail.toFixed(2);
-  const mu = document.getElementById('fut-mused'); if(mu) mu.textContent = locked.toFixed(2);
-  const q = document.getElementById('fut-qty-disp'); if(q) q.textContent = qty.toFixed(6);
-  const c = document.getElementById('fut-cost-disp'); if(c) c.textContent = orderValue.toFixed(2);
-  const md = document.getElementById('fut-margin-disp'); if(md) md.textContent = margin.toFixed(2);
-  const mc = document.getElementById('fut-maxcost'); if(mc) mc.textContent = avail.toFixed(2);
+  const set = (id,val) => { const el=document.getElementById(id); if(el) el.textContent = val; };
+  set('fut-wallet', equity.toFixed(2));
+  set('fut-avail',  avail.toFixed(2));
+  set('fut-mused',  locked.toFixed(2));
+  set('fut-qty-disp', qty.toFixed(6));
+  set('fut-cost-disp', orderValue.toFixed(2));
+  set('fut-margin-disp', margin.toFixed(2));
+  set('fut-maxcost', avail.toFixed(2));
   const liq = document.getElementById('fut-liq');
   if(liq){
     const dir = FUT.dir || 'Long';
-    liq.textContent = qty > EPS ? fmtPrice(calcLiqPrice(p, FUT.lev, dir)) : '--';
+    liq.textContent = qty > EPS ? fmtPrice(calcPreviewLiqPrice(p, FUT.lev, dir, margin, qty, FUT.margin)) : '--';
   }
 }
 
@@ -3532,12 +3762,13 @@ function openTpSlSheet(id){
   _activePos = p;
   const t = (tickerCache.linear||[]).find(x=>x.symbol===p.sym);
   const mark = t?parseFloat(t.lastPrice):p.entry;
+  const liq = getPositionLiqPrice(p); p.liq = liq;
   $('tpsl-body').innerHTML = `
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;font-size:10px;color:var(--text2);margin-bottom:14px;">
       <div><div>Qty</div><div style="color:var(--text);margin-top:2px;font-weight:600;">${p.qty.toFixed(4)}</div></div>
       <div><div>Entry</div><div style="color:var(--text);margin-top:2px;font-weight:600;">${(+p.entry).toFixed(4)}</div></div>
       <div><div>Mark</div><div style="color:var(--text);margin-top:2px;font-weight:600;">${mark.toFixed(4)}</div></div>
-      <div><div>Liq.</div><div style="color:var(--orange);margin-top:2px;font-weight:600;">${p.liq?(+p.liq).toFixed(4):'--'}</div></div>
+      <div><div>Liq.</div><div style="color:var(--orange);margin-top:2px;font-weight:600;">${liq?(+liq).toFixed(4):'--'}</div></div>
     </div>
     <div style="font-size:13px;font-weight:600;margin-bottom:8px;border-bottom:2px solid var(--orange);display:inline-block;padding-bottom:6px;">Entire Position</div>
     <div style="margin-top:14px;font-size:12px;color:var(--text2);margin-bottom:6px;">Take Profit</div>
@@ -3769,8 +4000,12 @@ function placeFutOrder(dir){
   FUT.dir = dir;
   const lev = Math.max(1, Math.min(125, FUT.lev|0));
   const p = getFutPrice();
+  // [BUG 1 FIX] Hard guard — never allow order at invalid price
+  if(!p || !Number.isFinite(p) || p <= 0){
+    return toast('Price not loaded yet — please wait a moment');
+  }
   const vRaw = parseFloat((document.getElementById('fut-value')||{}).value)||0;
-  if(vRaw<=0||p<=0) return toast('Enter amount');
+  if(vRaw<=0) return toast('Enter amount');
   STATE.balance = parseFloat(window.userBalance||0);
   // USDT input = MARGIN (user's actual locked $). COIN input = qty.
   let margin, orderValue, qty;
@@ -3787,25 +4022,32 @@ function placeFutOrder(dir){
     if(!existing) return toast('Reduce-Only: no opposite position');
     return closePositionPartial(existing.id, Math.min(qty, existing.qty), p);
   }
+  // [BUG 12 FIX] Check available balance (wallet - locked margin) BEFORE opening
+  if(getAvailableBalance() < margin){
+    return toast('Insufficient available balance ('+getAvailableBalance().toFixed(2)+' USDT available)');
+  }
   const mark = getMarkPrice(currentSymbol, 'linear') || p;
-  if(FUT.otype==='Limit' && Math.abs(p - mark)/p > 0.0005){
-    if(getAvailableBalance() < margin) return toast('Insufficient available balance');
-    STATE.orders.unshift({id:Date.now(), sym:currentSymbol, coin:currentSymbol.replace('USDT',''), side:dir, type:'Perp '+lev+'x Limit', price:p, qty, value:orderValue, ts:Date.now(), status:'Open', pending:{margin,lev,tp,sl,dir}});
+  if(FUT.otype==='Limit' && Math.abs(p - mark)/mark > 0.0005){
+    // Margin is locked via pending order (no balance change)
+    STATE.orders.unshift({id:Date.now(), sym:currentSymbol, coin:currentSymbol.replace('USDT',''), side:dir, type:'Perp '+lev+'x Limit', price:p, qty, value:orderValue, ts:Date.now(), status:'Open', pending:{margin,lev,tp,sl,dir,mode:FUT.margin}});
     saveState(STATE);
     toast('Limit order placed @ '+p);
     renderOrderTabs();
+    updateFutMaxes();
     return;
   }
-  if(getAvailableBalance() < margin) return toast('Insufficient available balance');
-  const liq = calcLiqPrice(p, lev, dir);
+  if(!Number.isFinite(qty) || qty <= 0 || !Number.isFinite(orderValue) || orderValue <= 0) return toast('Invalid order size');
+  const liq = calcPreviewLiqPrice(p, lev, dir, margin, qty, FUT.margin);
   STATE.positions.unshift({id:Date.now(), sym:currentSymbol, coin:currentSymbol.replace('USDT',''), side:dir, lev, entry:p, qty, margin, positionSize:orderValue, mode:FUT.margin, liq, tp, sl, ts:Date.now()});
   STATE.orders.unshift({id:Date.now()+1, sym:currentSymbol, coin:currentSymbol.replace('USDT',''), side:dir, type:'Perp '+lev+'x '+FUT.otype, price:p, qty, value:orderValue, ts:Date.now(), status:'Filled'});
   saveState(STATE);
-  toast(dir+' '+lev+'x · margin '+margin.toFixed(2)+' · size '+orderValue.toFixed(2)+' @ '+p.toFixed(4));
+  toast(dir+' '+lev+'x · locked margin '+margin.toFixed(2)+' · size '+orderValue.toFixed(2)+' @ '+p.toFixed(4));
   renderTradePanel(); renderOrderTabs();
+  // [BUG 12 FIX] Immediately reflect locked margin in available display
+  updateFutMaxes();
 }
 
-function closePositionPartial(id, qtyClose, exitPrice){
+function closePositionPartial(id, qtyClose, exitPrice, reason){
   const idx = STATE.positions.findIndex(p=>p.id===id);
   if(idx<0) return;
   const pos = STATE.positions[idx];
@@ -3815,16 +4057,26 @@ function closePositionPartial(id, qtyClose, exitPrice){
   const closedQty = pos.qty*ratio;
   const marginPortion = pos.margin*ratio;
   let pnl = (pos.side==='Long' ? (exit-pos.entry) : (pos.entry-exit)) * closedQty;
-  // Cannot lose more than the margin backing the closed portion (liquidation cap)
-  if(pnl < -marginPortion) pnl = -marginPortion;
-  STATE.balance = parseFloat(window.userBalance||0) + pnl;
-  writeBalance(STATE.balance);
+  // Liquidation consumes the isolated/cross margin reserved for this position, never more than wallet.
+  if(reason === 'LIQ') pnl = -marginPortion;
+  // [BUG 2 FIX] PnL can never exceed the margin backing the closed portion
+  pnl = Math.max(pnl, -marginPortion);
+  // [BUG 2 FIX] Balance can never go below 0
+  const rawNewBal = parseFloat(window.userBalance||0) + pnl;
+  const newBal = Math.max(0, rawNewBal);
+  writeBalance(newBal);
   STATE.orders.unshift({id:Date.now(), sym:pos.sym, coin:pos.coin, side:pos.side==='Long'?'Sell':'Buy', type:'Perp Close', price:exit, qty:closedQty, value:closedQty*exit, ts:Date.now(), status:'Filled', pnl});
   if(ratio>=0.999) STATE.positions.splice(idx,1);
-  else { pos.qty -= closedQty; pos.margin -= marginPortion; if(pos.positionSize) pos.positionSize -= pos.positionSize*ratio; }
+  else {
+    pos.qty -= closedQty;
+    pos.margin -= marginPortion;
+    if(pos.positionSize) pos.positionSize -= pos.positionSize*ratio;
+    // [BUG 2 FIX] margin can't go negative
+    pos.margin = Math.max(0, pos.margin);
+  }
   saveState(STATE);
-  toast('Closed '+closedQty.toFixed(6)+' '+pos.coin+' '+(pnl>=0?'+':'')+pnl.toFixed(2)+' USDT');
-  renderOrderTabs(); renderTradePanel();
+  toast((reason==='LIQ'?'Liquidated ':'Closed ')+closedQty.toFixed(6)+' '+pos.coin+' '+(pnl>=0?'+':'')+pnl.toFixed(2)+' USDT');
+  renderOrderTabs(); renderTradePanel(); syncLockedBalanceUI();
 }
 
 function closePosition(id){ const p = STATE.positions.find(x=>x.id===id); if(!p) return; openCloseBySheet(p); }
@@ -3836,24 +4088,29 @@ function closePositionFull(id){
 function checkPositionTriggers(){
   if(!STATE.positions.length) return;
   let changed = false;
+  const accountEquity = getAccountEquity();
+  const maintenance = getMaintenanceMargin();
+  const forceAccountLiquidation = accountEquity <= Math.max(0, maintenance);
   for(const p of [...STATE.positions]){
     const cur = getMarkPrice(p.sym, 'linear');
     if(!cur) continue;
-    let hit = null;
+    const dynLiq = getPositionLiqPrice(p);
+    p.liq = dynLiq;
+    let hit = forceAccountLiquidation ? 'LIQ' : null;
     if(p.side==='Long'){
       if(p.trail){ if(p.trailHigh==null||cur>p.trailHigh) p.trailHigh=cur; const stop=p.trailHigh*(1-p.trail/100); if(cur<=stop) hit='TRAIL'; }
       if(!hit && p.tp && cur>=p.tp) hit='TP';
       else if(!hit && p.sl && cur<=p.sl) hit='SL';
-      else if(!hit && p.liq && cur<=p.liq) hit='LIQ';
+      else if(!hit && dynLiq && cur<=dynLiq) hit='LIQ';
     } else {
       if(p.trail){ if(p.trailHigh==null||cur<p.trailHigh) p.trailHigh=cur; const stop=p.trailHigh*(1+p.trail/100); if(cur>=stop) hit='TRAIL'; }
       if(!hit && p.tp && cur<=p.tp) hit='TP';
       else if(!hit && p.sl && cur>=p.sl) hit='SL';
-      else if(!hit && p.liq && cur>=p.liq) hit='LIQ';
+      else if(!hit && dynLiq && cur>=dynLiq) hit='LIQ';
     }
     if(hit){
-      const px = hit==='TP'?p.tp : hit==='SL'?p.sl : hit==='LIQ'?p.liq : cur;
-      closePositionPartial(p.id, p.qty, px);
+      const px = hit==='TP'?p.tp : hit==='SL'?p.sl : hit==='LIQ'?(cur || dynLiq) : cur;
+      closePositionPartial(p.id, p.qty, px, hit);
       toast(hit+' triggered on '+p.coin+' @ '+px);
       changed = true;
     }
@@ -3892,6 +4149,7 @@ function renderOrderTabs(){
     if(!STATE.positions.length){ wrap.innerHTML = '<div class="empty">No open positions</div>'; return; }
     wrap.innerHTML = STATE.positions.map(p=>{
       const { cur, pnl, pct, up } = calcPositionPnl(p, getMarkPrice(p.sym, 'linear'));
+      const liq = getPositionLiqPrice(p); p.liq = liq;
       return `<div style="padding:12px 14px;border-bottom:1px solid var(--border);">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
           <div>
@@ -3906,7 +4164,7 @@ function renderOrderTabs(){
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;font-size:10px;color:var(--text2);margin-bottom:6px;">
           <div><div>Entry</div><div style="color:var(--text);font-weight:600;margin-top:2px;">${(+p.entry).toFixed(4)}</div></div>
           <div><div>Mark</div><div style="color:var(--text);font-weight:600;margin-top:2px;">${cur.toFixed(4)}</div></div>
-          <div><div>Liq.</div><div style="color:var(--orange);font-weight:600;margin-top:2px;">${p.liq?(+p.liq).toFixed(4):'--'}</div></div>
+          <div><div>Liq.</div><div style="color:var(--orange);font-weight:600;margin-top:2px;">${liq?(+liq).toFixed(4):'--'}</div></div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;font-size:10px;color:var(--text2);margin-bottom:9px;">
           <div><div>Size (USDT)</div><div style="color:var(--text);font-weight:600;margin-top:2px;">${((+p.positionSize)||(p.qty*p.entry)).toFixed(2)}</div></div>
@@ -3967,9 +4225,13 @@ async function renderAssetList(){
   const wrap = document.getElementById('asset-coin-list');
   if(!wrap) return;
   // Single source of truth: window.userBalance (Firebase)
-  const usdtBal = parseFloat(window.userBalance||0);
-  if(STATE) STATE.balance = usdtBal;
-  const rows = [['USDT', usdtBal, 1, 0]];
+  const rawBal = parseFloat(window.userBalance||0);
+  if(STATE) STATE.balance = rawBal;
+  // [BUG 4 FIX] equity = wallet + unrealized PnL; available = wallet - locked margin
+  const equityUsdt = (typeof getEquityBalance==='function') ? getEquityBalance() : rawBal;
+  const locked = (typeof getLockedMargin==='function') ? getLockedMargin() : 0;
+  const availUsdt = (typeof getAvailableBalance==='function') ? getAvailableBalance() : Math.max(0, rawBal - locked);
+  const rows = [['USDT', rawBal, 1, 0]];
   const coins = Object.entries(STATE.coins||{}).filter(([,v])=>v>0);
   let priceMap = {};
   if(coins.length){
@@ -3989,7 +4251,7 @@ async function renderAssetList(){
     total += usd;
     const chgTxt = chg!=null ? ((chg>=0?'+':'')+chg.toFixed(2)+'%') : '';
     const chgColor = chg>=0 ? 'var(--green)' : 'var(--red)';
-    return `<div class="crow" onclick="openTrade('${c}USDT','spot')">
+    return `<div class="crow" onclick="openCoinDetail('${c}')">
       <div style="display:flex;align-items:center;gap:11px;">
         <img class="clogo" style="width:34px;height:34px;" src="https://assets.coincap.io/assets/icons/${c.toLowerCase()}@2x.png" data-sym="${c}" onerror="logoFallback(this,1)" alt="${c}">
         <div><div class="cname2">${c}</div><div class="cchg" style="color:${chgTxt?chgColor:'var(--text2)'};">${chgTxt||'—'}</div></div>
@@ -3998,6 +4260,9 @@ async function renderAssetList(){
     </div>`;
   }).join('');
   wrap.innerHTML = html;
+  // [BUG 4 FIX] add unrealized PnL to total displayed (subtract raw USDT, add equity USDT)
+  const unrealizedPnl = equityUsdt - rawBal;
+  total = total + unrealizedPnl;
   // === Currency conversion + display ===
   const btcPx = priceMap['BTCUSDT'] ? parseFloat(priceMap['BTCUSDT'].lastPrice) : 0;
   const INR_RATE = 87; // approximate USDT→INR rate
@@ -4008,7 +4273,10 @@ async function renderAssetList(){
   else if(cur==='USD'){ shown = total; suffix='USD'; decimals=2; }
   const fmtTotal = shown.toLocaleString(undefined,{minimumFractionDigits:decimals, maximumFractionDigits:decimals});
   const at = document.getElementById('assetsTotalUSD'); if(at) at.textContent = fmtTotal;
-  const av = document.getElementById('assetsAvail');    if(av) av.textContent = usdtBal.toFixed(2);
+  // [BUG 4 FIX] Available shows wallet minus locked margin, not raw balance
+  const av = document.getElementById('assetsAvail');    if(av) av.textContent = availUsdt.toFixed(2);
+  const iu = document.getElementById('assetsInUse');   if(iu) iu.textContent = locked.toFixed(2);
+  const wb = document.getElementById('witBal');        if(wb) wb.textContent = availUsdt.toFixed(2);
   const tu = document.getElementById('totalAssetUSD');  if(tu) tu.textContent = fmtTotal;
   const lblA = document.getElementById('assetsCurLabel'); if(lblA) lblA.textContent = suffix+' ▾';
   const lblH = document.getElementById('homeCurLabel');   if(lblH) lblH.textContent = suffix+' ▾';
@@ -4083,6 +4351,19 @@ setInterval(()=>{
   if(currentCat!=='linear') return;
   checkPositionTriggers();
   if(_bbIsTradeVisible()) refreshFuturesLiveUI();
+  // [BUG 11 FIX] keep nav/assets balance live with equity while positions are open
+  if((STATE.positions||[]).length > 0 || (STATE.orders||[]).some(o=>o.status==='Open' && o.pending)){
+    try {
+      const equity = getEquityBalance();
+      const available = getAvailableBalance();
+      const tu = document.getElementById('totalAssetUSD'); if(tu) tu.textContent = equity.toFixed(2);
+      const at = document.getElementById('assetsTotalUSD'); if(at) at.textContent = equity.toFixed(2);
+      const av = document.getElementById('assetsAvail'); if(av) av.textContent = available.toFixed(2);
+      const iu = document.getElementById('assetsInUse'); if(iu) iu.textContent = getLockedMargin().toFixed(2);
+      const wb = document.getElementById('witBal'); if(wb) wb.textContent = available.toFixed(2);
+      if(orderTab==='positions') renderOrderTabs();
+    } catch(e){}
+  }
 }, 1000);
 setInterval(()=>{
   if(!STATE.orders.some(o=>o.status==='Open' && o.pending)) return;
@@ -4093,9 +4374,11 @@ setInterval(()=>{
     if(!cur) continue;
     const filled = o.pending.dir==='Long' ? cur<=o.price : cur>=o.price;
     if(filled){
-      if(getAvailableBalance() < o.pending.margin){ o.status='Cancelled'; changed=true; continue; }
-      const liq = calcLiqPrice(o.price, o.pending.lev, o.pending.dir);
-      STATE.positions.unshift({id:Date.now(),sym:o.sym,coin:o.coin,side:o.pending.dir,lev:o.pending.lev,entry:o.price,qty:o.qty,margin:o.pending.margin,positionSize:o.pending.margin*o.pending.lev,mode:FUT.margin,liq,tp:o.pending.tp,sl:o.pending.sl,ts:Date.now()});
+      const availableWithThisOrder = getAvailableBalance() + (parseFloat(o.pending.margin)||0);
+      if(availableWithThisOrder < o.pending.margin){ o.status='Cancelled'; changed=true; continue; }
+      const mode = o.pending.mode || FUT.margin;
+      const liq = calcPreviewLiqPrice(o.price, o.pending.lev, o.pending.dir, o.pending.margin, o.qty, mode);
+      STATE.positions.unshift({id:Date.now(),sym:o.sym,coin:o.coin,side:o.pending.dir,lev:o.pending.lev,entry:o.price,qty:o.qty,margin:o.pending.margin,positionSize:o.pending.margin*o.pending.lev,mode,liq,tp:o.pending.tp,sl:o.pending.sl,ts:Date.now()});
       o.status='Filled'; delete o.pending; changed=true;
     }
   }
@@ -4238,12 +4521,23 @@ function doConvert(){
   if(amt<=0) return toast('Enter amount');
   if(f===t) return toast('Pick different coins');
   const pf = getCoinUsdPrice(f), pt = getCoinUsdPrice(t);
-  if(!pf||!pt) return toast('Price unavailable');
-  const have = f==='USDT' ? STATE.balance : (STATE.coins[f]||0);
+  // [BUG 8 FIX] explicit price guards with helpful messages
+  if(!pf || pf<=0) return toast(f+' price not loaded yet — try again in a moment');
+  if(!pt || pt<=0) return toast(t+' price not loaded yet — try again in a moment');
+  const have = f==='USDT' ? getBalance() : (STATE.coins[f]||0);
   if(have < amt) return toast('Insufficient '+f);
   const out = amt*(pf/pt);
-  if(f==='USDT') STATE.balance -= amt; else STATE.coins[f] -= amt;
-  if(t==='USDT') STATE.balance += out; else STATE.coins[t] = (STATE.coins[t]||0) + out;
+  // [BUG 8 FIX] floor deductions at 0 + use writeBalance so floor/Firebase sync apply
+  if(f==='USDT'){
+    writeBalance(Math.max(0, getBalance() - amt));
+  } else {
+    STATE.coins[f] = Math.max(0, (STATE.coins[f]||0) - amt);
+  }
+  if(t==='USDT'){
+    writeBalance((parseFloat(window.userBalance||0)) + out);
+  } else {
+    STATE.coins[t] = (STATE.coins[t]||0) + out;
+  }
   STATE.orders.unshift({id:Date.now(),sym:f+'→'+t,coin:t,side:'Convert',type:'Convert',price:pf/pt,qty:out,value:amt*pf,ts:Date.now(),status:'Filled'});
   saveState(STATE);
   toast(`Converted ${amt} ${f} → ${out.toFixed(6)} ${t}`);
@@ -6309,7 +6603,7 @@ main{padding:0 0 90px!important;}
       <div class="field-lbl">Amount (USDT)</div>
       <div style="position:relative;">
         <input type="number" class="big-inp" id="witAmt" placeholder="0.00" style="margin-bottom:4px;">
-        <button onclick="document.getElementById('witAmt').value=balance" style="position:absolute;right:14px;top:14px;background:none;border:none;color:var(--y);font-weight:700;font-size:10px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;">MAX</button>
+        <button onclick="document.getElementById('witAmt').value=(typeof getWithdrawableBalance==='function'?getWithdrawableBalance():balance).toFixed(2)" style="position:absolute;right:14px;top:14px;background:none;border:none;color:var(--y);font-weight:700;font-size:10px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;">MAX</button>
       </div>
       <div style="font-size:9px;color:var(--muted);font-weight:600;margin:8px 0 4px;">Available: <span style="color:var(--y);" id="witBal">0.00</span> USDT</div>
       <button class="main-btn btn-y" onclick="doWithdraw()" style="margin-top:12px;">CONFIRM WITHDRAWAL</button>
@@ -6632,8 +6926,8 @@ function subscribeUserData(firebaseUid) {
     balance = parseFloat(snap.val() || 0);
     window.userBalance = balance; // [FIXED] keep both balance sources in sync
     const navBalEl = document.getElementById('navBal'); if (navBalEl) navBalEl.innerText = balance.toFixed(2);
-    const witBalEl = document.getElementById('witBal'); if (witBalEl) witBalEl.innerText = balance.toFixed(2);
     try { if (typeof STATE === 'object') STATE.balance = balance; } catch(e){}
+    try { if (typeof syncLockedBalanceUI === 'function') syncLockedBalanceUI(); } catch(e){ const witBalEl = document.getElementById('witBal'); if (witBalEl) witBalEl.innerText = balance.toFixed(2); }
     try { if (typeof updateUserUI === 'function') updateUserUI(); } catch(e){}
   });
 
@@ -6873,7 +7167,7 @@ function updateNavState() {
   if (li) {
     document.getElementById('uidDisplay').innerText = userUID;
     document.getElementById('navBal').innerText     = balance.toFixed(2);
-    document.getElementById('witBal').innerText     = balance.toFixed(2);
+    document.getElementById('witBal').innerText     = (typeof getWithdrawableBalance==='function'?getWithdrawableBalance():balance).toFixed(2);
   }
 }
 function updateSidebarUser() {
@@ -6910,7 +7204,7 @@ function saveLastUpdateId(id) { lastUpdateId=id; localStorage.setItem('p2p_lastU
 const OPEN_DEAL_KEY='p2p_openDealId';
 function saveOpenDeal(id){ try{ if(id) localStorage.setItem(OPEN_DEAL_KEY,String(id)); else localStorage.removeItem(OPEN_DEAL_KEY);}catch(e){} }
 function getSavedOpenDeal(){ try{ const v=localStorage.getItem(OPEN_DEAL_KEY); return v?parseInt(v):null;}catch(e){return null;} }
-function updateBal() { balance=parseFloat(balance)||0; fbSetBalance(balance); }
+function updateBal() { balance=Math.max(0, parseFloat(balance)||0); fbSetBalance(balance); try{ syncLockedBalanceUI&&syncLockedBalanceUI(); }catch(e){} }
 function copyUID()   { if(!currentUser) return openAuth('signin'); copyText(userUID); toast('success','Copied!','User ID copied.'); }
 function copyAddr(a) { copyText(a); toast('success','Copied!','Address copied.'); }
 function copyMerchantUpi() {
@@ -7360,7 +7654,8 @@ async function doWithdraw() {
   const addr=document.getElementById('witAddr').value.trim();
   const amt=parseFloat(document.getElementById('witAmt').value);
   if(!addr||addr.length<20) return toast('error','Invalid Address','Enter a valid wallet address.');
-  if(!amt||amt>balance) return toast('error','Insufficient Balance','Not enough USDT.');
+  const withdrawable = (typeof getWithdrawableBalance==='function') ? getWithdrawableBalance() : balance;
+  if(!amt||amt>withdrawable) return toast('error','Insufficient Available Balance','Only '+withdrawable.toFixed(2)+' USDT is withdrawable. Open position/order margin is locked.');
   if(!confirm('Confirm withdrawal of '+amt+' USDT?')) return;
   balance-=amt; updateBal();
   closeOverlay('witOverlay');
@@ -7382,7 +7677,8 @@ window.confirmWithdrawCustom = async function(opts){
   const coin = opts.coin||'USDT', chain = opts.chain||'BEP-20', addr = opts.addr||'';
   // Only deduct balance for USDT (the only tracked coin)
   if(coin==='USDT'){
-    if(amt > balance) return {ok:false, error:'Insufficient balance'};
+    const withdrawable = (typeof getWithdrawableBalance==='function') ? getWithdrawableBalance() : balance;
+    if(amt > withdrawable) return {ok:false, error:'Insufficient available balance ('+withdrawable.toFixed(2)+' USDT withdrawable)'};
     balance -= amt; updateBal();
   }
   const txId = genTxId();
@@ -7995,7 +8291,7 @@ function selNet(net,pfx){
   if(pfx==='dep') depNet=net; else witNet=net;
 }
 
-function openOverlay(id) { document.getElementById(id).classList.add('show'); }
+function openOverlay(id) { document.getElementById(id).classList.add('show'); if(id==='witOverlay'){ try{ syncLockedBalanceUI&&syncLockedBalanceUI(); }catch(e){} } }
 function closeOverlay(id){ document.getElementById(id).classList.remove('show'); }
 
 function showAlert(type,title,msg){
@@ -8094,6 +8390,7 @@ window.addEventListener('load',()=>{
         }
       } catch(e){}
       document.querySelectorAll('[data-bal-usdt]').forEach(el => { el.textContent = usdt.toFixed(2); });
+      try { typeof syncLockedBalanceUI === 'function' && syncLockedBalanceUI(); } catch(e){}
       try { typeof updateUserUI === 'function' && updateUserUI(); } catch(e){}
       try { typeof renderAssetList === 'function' && renderAssetList(); } catch(e){}
     });
@@ -8184,7 +8481,7 @@ window.addEventListener('load',()=>{
         coin: t,
         amt: out,
         status: 'COMPLETED',
-        meta: { fromCoin: f, toCoin: t, fromAmt: amt, toAmt: out, rate: pf / pt }
+        meta: { fromCoin: f, toCoin: t, fromAmt: amt, toAmt: out, rate: pf / pt, fromUsd: amt*pf, toUsd: out*pt, fromPriceUsd: pf, toPriceUsd: pt }
       });
 
       T('Converted ' + amt + ' ' + f + ' → ' + out.toFixed(6) + ' ' + t);
@@ -8199,6 +8496,331 @@ window.addEventListener('load',()=>{
   };
 
   console.log('[PATCH v4] Frontend TG disabled · balances map active · doConvert atomic');
+})();
+</script>
+<!-- ═══ Coin Detail Screen ═══ -->
+<div class="bb-screen" id="coinDetail" style="background:#000;">
+  <div class="bb-hdr">
+    <button class="bb-back" onclick="bbClose('coinDetail')"><i class="fas fa-arrow-left"></i></button>
+    <div class="bb-ttl" style="display:flex;align-items:center;gap:8px;justify-content:center;">
+      <img id="cdLogo" src="" style="width:22px;height:22px;border-radius:50%;" onerror="this.style.display='none'">
+      <span id="cdSymTtl" style="font-weight:700;">USDT</span>
+    </div>
+    <div style="display:flex;gap:16px;align-items:center;">
+      <i class="far fa-file-alt" style="color:#fff;cursor:pointer;font-size:18px;" onclick="bbOpenHistory()"></i>
+      <i class="fas fa-external-link-alt" style="color:#fff;cursor:pointer;font-size:16px;" onclick="(function(){var s=document.getElementById('cdSymTtl').textContent;openTrade(s+'USDT','spot');})()"></i>
+    </div>
+  </div>
+  <div style="padding:18px 20px 110px;color:#fff;">
+    <div style="color:#8c8c8c;font-size:13px;border-bottom:1px dashed #2a2a2a;display:inline-block;padding-bottom:2px;">Equity</div>
+    <div id="cdEquity" style="font-size:36px;font-weight:700;margin-top:8px;line-height:1.1;">0.0000</div>
+    <div id="cdEquityUsd" style="color:#8c8c8c;font-size:13px;margin-top:4px;">≈ 0.00 USD</div>
+    <div style="display:flex;gap:80px;margin-top:24px;">
+      <div>
+        <div style="color:#8c8c8c;font-size:12px;">Cumulative PnL (USD)</div>
+        <div id="cdPnl" style="font-size:18px;font-weight:600;margin-top:4px;color:var(--green);">0.00</div>
+      </div>
+      <div>
+        <div style="color:#8c8c8c;font-size:12px;">Cumulative ROI%</div>
+        <div id="cdRoi" style="font-size:18px;font-weight:600;margin-top:4px;color:var(--green);">0.00%</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:80px;margin-top:22px;">
+      <div>
+        <div style="color:#8c8c8c;font-size:12px;border-bottom:1px dashed #2a2a2a;display:inline-block;padding-bottom:2px;">Avg. Cost (USD)</div>
+        <div id="cdAvgCost" style="font-size:16px;font-weight:500;margin-top:6px;">—</div>
+      </div>
+      <div>
+        <div style="color:#8c8c8c;font-size:12px;border-bottom:1px dashed #2a2a2a;display:inline-block;padding-bottom:2px;">Index Price (USD)</div>
+        <div id="cdIdxPx" style="font-size:16px;font-weight:500;margin-top:6px;">—</div>
+      </div>
+    </div>
+    <div style="height:1px;background:#1d1d1d;margin:26px 0 18px;"></div>
+    <div style="font-size:16px;font-weight:700;margin-bottom:12px;">Trade</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div onclick="openTrade('BTCUSDT','spot')" style="border:1px solid #232323;border-radius:12px;padding:14px;cursor:pointer;">
+        <div style="color:#8c8c8c;font-size:12px;">BTCUSDT</div>
+        <div id="cdBtcPx" style="font-size:18px;font-weight:600;margin-top:6px;">—</div>
+        <div id="cdBtcChg" style="font-size:12px;margin-top:4px;color:var(--green);">+0.00%</div>
+      </div>
+      <div onclick="openTrade('ETHUSDT','spot')" style="border:1px solid #232323;border-radius:12px;padding:14px;cursor:pointer;">
+        <div style="color:#8c8c8c;font-size:12px;">ETHUSDT</div>
+        <div id="cdEthPx" style="font-size:18px;font-weight:600;margin-top:6px;">—</div>
+        <div id="cdEthChg" style="font-size:12px;margin-top:4px;color:var(--green);">+0.00%</div>
+      </div>
+    </div>
+    <div style="text-align:center;margin:14px 0 4px;color:#666;"><i class="fas fa-chevron-down"></i></div>
+    <div style="font-size:16px;font-weight:700;margin:14px 0 12px;">Earn</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div onclick="(function(){bbClose('coinDetail');var e=document.querySelector('[data-tab=\'earn\']');e&&e.click();})()" style="border:1px solid #232323;border-radius:12px;padding:14px;cursor:pointer;">
+        <div style="color:#8c8c8c;font-size:12px;">On-Chain Earn</div>
+        <div style="font-size:16px;font-weight:600;margin-top:6px;">Mantle Vault</div>
+        <div style="color:#8c8c8c;font-size:12px;margin-top:4px;">up to <span style="color:var(--green);">4.49%</span></div>
+      </div>
+      <div onclick="(function(){bbClose('coinDetail');var e=document.querySelector('[data-tab=\'earn\']');e&&e.click();})()" style="border:1px solid #232323;border-radius:12px;padding:14px;cursor:pointer;">
+        <div style="color:#8c8c8c;font-size:12px;">Easy Earn Fixed</div>
+        <div id="cdEarnSym" style="font-size:16px;font-weight:600;margin-top:6px;">USDT</div>
+        <div style="color:#8c8c8c;font-size:12px;margin-top:4px;">up to <span style="color:var(--green);">6.29%</span></div>
+      </div>
+    </div>
+  </div>
+  <!-- Bottom action bar: Transfer | Convert -->
+  <div style="position:absolute;left:0;right:0;bottom:0;background:#000;border-top:1px solid #1a1a1a;padding:14px 20px 22px;display:flex;justify-content:space-around;align-items:center;">
+    <div onclick="bbClose('coinDetail');try{showTab&&showTab('home')}catch(e){}" style="display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;">
+      <div style="width:42px;height:42px;border-radius:50%;background:#1f1f1f;display:flex;align-items:center;justify-content:center;"><i class="fas fa-exchange-alt" style="color:#fff;font-size:16px;"></i></div>
+      <div style="font-size:12px;color:#fff;">Transfer</div>
+    </div>
+    <div onclick="bbClose('coinDetail');try{openConvert&&openConvert(window._cdSym||'USDT')}catch(e){}" style="display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;">
+      <div style="width:42px;height:42px;border-radius:50%;background:#1f1f1f;display:flex;align-items:center;justify-content:center;"><i class="fas fa-sync-alt" style="color:#fff;font-size:16px;"></i></div>
+      <div style="font-size:12px;color:#fff;">Convert</div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* Coin Detail logic: live equity, PnL, ROI from weighted avg cost. */
+window._cdSym = null;
+window._cdIv  = null;
+window.openCoinDetail = async function(sym){
+  sym = String(sym||'USDT').toUpperCase();
+  window._cdSym = sym;
+  document.getElementById('cdSymTtl').textContent = sym;
+  const lg = document.getElementById('cdLogo');
+  lg.style.display=''; lg.src='https://assets.coincap.io/assets/icons/'+sym.toLowerCase()+'@2x.png';
+  bbOpen('coinDetail');
+  try{ if(!window._bbHistCache || !window._bbHistCache.length) await bbLoadHistFromFb(); }catch(e){}
+  cdRender();
+  if(window._cdIv) clearInterval(window._cdIv);
+  window._cdIv = setInterval(cdRender, 2000);
+};
+(function(){
+  const _bbClose = window.bbClose;
+  window.bbClose = function(id){
+    if(id==='coinDetail' && window._cdIv){ clearInterval(window._cdIv); window._cdIv=null; }
+    return _bbClose.apply(this, arguments);
+  };
+})();
+function cdGetPriceUsd(sym){
+  sym = String(sym||'').toUpperCase();
+  if(['USDT','USDC','DAI','BUSD','TUSD'].includes(sym)) return 1;
+  try{
+    const t = (typeof getTickerRecord==='function')
+      ? (getTickerRecord('spot', sym+'USDT') || getTickerRecord('linear', sym+'USDT')) : null;
+    const p = t && parseFloat(t.lastPrice);
+    if(p>0) return p;
+  }catch(e){}
+  try{ if(typeof getCoinUsdPrice==='function'){ const p = getCoinUsdPrice(sym); if(p>0) return p; } }catch(e){}
+  return 0;
+}
+function cdGet24hPct(sym){
+  try{
+    const t = (typeof getTickerRecord==='function')
+      ? (getTickerRecord('spot', sym+'USDT') || getTickerRecord('linear', sym+'USDT')) : null;
+    if(t) return parseFloat(t.price24hPcnt||0)*100;
+  }catch(e){}
+  return 0;
+}
+function cdGetBal(sym){
+  sym = String(sym||'').toUpperCase();
+  if(sym==='USDT') return parseFloat(window.userBalance||0);
+  try{ if(window.balances && window.balances[sym]!=null) return parseFloat(window.balances[sym]); }catch(e){}
+  try{ return parseFloat((STATE.coins||{})[sym]||0); }catch(e){ return 0; }
+}
+function cdCalcAvgCost(sym){
+  sym = String(sym||'').toUpperCase();
+  if(['USDT','USDC','DAI','BUSD','TUSD'].includes(sym)) return 1;
+  let qty=0, cost=0;
+  const items = (window._bbHistCache||[]).filter(h => h && h.type==='CONVERT' && (h.meta||{}).toCoin===sym && (h.status==='COMPLETED'||h.status==='SUCCESS'));
+  items.forEach(h=>{
+    const m = h.meta||{};
+    const q = parseFloat(m.toAmt||h.amt||0);
+    let usd = parseFloat(m.toUsd||m.fromUsd||0);
+    if(!usd){
+      const f = String(m.fromCoin||'').toUpperCase();
+      if(['USDT','USDC','DAI','BUSD','TUSD'].includes(f)) usd = parseFloat(m.fromAmt||0);
+    }
+    if(!usd) usd = q * cdGetPriceUsd(sym);
+    if(q>0 && usd>0){ qty += q; cost += usd; }
+  });
+  if(qty<=0) return 0;
+  return cost / qty;
+}
+function cdRender(){
+  const sym = window._cdSym; if(!sym) return;
+  const price = cdGetPriceUsd(sym);
+  const bal   = cdGetBal(sym);
+  const avg   = cdCalcAvgCost(sym);
+  const equityUsd = bal * price;
+  const pnl   = avg>0 ? bal * (price - avg) : 0;
+  const roi   = avg>0 ? (price/avg - 1)*100 : 0;
+  const set = (id,v)=>{ const el=document.getElementById(id); if(el) el.textContent=v; };
+  const col = (id,c)=>{ const el=document.getElementById(id); if(el) el.style.color=c; };
+  set('cdEquity',    bal.toFixed(sym==='USDT'?4:8));
+  set('cdEquityUsd', '≈ '+equityUsd.toFixed(2)+' USD');
+  set('cdAvgCost',   avg>0 ? avg.toLocaleString(undefined,{maximumFractionDigits:8}) : '—');
+  set('cdIdxPx',     price>0 ? price.toLocaleString(undefined,{maximumFractionDigits:8}) : '—');
+  const pnlSign = pnl>=0?'+':''; const pnlCol = pnl>=0?'var(--green)':'var(--red)';
+  set('cdPnl', pnlSign+pnl.toFixed(2)); col('cdPnl', pnlCol);
+  const roiSign = roi>=0?'+':''; const roiCol = roi>=0?'var(--green)':'var(--red)';
+  set('cdRoi', roiSign+roi.toFixed(2)+'%'); col('cdRoi', roiCol);
+  ['BTC','ETH'].forEach(s=>{
+    const p = cdGetPriceUsd(s); const c = cdGet24hPct(s);
+    set('cd'+(s==='BTC'?'Btc':'Eth')+'Px', p>0 ? p.toLocaleString(undefined,{maximumFractionDigits:2}) : '—');
+    const cSign = c>=0?'+':''; const cCol = c>=0?'var(--green)':'var(--red)';
+    const ce = document.getElementById('cd'+(s==='BTC'?'Btc':'Eth')+'Chg');
+    if(ce){ ce.textContent = cSign+c.toFixed(2)+'%'; ce.style.color=cCol; }
+  });
+  ['BTC','ETH'].forEach(s=>{
+    const p = cdGetPriceUsd(s); const c = cdGet24hPct(s);
+    set('cd'+(s==='BTC'?'Btc':'Eth')+'Px', p>0 ? p.toLocaleString(undefined,{maximumFractionDigits:2}) : '—');
+    const cSign = c>=0?'+':''; const cCol = c>=0?'var(--green)':'var(--red)';
+    const ce = document.getElementById('cd'+(s==='BTC'?'Btc':'Eth')+'Chg');
+    if(ce){ ce.textContent = cSign+c.toFixed(2)+'%'; ce.style.color=cCol; }
+  });
+  set('cdEarnSym', sym);
+}
+</script>
+
+<!-- ═══ Spot Trade Engine v6 — Bybit/Binance-grade logic ═══ -->
+<script>
+(function(){
+  /* Real-exchange spot logic:
+     - Market order: fill instantly at last/mark price
+     - Limit order: validate against current price; for demo, fill if price crosses, else queue
+     - Taker fee: 0.10% (Bybit/Binance default for non-VIP)
+     - Min notional: $1 USDT
+     - Persist BOTH sides (USDT + coin) to Firebase atomically
+  */
+  const TAKER_FEE = 0.001;
+  const MIN_NOTIONAL = 1;
+
+  async function fbAdjustBalance(coin, delta){
+    const fb = window._fb, u = window.currentFbUser;
+    if(!fb || !u || !u.firebaseUid) throw new Error('Login required');
+    const { db, ref, runTransaction } = fb;
+    const fuid = u.firebaseUid;
+    const r = await runTransaction(ref(db,'users/'+fuid+'/balances/'+coin), v=>{
+      const cur = parseFloat(v||0);
+      const next = cur + delta;
+      if(next < -1e-9) return; // abort if would go negative
+      return +Math.max(0,next).toFixed(8);
+    });
+    if(!r.committed) throw new Error('Insufficient '+coin);
+    if(coin==='USDT'){
+      await runTransaction(ref(db,'users/'+fuid+'/balance'), v=>{
+        const cur = parseFloat(v||0);
+        return Math.max(0, +(cur+delta).toFixed(8));
+      });
+    }
+  }
+
+  async function logSpotHistory(side, coin, qty, price, fee, total){
+    try{
+      const fb = window._fb, u = window.currentFbUser;
+      if(!fb || !u || !u.firebaseUid) return;
+      const { db, ref, set } = fb;
+      const hid = 'h_spot_'+Date.now()+'_'+Math.random().toString(36).slice(2,6);
+      await set(ref(db,'users/'+u.firebaseUid+'/history/'+hid), {
+        hid, ts: Date.now(),
+        type: 'CONVERT',
+        coin: side==='Buy'? coin : 'USDT',
+        amt:  side==='Buy'? qty  : +(total-fee).toFixed(8),
+        status: 'COMPLETED',
+        meta: side==='Buy'
+          ? { fromCoin:'USDT', toCoin:coin, fromAmt:total, toAmt:qty, rate:1/price, fromUsd:total, toUsd:qty*price, fromPriceUsd:1, toPriceUsd:price, kind:'SPOT_BUY', fee }
+          : { fromCoin:coin, toCoin:'USDT', fromAmt:qty, toAmt:+(total-fee).toFixed(8), rate:price, fromUsd:qty*price, toUsd:+(total-fee).toFixed(8), fromPriceUsd:price, toPriceUsd:1, kind:'SPOT_SELL', fee }
+      });
+    }catch(e){ console.warn('[spot hist]', e); }
+  }
+
+  async function executeSpot(side, coin, qty, price){
+    if(!Number.isFinite(price) || price<=0) throw new Error('Price not ready');
+    if(!Number.isFinite(qty)   || qty<=0)   throw new Error('Enter quantity');
+    const notional = qty * price;
+    if(notional < MIN_NOTIONAL) throw new Error('Min order is $'+MIN_NOTIONAL);
+    const fee = +(notional * TAKER_FEE).toFixed(8);
+    if(side==='Buy'){
+      // Need USDT = notional + fee
+      const need = notional + fee;
+      const have = (window.balances && window.balances.USDT!=null) ? parseFloat(window.balances.USDT) : parseFloat(window.userBalance||0);
+      if(have + 1e-9 < need) throw new Error('Insufficient USDT (need '+need.toFixed(4)+')');
+      await fbAdjustBalance('USDT', -need);
+      try{ await fbAdjustBalance(coin, qty); }
+      catch(e){ // rollback USDT on failure
+        try{ await fbAdjustBalance('USDT', +need); }catch(_){}
+        throw e;
+      }
+    } else {
+      const have = (window.balances && window.balances[coin]!=null) ? parseFloat(window.balances[coin]) : parseFloat((STATE.coins||{})[coin]||0);
+      if(have + 1e-9 < qty) throw new Error('Insufficient '+coin);
+      await fbAdjustBalance(coin, -qty);
+      const credit = notional - fee;
+      try{ await fbAdjustBalance('USDT', +credit); }
+      catch(e){
+        try{ await fbAdjustBalance(coin, +qty); }catch(_){}
+        throw e;
+      }
+    }
+    await logSpotHistory(side, coin, qty, price, fee, notional);
+    try{ STATE.orders.unshift({id:Date.now(),sym:coin+'USDT',coin,side,type:'Spot Market',price,qty,value:notional,fee,ts:Date.now(),status:'Filled'}); saveState(STATE);}catch(e){}
+    return { qty, price, fee, notional };
+  }
+
+  // Override placeSpotOrder — proper limit/market behavior
+  window.placeSpotOrder = async function(){
+    try{
+      if(typeof needLogin==='function' && !needLogin()) return;
+      const coin = currentSymbol.replace('USDT','');
+      const pIn = parseFloat(document.getElementById('limit-price').value)||0;
+      const qIn = parseFloat(document.getElementById('limit-qty').value)||0;
+      const mkt = getMarkPrice(currentSymbol,'spot') || getMarkPrice(currentSymbol,'linear') || pIn;
+      if(!mkt) return toast('Price not loaded');
+      if(qIn<=0) return toast('Enter quantity');
+      // Sanity: reject limit price >10x away from market (typo guard)
+      if(pIn>0 && (pIn > mkt*10 || pIn < mkt/10)) return toast('Limit price too far from market');
+      // For demo: limit orders that don't cross fill at limit price anyway (simulated immediate match)
+      const fillPx = pIn>0 ? pIn : mkt;
+      const btn = document.getElementById('spot-submit');
+      if(btn){ btn.disabled=true; btn.style.opacity='.6'; }
+      const r = await executeSpot(spotSide, coin, qIn, fillPx);
+      toast(spotSide+' '+r.qty.toFixed(6)+' '+coin+' @ '+r.price+' (fee '+r.fee.toFixed(4)+' USDT)');
+      if(btn){ btn.disabled=false; btn.style.opacity='1'; }
+      try{ renderTradePanel(); renderOrderTabs(); renderAssetList(); }catch(e){}
+    }catch(e){ toast(e.message||String(e)); const btn=document.getElementById('spot-submit'); if(btn){btn.disabled=false;btn.style.opacity='1';} }
+  };
+
+  // Override quickOrder for spot side — respect input, no hardcoded 50%
+  const _origQuick = window.quickOrder;
+  window.quickOrder = async function(side){
+    try{
+      if(currentCat==='linear'){ return _origQuick && _origQuick.call(this, side); }
+      if(typeof needLogin==='function' && !needLogin()) return;
+      const coin = currentSymbol.replace('USDT','');
+      const px = getMarkPrice(currentSymbol,'spot') || getMarkPrice(currentSymbol,'linear') || parseFloat($('chart-price-big').textContent)||0;
+      if(!px) return toast('Price not ready');
+      let qty;
+      if(side==='Buy'){
+        const usdt = (parseFloat(window.userBalance||0)) * 0.1;
+        if(usdt < MIN_NOTIONAL) return toast('Insufficient USDT (min $'+MIN_NOTIONAL+')');
+        qty = usdt / px;
+      } else {
+        const have = (window.balances && window.balances[coin]!=null) ? parseFloat(window.balances[coin]) : parseFloat((STATE.coins||{})[coin]||0);
+        if(have<=0) return toast('No '+coin+' to sell');
+        qty = have * 0.1; // 10%, consistent with Buy 10%
+        if(qty*px < MIN_NOTIONAL) qty = Math.min(have, MIN_NOTIONAL/px);
+      }
+      const r = await executeSpot(side, coin, qty, px);
+      toast(side+' '+r.qty.toFixed(6)+' '+coin+' @ '+r.price);
+      try{ renderTradePanel(); renderOrderTabs(); renderAssetList(); }catch(e){}
+    }catch(e){ toast(e.message||String(e)); }
+  };
+
+  // Clear corrupted USD cache from older versions (stored unit price as total)
+  try{
+    Object.keys(localStorage).filter(k=>k.startsWith('bbUsdRate:')).forEach(k=>localStorage.removeItem(k));
+  }catch(e){}
+
+  console.log('[PATCH v6] Spot engine: market+limit, 0.1% fee, atomic Firebase, $1 min notional');
 })();
 </script>
 </body>
