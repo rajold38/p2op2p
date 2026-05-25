@@ -682,8 +682,8 @@ onAuthStateChanged(auth, async (fbUser) => {
     <div class="sbar" onclick="openSearch()"><i class="fas fa-fire" style="color:var(--orange);"></i><span id="home-search-label" style="color:var(--text2);">🔥 Search crypto</span></div>
     <div class="ibt" onclick="toast('Scan')"><i class="fas fa-qrcode"></i></div>
     <div class="ibt" onclick="toast('Rewards')"><i class="fas fa-gift"></i></div>
-    <div class="ibt" style="position:relative;" onclick="toast('Notifications')">
-      <i class="fas fa-bell"></i><span class="bdg">68</span>
+    <div class="ibt" id="notifBell" style="position:relative;" onclick="openNotifications()">
+      <i class="fas fa-bell"></i><span class="bdg" id="notifBadge" style="display:none;">0</span>
     </div>
   </div>
   <div class="scroll">
@@ -8821,6 +8821,353 @@ function cdRender(){
   }catch(e){}
 
   console.log('[PATCH v6] Spot engine: market+limit, 0.1% fee, atomic Firebase, $1 min notional');
+})();
+</script>
+
+<!-- ============ NOTIFICATIONS SYSTEM v7 ============ -->
+<style>
+  #notifScreen{position:fixed;inset:0;background:var(--bg,#0b0e11);z-index:9999;display:none;flex-direction:column;color:#fff;}
+  #notifScreen.open{display:flex;}
+  #notifScreen .nf-hdr{display:flex;align-items:center;gap:10px;padding:14px 14px 10px;border-bottom:1px solid rgba(255,255,255,0.05);}
+  #notifScreen .nf-hdr .nf-back{font-size:18px;cursor:pointer;padding:6px 8px;}
+  #notifScreen .nf-hdr .nf-title{flex:1;text-align:center;font-size:16px;font-weight:600;}
+  #notifScreen .nf-hdr .nf-clear{font-size:12px;color:var(--text2,#848e9c);cursor:pointer;padding:6px 8px;}
+  #notifScreen .nf-list{flex:1;overflow-y:auto;padding:4px 14px 24px;}
+  #notifScreen .nf-empty{text-align:center;color:var(--text2,#848e9c);font-size:13px;padding:60px 20px;}
+  .nf-item{padding:16px 0;border-bottom:1px solid rgba(255,255,255,0.05);cursor:pointer;position:relative;}
+  .nf-item .nf-row1{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+  .nf-item .nf-dot{width:8px;height:8px;border-radius:50%;background:#f6465d;flex-shrink:0;}
+  .nf-item.read .nf-dot{background:#3a3f47;}
+  .nf-item .nf-h{font-size:15px;font-weight:600;color:#fff;flex:1;}
+  .nf-item .nf-arrow{color:var(--text2,#848e9c);font-size:14px;}
+  .nf-item .nf-body{font-size:13px;color:var(--text2,#848e9c);line-height:1.5;margin-left:16px;white-space:pre-wrap;word-break:break-all;}
+  .nf-item .nf-time{font-size:12px;color:#5b6470;margin:8px 0 0 16px;}
+</style>
+
+<div id="notifScreen">
+  <div class="nf-hdr">
+    <span class="nf-back" onclick="closeNotifications()"><i class="fas fa-arrow-left"></i></span>
+    <span class="nf-title">System Notification</span>
+    <span class="nf-clear" onclick="markAllNotifsRead()">Mark all read</span>
+  </div>
+  <div class="nf-list" id="notifList"></div>
+</div>
+
+<script>
+(function(){
+  // ============ Notifications Module ============
+  // Firebase paths:
+  //   users/<uid>/notifs/<key>  -> per-user notifications
+  //   broadcasts/<key>          -> global broadcasts (written by bot/admin)
+  // Notif schema: { title, body, type, ts, hid?, route?, read? }
+  // For broadcasts, read state is tracked locally in localStorage('bcRead')
+
+  const NOTIF_TYPES_HISTORY = ['DEPOSIT','WITHDRAW','P2P','P2PPRO_CREDIT','P2P_BUY','P2P_SELL'];
+
+  function _uid(){
+    const u = window.currentFbUser;
+    return u ? (u.firebaseUid || (window._fb && window._fb.auth && window._fb.auth.currentUser && window._fb.auth.currentUser.uid) || u.uid) : null;
+  }
+
+  function _bcReadSet(){
+    try{ return new Set(JSON.parse(localStorage.getItem('bcRead_'+(_uid()||'g'))||'[]')); }
+    catch(e){ return new Set(); }
+  }
+  function _bcMarkRead(key){
+    const s = _bcReadSet(); s.add(key);
+    localStorage.setItem('bcRead_'+(_uid()||'g'), JSON.stringify([...s]));
+  }
+
+  window._notifCache = { user:{}, bc:{} };
+
+  window.pushNotif = async function(opts){
+    try{
+      const fb = window._fb; const uid = _uid();
+      if(!fb || !uid) return;
+      const { db, ref, push, set, serverTimestamp } = fb;
+      const entry = {
+        title: opts.title || 'Notification',
+        body:  opts.body  || '',
+        type:  opts.type  || 'INFO',
+        ts:    Date.now(),
+        read:  false,
+        hid:   opts.hid   || null,
+        route: opts.route || null
+      };
+      await push(ref(db, 'users/'+uid+'/notifs'), entry);
+    }catch(e){ console.warn('[pushNotif]', e); }
+  };
+
+  function _fmtTime(ts){
+    if(!ts) return '';
+    const d = new Date(ts);
+    const pad = n => String(n).padStart(2,'0');
+    return pad(d.getMonth()+1)+'-'+pad(d.getDate())+' '+pad(d.getHours())+':'+pad(d.getMinutes());
+  }
+
+  function _allNotifs(){
+    const u = window._notifCache.user || {};
+    const b = window._notifCache.bc   || {};
+    const bcRead = _bcReadSet();
+    const list = [];
+    Object.entries(u).forEach(([k,v])=>{
+      if(!v) return;
+      list.push({ key:k, src:'user', ...v });
+    });
+    Object.entries(b).forEach(([k,v])=>{
+      if(!v) return;
+      // Server schema: { text, ts, from, date }
+      list.push({
+        key:k, src:'bc', read: bcRead.has(k),
+        title: v.title || 'Announcement',
+        body:  v.body  || v.text || '',
+        ts:    v.ts    || 0,
+        type:  v.type  || 'BROADCAST'
+      });
+    });
+    list.sort((a,b)=>(b.ts||0)-(a.ts||0));
+    return list;
+  }
+
+  function _unreadCount(){
+    return _allNotifs().filter(n=>!n.read).length;
+  }
+
+  function _refreshBadge(){
+    const b = document.getElementById('notifBadge');
+    if(!b) return;
+    const n = _unreadCount();
+    if(n<=0){ b.style.display='none'; }
+    else { b.style.display=''; b.textContent = n>99 ? '99+' : String(n); }
+  }
+
+  function _esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+
+  function _renderList(){
+    const el = document.getElementById('notifList'); if(!el) return;
+    const list = _allNotifs();
+    if(!list.length){
+      el.innerHTML = '<div class="nf-empty">No notifications yet</div>';
+      return;
+    }
+    el.innerHTML = list.map(n=>{
+      const goesHist = NOTIF_TYPES_HISTORY.includes((n.type||'').toUpperCase());
+      const clickAttr = goesHist
+        ? `onclick="_notifClick('${n.src}','${n.key}',true)"`
+        : `onclick="_notifClick('${n.src}','${n.key}',false)"`;
+      return `<div class="nf-item ${n.read?'read':''}" ${clickAttr}>
+        <div class="nf-row1">
+          <span class="nf-dot"></span>
+          <span class="nf-h">${_esc(n.title)}</span>
+          <span class="nf-arrow"><i class="fas fa-chevron-right"></i></span>
+        </div>
+        <div class="nf-body">${_esc(n.body)}</div>
+        <div class="nf-time">${_fmtTime(n.ts)}</div>
+      </div>`;
+    }).join('');
+  }
+
+  window._notifClick = async function(src, key, goHistory){
+    try{
+      if(src==='user'){
+        const fb = window._fb, uid = _uid();
+        if(fb && uid){
+          const { db, ref, update } = fb;
+          await update(ref(db,'users/'+uid+'/notifs/'+key), { read:true });
+        }
+      }else{
+        _bcMarkRead(key);
+      }
+    }catch(e){}
+    _refreshBadge(); _renderList();
+    if(goHistory){
+      closeNotifications();
+      try{ bbOpenHistory(); }catch(e){ try{ toast('Open history'); }catch(_){} }
+    }
+  };
+
+  window.openNotifications = function(){
+    const s = document.getElementById('notifScreen'); if(!s) return;
+    s.classList.add('open');
+    _renderList();
+  };
+  window.closeNotifications = function(){
+    const s = document.getElementById('notifScreen'); if(s) s.classList.remove('open');
+  };
+
+  window.markAllNotifsRead = async function(){
+    try{
+      const fb = window._fb, uid = _uid();
+      if(fb && uid){
+        const { db, ref, update } = fb;
+        const upd = {};
+        Object.keys(window._notifCache.user||{}).forEach(k=>{ upd[k+'/read'] = true; });
+        if(Object.keys(upd).length) await update(ref(db,'users/'+uid+'/notifs'), upd);
+      }
+      // Mark all broadcasts read locally
+      Object.keys(window._notifCache.bc||{}).forEach(k=>_bcMarkRead(k));
+    }catch(e){}
+    _refreshBadge(); _renderList();
+  };
+
+  let _notifSubbed = false;
+  function _subscribe(){
+    const fb = window._fb, uid = _uid();
+    if(!fb || !uid || _notifSubbed) return;
+    _notifSubbed = true;
+    const { db, ref, onValue, get } = fb;
+    onValue(ref(db,'users/'+uid+'/notifs'), snap=>{
+      window._notifCache.user = snap.val() || {};
+      _refreshBadge();
+      if(document.getElementById('notifScreen')?.classList.contains('open')) _renderList();
+    }, err => console.warn('[NOTIF] notifs subscribe error:', err && err.message || err));
+
+    // Server writes to /broadcast (singular) per server_4.js handleBroadcast()
+    const _applyBroadcast = (val, src) => {
+      window._notifCache.bc = val || {};
+      console.log('[NOTIF] broadcast ('+src+') count:', Object.keys(window._notifCache.bc).length);
+      _refreshBadge();
+      if(document.getElementById('notifScreen')?.classList.contains('open')) _renderList();
+    };
+    onValue(ref(db,'broadcast'), snap=>{
+      _applyBroadcast(snap.val(), 'onValue');
+    }, err => {
+      console.warn('[NOTIF] broadcast subscribe error:', err && err.message || err);
+      // Likely PERMISSION_DENIED — fall back to polling via authed get(),
+      // and if that also fails, try the /broadcasts/<uid> per-user mirror path.
+      const _poll = async () => {
+        try{
+          const s = await get(ref(db,'broadcast'));
+          _applyBroadcast(s.val(), 'get-poll');
+        }catch(e){
+          try{
+            const s2 = await get(ref(db,'broadcasts/'+uid));
+            _applyBroadcast(s2.val(), 'per-user');
+          }catch(e2){ console.warn('[NOTIF] broadcast poll failed:', e.message); }
+        }
+      };
+      _poll();
+      setInterval(_poll, 15000);
+    });
+
+    // One-shot diagnostic so we can see in console whether read is allowed
+    get(ref(db,'broadcast')).then(s=>{
+      const v = s.val();
+      console.log('[NOTIF] /broadcast initial read OK, keys:', v?Object.keys(v).length:0, v);
+    }).catch(e=>{
+      console.warn('[NOTIF] /broadcast initial read DENIED:', e.message,
+        '\n→ Add this to Firebase Rules:  "broadcast": { ".read": "auth != null" }');
+    });
+  }
+
+  // Wait for auth, then subscribe
+  function _watchAuth(){
+    if(_uid()){ _subscribe(); return; }
+    setTimeout(_watchAuth, 800);
+  }
+  _watchAuth();
+
+  // ============ Auto-notify hooks ============
+  // Wrap fbAddHist (covers DEPOSIT, WITHDRAW, P2P, etc.)
+  function _notifTextForType(type, amt, meta){
+    const t = String(type||'').toUpperCase();
+    const coin = (meta && (meta.coin || meta.fromCoin || meta.toCoin)) || 'USDT';
+    if(t==='DEPOSIT')        return { title:'Deposit Confirmed',     body:'Your deposit of '+amt+' '+coin+' has been confirmed.' };
+    if(t==='WITHDRAW')       return { title:'Withdrawal Successful', body:"You've successfully withdrawn "+amt+' '+coin+'.' };
+    if(t==='P2P' || t==='P2P_BUY')  return { title:'P2P Order Update',  body:'Your P2P buy of '+amt+' '+coin+' completed.' };
+    if(t==='P2P_SELL')       return { title:'P2P Order Update',     body:'Your P2P sell of '+amt+' '+coin+' completed.' };
+    if(t==='P2PPRO_CREDIT')  return { title:'P2P Credit',            body:'+'+amt+' '+coin+' credited via P2P.' };
+    if(t==='CONVERT'){
+      const k = (meta&&meta.kind)||'';
+      if(k==='SPOT_BUY')   return { title:'Spot Buy Filled',  body:'Bought '+(meta.toAmt||amt)+' '+(meta.toCoin||coin)+' for '+(meta.fromAmt||'')+' '+(meta.fromCoin||'USDT') };
+      if(k==='SPOT_SELL')  return { title:'Spot Sell Filled', body:'Sold '+(meta.fromAmt||'')+' '+(meta.fromCoin||coin)+' for '+(meta.toAmt||amt)+' '+(meta.toCoin||'USDT') };
+      return { title:'Convert Completed', body:'Converted '+(meta.fromAmt||'')+' '+(meta.fromCoin||'')+' → '+(meta.toAmt||amt)+' '+(meta.toCoin||coin) };
+    }
+    if(t==='LIQUIDATE')      return { title:'Position Liquidated', body:'Your position was liquidated.' };
+    if(t==='TRADE')          return { title:'Trade Executed',     body:'Trade of '+amt+' '+coin+' executed.' };
+    return { title: t.charAt(0)+t.slice(1).toLowerCase()+' Update', body: amt+' '+coin };
+  }
+
+  if(typeof window.fbAddHist === 'function'){
+    const _origAdd = window.fbAddHist;
+    window.fbAddHist = async function(type, amt, status, meta){
+      const hid = await _origAdd.apply(this, arguments);
+      try{
+        if(status==='COMPLETED' || status==='SUCCESS'){
+          const tx = _notifTextForType(type, amt, meta||{});
+          await window.pushNotif({ title:tx.title, body:tx.body, type:type, hid:hid });
+        }
+      }catch(e){}
+      return hid;
+    };
+  }
+
+  // Hook fbUpdateHistStatus -> notify when an entry flips to COMPLETED
+  if(typeof window.fbUpdateHistStatus === 'function'){
+    const _origUpd = window.fbUpdateHistStatus;
+    window.fbUpdateHistStatus = async function(hid, status){
+      const r = await _origUpd.apply(this, arguments);
+      try{
+        if(status==='COMPLETED' || status==='SUCCESS'){
+          // Find latest history entry to enrich notification
+          let entry = null;
+          if(Array.isArray(window.hist)) entry = window.hist.find(h=>h && h.hid===hid);
+          if(entry){
+            const tx = _notifTextForType(entry.type, entry.amt, entry.meta||entry);
+            await window.pushNotif({ title:tx.title, body:tx.body, type:entry.type, hid:hid });
+          }
+        }
+      }catch(e){}
+      return r;
+    };
+  }
+
+  // Watch Firebase history directly for new entries created by spot/convert paths
+  // that bypass fbAddHist (e.g. logSpotHistory, doConvert v4, server-side approve)
+  // We track BOTH new entries AND status flips (server approve flips PENDING→COMPLETED)
+  let _histKnown = new Map(); // hid -> status
+  let _histPrimed = false;
+  function _watchHistory(){
+    const fb = window._fb, uid = _uid();
+    if(!fb || !uid){ setTimeout(_watchHistory, 1000); return; }
+    const { db, ref, onValue } = fb;
+    onValue(ref(db,'users/'+uid+'/history'), snap=>{
+      const v = snap.val() || {};
+      const entries = Object.values(v);
+      if(!_histPrimed){
+        entries.forEach(e=>{ if(e && e.hid) _histKnown.set(e.hid, e.status||''); });
+        _histPrimed = true; return;
+      }
+      entries.forEach(e=>{
+        if(!e || !e.hid) return;
+        const prev = _histKnown.get(e.hid);
+        const cur  = e.status || '';
+        if(prev === cur) return; // unchanged
+        _histKnown.set(e.hid, cur);
+        const isNew = prev === undefined;
+        // Notify when:
+        //  - new entry that lands COMPLETED/SUCCESS (spot/convert)
+        //  - existing entry that flipped to COMPLETED/SUCCESS/REJECTED/CANCELLED (server approve/reject)
+        const interesting = ['COMPLETED','SUCCESS','REJECTED','CANCELLED'].includes(cur);
+        if(!interesting) return;
+        // Skip if fbAddHist hook would have already pushed (only on brand-new COMPLETED entries
+        // created by client). Server-created entries start as PENDING then flip — those we want.
+        if(isNew){
+          const isSpotConvert = (e.hid||'').startsWith('h_spot_') || (e.hid||'').startsWith('h_conv_');
+          if(!isSpotConvert) return; // fbAddHist already notified
+        }
+        let tx = _notifTextForType(e.type, e.amt, e.meta||e);
+        if(cur==='REJECTED' || cur==='CANCELLED'){
+          tx = { title: (e.type==='DEPOSIT'?'Deposit':e.type==='WITHDRAW'?'Withdrawal':'Request')+' '+(cur==='REJECTED'?'Rejected':'Cancelled'),
+                 body: (e.amt||'')+' '+(e.coin||'USDT')+' — '+cur.toLowerCase() };
+        }
+        window.pushNotif({ title:tx.title, body:tx.body, type:e.type, hid:e.hid });
+      });
+    });
+  }
+  _watchHistory();
+
+  console.log('[NOTIF v7] Notification system active. Listening: users/<uid>/notifs, /broadcast, users/<uid>/history (status flips)');
 })();
 </script>
 </body>
