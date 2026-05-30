@@ -249,8 +249,69 @@ body.light .ibt,body.light .st,body.light .pill{color:var(--text)}
 body.light .theme-toggle-icon{transform:rotate(180deg)}
 body.light .bnav{background:rgba(255,255,255,0.96)!important;border-top:1px solid var(--border)}
 body.light .bnav .ni i,body.light .bnav .ni span{color:#5e6673}
-body.light .bnav .ni.active i,body.light .bnav .ni.active span{color:var(--orange)}
+body.light .bnav .ni.active i,body.light .bnav .ni.active span{color:#0b0e11!important;font-weight:700}
 body.light #tv-chart,body.light .tv-lightweight-charts{background:#fff!important}
+
+/* ===== Bybit pixel-match: Home (BOTH themes) ===== */
+/* Light theme */
+body.light #sc-home .user-badge{background:#cfe6f5!important;border:1.5px solid #b6d6ea;width:36px;height:36px}
+body.light #sc-home .user-badge i{color:#7aa6c4!important;font-size:15px!important}
+body.light #sc-home .sbar{background:#f3f5f7}
+body.light #sc-home .promo-card{background:#f3f5f7}
+body.light #sc-home .promo-sub,body.light #sc-home .promo-ttl,body.light #sc-home .promo-cta{color:#0b0e11}
+body.light #sc-home .promo-sub{color:#5e6673}
+body.light #sc-home .promo-dots{background:#fff;color:#5e6673}
+body.light #sc-home .mkt-card{background:#f7f8fa}
+body.light #sc-home .mkt-card .type-row .pill.active{background:#eff2f5;color:#0b0e11}
+body.light #sc-home .hbs{background:#eff2f5}
+body.light #sc-home .hbs-icon{background:#eff2f5;color:#0b0e11}
+body.light #sc-home .hactc i{color:#0b0e11!important}
+body.light #sc-home .hacts span{color:#0b0e11}
+body.light .bnav{background:#fff!important;border-top:1px solid #eaecef}
+
+/* Dark theme */
+.dark-theme-styles{} /* anchor */
+#sc-home .user-badge{background:#2a3a47!important;border:1.5px solid #3a4a57;width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:50%}
+#sc-home .user-badge i{color:#7a95ab!important;font-size:15px!important}
+body.light #sc-home .user-badge{background:#cfe6f5!important;border-color:#b6d6ea}
+body.light #sc-home .user-badge i{color:#7aa6c4!important}
+
+/* Shared (both themes) */
+#sc-home .sbar{border-radius:24px;padding:11px 16px;font-weight:500;display:flex;align-items:center;gap:8px}
+#sc-home .sbar i.fa-search{font-size:14px;color:var(--text)}
+#sc-home .ibt{font-size:19px;width:34px;height:34px}
+#sc-home #notifBadge{display:inline-flex!important;background:#ff4d4f;color:#fff;font-size:9px;font-weight:700;min-width:18px;height:18px;border-radius:9px;align-items:center;justify-content:center;padding:0 4px;position:absolute;top:-2px;right:-4px}
+#sc-home .total-assets-row{font-size:13px;display:flex;align-items:center;gap:5px}
+#sc-home .total-assets-row i{color:var(--text2);margin-left:2px}
+#sc-home .hamt{font-size:32px;font-weight:700;letter-spacing:-0.8px;margin:6px 0 0}
+#sc-home #homeBtcEq{display:none}
+#sc-home #homePnl{font-size:13px;margin:6px 0 18px}
+#sc-home .hbtns{gap:10px;margin-bottom:22px}
+#sc-home .hbm{background:#f7a600;color:#0b0e11;font-weight:600;border-radius:26px;padding:13px 28px;font-size:15px;flex:0 0 auto;border:none;cursor:pointer}
+#sc-home .hbs{background:var(--bg3);color:var(--text);font-weight:500;border-radius:26px;padding:13px 24px;font-size:14px;flex:1;border:none;cursor:pointer}
+#sc-home .hbs i{display:none}
+#sc-home .hbs-icon{background:var(--bg3);color:var(--text);border-radius:50%;width:44px;height:44px;font-size:12px;flex-shrink:0;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center}
+#sc-home .hacts{margin-bottom:18px;display:flex;gap:8px}
+#sc-home .hact{flex:1;display:flex;flex-direction:column;align-items:center;cursor:pointer}
+#sc-home .hactc{background:transparent!important;width:34px;height:34px;font-size:24px;display:flex;align-items:center;justify-content:center}
+#sc-home .hactc i{color:var(--text)!important;font-weight:300}
+#sc-home .hacts span{font-size:12px;color:var(--text);font-weight:500;margin-top:6px}
+#sc-home .promo-card{background:var(--bg2);border-radius:14px;padding:14px;margin:0 14px 14px;display:flex;align-items:center;gap:12px;cursor:pointer}
+#sc-home .promo-2m{width:64px;height:64px;border-radius:10px;background:linear-gradient(135deg,#3a2a18,#7a5530);display:flex;align-items:center;justify-content:center;color:#f5c542;font-weight:900;font-size:22px;letter-spacing:-1px;flex-shrink:0;box-shadow:inset 0 0 12px rgba(255,200,80,0.3)}
+#sc-home .promo-body{flex:1;min-width:0}
+#sc-home .promo-sub{color:var(--text2);font-size:12px;margin-bottom:2px}
+#sc-home .promo-ttl{color:var(--text);font-size:14px;font-weight:600;margin-bottom:6px;line-height:1.3}
+#sc-home .promo-cta{color:var(--text);font-size:12px;font-weight:500}
+#sc-home .promo-dots{font-size:10px;color:var(--text2);background:var(--bg3);padding:2px 8px;border-radius:10px}
+#sc-home .mkt-card{background:var(--bg2);border-radius:14px;margin:0 14px 14px;padding:6px 14px 8px;border-top:none!important}
+#sc-home .mkt-card #home-cat-tabs{padding:10px 0 4px;display:flex;gap:18px;overflow-x:auto}
+#sc-home .mkt-card #home-cat-tabs .st{font-size:14px!important;font-weight:600;color:var(--text3)!important;border-bottom:none!important;padding:4px 0!important;white-space:nowrap}
+#sc-home .mkt-card #home-cat-tabs .st.active{color:var(--text)!important;font-weight:800}
+#sc-home .mkt-card .type-row{display:flex;gap:6px;padding:8px 0 6px}
+#sc-home .mkt-card .type-row .pill{background:transparent;color:var(--text2);font-weight:500;padding:5px 12px;border-radius:14px}
+#sc-home .mkt-card .type-row .pill.active{background:var(--bg3);color:var(--text);font-weight:700}
+.bnav .ni i{font-size:18px}
+.bnav .ni span{font-size:11px;font-weight:500}
 
 body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;font-size:14px;max-width:430px;margin:0 auto;height:100dvh;display:flex;flex-direction:column;overflow:hidden;position:relative}
 .screen{display:none;flex:1;flex-direction:column;overflow:hidden}
@@ -745,16 +806,16 @@ onAuthStateChanged(auth, async (fbUser) => {
       <i class="fas fa-user" style="color:#000;font-size:13px;"></i>
     </div>
 
-    <div class="sbar" onclick="openSearch()"><i class="fas fa-fire" style="color:var(--orange);"></i><span id="home-search-label" style="color:var(--text2);">🔥 Search crypto</span></div>
-    <div class="ibt" onclick="toast('Scan')"><i class="fas fa-qrcode"></i></div>
-    <div class="ibt" onclick="toast('Rewards')"><i class="fas fa-gift"></i></div>
+    <div class="sbar" onclick="openSearch()"><i class="fas fa-search"></i><i class="fas fa-fire" style="color:var(--orange);"></i><span id="home-search-label" style="color:var(--text2);">BILL/USDT</span></div>
+    <div class="ibt" onclick="toast('Scan')"><i class="fas fa-expand"></i></div>
+    <div class="ibt" onclick="toast('Referral')"><i class="fas fa-user-plus"></i></div>
     <div class="ibt" id="notifBell" style="position:relative;" onclick="openNotifications()">
-      <i class="fas fa-bell"></i><span class="bdg" id="notifBadge" style="display:none;">0</span>
+      <i class="fas fa-bell"></i><span class="bdg" id="notifBadge">52</span>
     </div>
   </div>
   <div class="scroll">
     <div style="padding:14px;">
-      <div style="color:var(--text2);font-size:13px;display:flex;align-items:center;gap:5px;"><i class="far fa-eye"></i>Total Assets</div>
+      <div class="total-assets-row" style="color:var(--text2);">Total Assets<i class="far fa-eye"></i></div>
       <div class="hamt" onclick="openCurrencyPicker('home')"><span id="totalAssetUSD">0.00</span> <span style="font-size:18px;font-weight:500;color:var(--text2);" id="homeCurLabel">USDT ▾</span></div>
       <div style="color:var(--text2);font-size:12px;" id="homeBtcEq">≈ 0.00000000 BTC</div>
       <div style="font-size:13px;margin:4px 0 16px;" id="homePnl">Today's P&L +0.00 USD(+0.00%) ∨</div>
@@ -764,25 +825,36 @@ onAuthStateChanged(auth, async (fbUser) => {
         <button class="hbs-icon" onclick="toast('More')"><i class="fas fa-chevron-down"></i></button>
       </div>
       <div class="hacts">
-        <div class="hact" onclick="toast('Buy Crypto')"><div class="hactc"><i class="fas fa-credit-card" style="color:var(--text2);"></i></div><span>Buy Crypto</span></div>
-        <div class="hact" onclick="toggleTheme()"><div class="hactc"><i id="themeToggleIcon" class="fas fa-moon theme-toggle-icon" style="color:var(--text2);"></i></div><span id="themeToggleLabel">Night</span></div>
-        <div class="hact" onclick="toast('Launchpool')"><div class="hactc"><i class="fas fa-circle-dot" style="color:var(--text2);"></i></div><span>Launchpool</span></div>
-        <div class="hact" onclick="toast('More')"><div class="hactc"><i class="fas fa-ellipsis" style="color:var(--text2);"></i></div><span>More</span></div>
+        <div class="hact" onclick="toast('Buy Crypto')"><div class="hactc"><i class="far fa-credit-card"></i></div><span>Buy Crypto</span></div>
+        <div class="hact" onclick="toggleTheme()"><div class="hactc"><i id="themeToggleIcon" class="far fa-clone theme-toggle-icon"></i></div><span id="themeToggleLabel">Demo Trading</span></div>
+        <div class="hact" onclick="toast('Launchpool')"><div class="hactc"><i class="far fa-circle-dot"></i></div><span>Launchpool</span></div>
+        <div class="hact" onclick="toast('More')"><div class="hactc"><i class="far fa-edit"></i></div><span>More</span></div>
       </div>
     </div>
+    <!-- PROMO BANNER -->
+    <div class="promo-card" onclick="toast('2M Giveaway')">
+      <div class="promo-2m">2M</div>
+      <div class="promo-body">
+        <div class="promo-sub">Global Assets $2M Giveaway</div>
+        <div class="promo-ttl">Trade RWA on Biexc, earn rewards!</div>
+        <div class="promo-cta">Trade Now →</div>
+      </div>
+      <div class="promo-dots">1/6</div>
+    </div>
     <!-- LIVE MINI MARKET on HOME -->
-    <div style="padding:0 14px 8px;border-top:1px solid var(--border);">
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0 8px;">
-        <div style="display:flex;gap:12px;overflow-x:auto;" id="home-cat-tabs">
-          <span class="st active" style="padding:0 0 6px;border-bottom:2px solid var(--orange);" onclick="homeTab(this,'Gainers')">Gainers</span>
-          <span class="st" style="padding:0 0 6px;" onclick="homeTab(this,'Losers')">Losers</span>
-          <span class="st" style="padding:0 0 6px;" onclick="homeTab(this,'Hot')">Hot</span>
-          <span class="st" style="padding:0 0 6px;" onclick="homeTab(this,'New')">New</span>
-        </div>
-        <div style="display:flex;gap:8px;">
-          <span class="pill active" style="padding:3px 10px;" id="hspot-pill" onclick="homeMarketType('spot')">Spot</span>
-          <span class="pill" style="padding:3px 10px;" id="hfut-pill" onclick="homeMarketType('futures')">Futures</span>
-        </div>
+    <div class="mkt-card">
+      <div id="home-cat-tabs">
+        <span class="st" onclick="homeTab(this,'Favorites')">Favorites</span>
+        <span class="st active" onclick="homeTab(this,'Hot')">Hot</span>
+        <span class="st" onclick="homeTab(this,'New')">New</span>
+        <span class="st" onclick="homeTab(this,'Gainers')">Gainers</span>
+        <span class="st" onclick="homeTab(this,'Losers')">Losers</span>
+      </div>
+      <div class="type-row">
+        <span class="pill active" id="hspot-pill" onclick="homeMarketType('spot')">Spot</span>
+        <span class="pill" id="hfut-pill" onclick="homeMarketType('futures')">Futures</span>
+        <span class="pill" onclick="toast('TradFi')">TradFi 🔥</span>
+        <span class="pill" onclick="toast('Alpha')">Alpha</span>
       </div>
       <div id="home-mini-list"><div class="ld"><i class="fas fa-circle-notch"></i>Loading live data…</div></div>
     </div>
