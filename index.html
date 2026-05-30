@@ -243,6 +243,15 @@
 .bb-popup .bb-pop-sub{font-size:13px;color:#999;line-height:1.5;margin-bottom:18px}
 .bb-popup .bb-pop-btn{width:100%;background:var(--orange);color:#000;border:none;border-radius:24px;padding:13px;font-weight:800;font-size:14px;cursor:pointer}
 :root{--bg:#000;--bg2:#0d0d0d;--bg3:#1a1a1a;--bg4:#222;--text:#fff;--text2:#8c8c8c;--text3:#444;--green:#00c087;--red:#f0444b;--orange:#f7a600;--border:#1f1f1f;--card:#111}
+body.light{--bg:#fff;--bg2:#f7f8fa;--bg3:#eff2f5;--bg4:#e6e8eb;--text:#0b0e11;--text2:#5e6673;--text3:#a1a7b0;--border:#eaecef;--card:#fff}
+body.light .ibt,body.light .st,body.light .pill{color:var(--text)}
+.theme-toggle-icon{transition:transform .35s ease}
+body.light .theme-toggle-icon{transform:rotate(180deg)}
+body.light .bnav{background:rgba(255,255,255,0.96)!important;border-top:1px solid var(--border)}
+body.light .bnav .ni i,body.light .bnav .ni span{color:#5e6673}
+body.light .bnav .ni.active i,body.light .bnav .ni.active span{color:var(--orange)}
+body.light #tv-chart,body.light .tv-lightweight-charts{background:#fff!important}
+
 body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;font-size:14px;max-width:430px;margin:0 auto;height:100dvh;display:flex;flex-direction:column;overflow:hidden;position:relative}
 .screen{display:none;flex:1;flex-direction:column;overflow:hidden}
 .screen.active{display:flex;animation:scrIn .28s cubic-bezier(.22,1,.36,1)}
@@ -756,7 +765,7 @@ onAuthStateChanged(auth, async (fbUser) => {
       </div>
       <div class="hacts">
         <div class="hact" onclick="toast('Buy Crypto')"><div class="hactc"><i class="fas fa-credit-card" style="color:var(--text2);"></i></div><span>Buy Crypto</span></div>
-        <div class="hact" onclick="toast('Demo')"><div class="hactc"><i class="fas fa-copy" style="color:var(--text2);"></i></div><span>Demo</span></div>
+        <div class="hact" onclick="toggleTheme()"><div class="hactc"><i id="themeToggleIcon" class="fas fa-moon theme-toggle-icon" style="color:var(--text2);"></i></div><span id="themeToggleLabel">Night</span></div>
         <div class="hact" onclick="toast('Launchpool')"><div class="hactc"><i class="fas fa-circle-dot" style="color:var(--text2);"></i></div><span>Launchpool</span></div>
         <div class="hact" onclick="toast('More')"><div class="hactc"><i class="fas fa-ellipsis" style="color:var(--text2);"></i></div><span>More</span></div>
       </div>
@@ -1058,6 +1067,14 @@ onAuthStateChanged(auth, async (fbUser) => {
 .ern-tog.on{background:#f7a600;}
 .ern-tog::after{content:'';position:absolute;top:2px;left:2px;width:20px;height:20px;background:#fff;border-radius:50%;transition:left .2s;}
 .ern-tog.on::after{left:20px;}
+body.light #sc-earn{background:#fff;color:#0b0e11;}
+body.light #sc-earn .sb,body.light #sc-earn .ern-sect,body.light #sc-earn .ern-feat .fc .nm,body.light #sc-earn .ern-prod .mid .sym,body.light #sc-earn .ern-tabs span.act,body.light #sc-earn .ern-stabs span.act,body.light #sc-earn .ern-banner .ti,body.light #sc-earn .ern-sumcard .big,body.light #sc-earn .ern-sumcard .grid > div .v,body.light #sc-earn .ern-pos .hd .sym,body.light #sc-earn .ern-pos .stats > div .v,body.light #sc-earn .ern-hist .nm,body.light #sc-earn .ern-hist .right .am,body.light #sc-earn .ern-sh-hd .nm,body.light #sc-earn .ern-kv .v,body.light #sc-earn .ern-qpills span{color:#0b0e11;}
+body.light #sc-earn .ern-srch,body.light #sc-earn .ern-pill,body.light #sc-earn .ern-feat .fc,body.light #sc-earn .ern-evt,body.light #sc-earn .ern-info-card,body.light #sc-earn .ern-fpills span,body.light #sc-earn .ern-sumcard,body.light #sc-earn .ern-pos,body.light #sc-earn .ern-sheet,body.light #sc-earn .ern-sh-inp,body.light #sc-earn .ern-qpills span,body.light #sc-earn .ern-netbadge{background:#f3f5f7;}
+body.light #sc-earn .ern-info,body.light #sc-earn .ern-srch,body.light #sc-earn .ern-pill,body.light #sc-earn .ern-tabs span,body.light #sc-earn .ern-stabs span,body.light #sc-earn .ern-feat .fc .sb,body.light #sc-earn .ern-prod .mid .tp,body.light #sc-earn .ern-prod .mid .mn,body.light #sc-earn .ern-prod .rgt .lb,body.light #sc-earn .ern-banner .su,body.light #sc-earn .ern-info-card,body.light #sc-earn .ern-sumcard .h,body.light #sc-earn .ern-sumcard .grid > div .l,body.light #sc-earn .ern-pos .hd .tp,body.light #sc-earn .ern-pos .pill,body.light #sc-earn .ern-pos .stats > div .l,body.light #sc-earn .ern-pos .ft .sd,body.light #sc-earn .ern-empty .t,body.light #sc-earn .ern-hist .meta,body.light #sc-earn .ern-sh-hd .tp,body.light #sc-earn .ern-sh-lbl,body.light #sc-earn .ern-sh-avail,body.light #sc-earn .ern-kv .k,body.light #sc-earn .ern-warn{color:#5e6673;}
+body.light #sc-earn .ern-tabs,body.light #sc-earn .ern-stabs,body.light #sc-earn .ern-prod,body.light #sc-earn .ern-hist,body.light #sc-earn .ern-sheet,body.light #sc-earn .ern-divider,body.light #sc-earn .ern-kv{border-color:#eaecef;}
+body.light #sc-earn .ern-sheet{background:#fff;}
+body.light #sc-earn .ern-sh-inp input{color:#0b0e11;}
+body.light #sc-earn .ern-sh-btns .can{border-color:#d8dde3;color:#0b0e11;}
 </style>
 <div class="screen" id="sc-earn">
   <div class="sb"><span>2:47</span><div class="sb-r"><i class="fas fa-signal"></i><span>5G</span><i class="fas fa-battery-three-quarters"></i></div></div>
@@ -3061,14 +3078,15 @@ function initTVChart() {
   if(w < 20) w = window.innerWidth || 375;
   container.innerHTML = '';
   if(tvChart) { try { tvChart.remove(); } catch(e){} tvChart=null; }
+  const isLightTheme = document.body.classList.contains('light');
   tvChart = LightweightCharts.createChart(container, {
     width: w,
     height: 220,
-    layout: { background: { color: '#000' }, textColor: '#666' },
-    grid: { vertLines: { color: '#111' }, horzLines: { color: '#111' } },
+    layout: { background: { color: isLightTheme ? '#ffffff' : '#000000' }, textColor: isLightTheme ? '#5e6673' : '#666' },
+    grid: { vertLines: { color: isLightTheme ? '#eaecef' : '#111' }, horzLines: { color: isLightTheme ? '#eaecef' : '#111' } },
     crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
-    rightPriceScale: { borderColor: '#222', textColor: '#666' },
-    timeScale: { borderColor: '#222', textColor: '#666', timeVisible: true, secondsVisible: false },
+    rightPriceScale: { borderColor: isLightTheme ? '#eaecef' : '#222', textColor: isLightTheme ? '#5e6673' : '#666' },
+    timeScale: { borderColor: isLightTheme ? '#eaecef' : '#222', textColor: isLightTheme ? '#5e6673' : '#666', timeVisible: true, secondsVisible: false },
     handleScroll: true,
     handleScale: true,
   });
@@ -9225,6 +9243,37 @@ function cdRender(){
   _watchHistory();
 
   console.log('[NOTIF v7] Notification system active. Listening: users/<uid>/notifs, /broadcast, users/<uid>/history (status flips)');
+})();
+</script>
+
+<script>
+(function(){
+  function applyTheme(mode){
+    var body=document.body, icon=document.getElementById('themeToggleIcon'), lbl=document.getElementById('themeToggleLabel');
+    if(mode==='light'){ body.classList.add('light'); if(icon){icon.className='fas fa-sun theme-toggle-icon';} if(lbl){lbl.textContent='Day';} }
+    else { body.classList.remove('light'); if(icon){icon.className='fas fa-moon theme-toggle-icon';} if(lbl){lbl.textContent='Night';} }
+    try{ localStorage.setItem('app_theme', mode); }catch(e){}
+    var meta=document.querySelector('meta[name="theme-color"]'); if(meta){ meta.setAttribute('content', mode==='light'?'#ffffff':'#000000'); }
+    try{
+      var ch=(typeof tvChart!=='undefined')?tvChart:(window.tvChart||null);
+      if(ch && ch.applyOptions){
+        var L=(mode==='light');
+        ch.applyOptions({
+          layout:{background:{color:L?'#ffffff':'#000000'},textColor:L?'#5e6673':'#666'},
+          grid:{vertLines:{color:L?'#eaecef':'#111'},horzLines:{color:L?'#eaecef':'#111'}},
+          rightPriceScale:{borderColor:L?'#eaecef':'#222',textColor:L?'#5e6673':'#666'},
+          timeScale:{borderColor:L?'#eaecef':'#222',textColor:L?'#5e6673':'#666'}
+        });
+      }
+    }catch(e){}
+  }
+  window.toggleTheme=function(){
+    var cur=document.body.classList.contains('light')?'light':'dark';
+    applyTheme(cur==='light'?'dark':'light');
+  };
+  var saved='dark'; try{ saved=localStorage.getItem('app_theme')||'dark'; }catch(e){}
+  if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded',function(){applyTheme(saved);}); }
+  else { applyTheme(saved); }
 })();
 </script>
 </body>
