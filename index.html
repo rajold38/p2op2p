@@ -4625,7 +4625,7 @@ function setTradeMode(mode){
     el.style.borderBottomColor = on ? 'var(--orange)' : 'transparent';
   });
   // Convert requires login — pass callback so post-login lands back on Convert
-  if(mode==='convert' && !needLogin(function(){ setTradeMode('convert'); })) return;
+  if(mode==='convert' && !needLogin()) return;
   const chartV = $('chart-view'), obV = $('ob-view'), cvV = $('convert-view'), hdr = $('trade-hdr');
   if(mode === 'convert'){
     chartV.style.display='none'; obV.style.display='none'; cvV.style.display='flex';
