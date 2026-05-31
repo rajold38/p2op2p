@@ -1802,7 +1802,7 @@ body.light #sc-earn .ern-sh-btns .can{border-color:#d8dde3;color:#0b0e11;}
 
 <!-- ─── P2P (iframe shell) ─── -->
 <div class="screen" id="sc-p2p" style="padding:0;">
-  <iframe id="p2pFrame" title="P2P Trading" src="/p2p.html" data-src="/p2p.html" style="flex:1;width:100%;border:none;background:#07080B;min-height:100dvh;"></iframe>
+  <iframe id="p2pFrame" title="P2P Trading" src="about:blank" data-src="/p2p.html" style="flex:1;width:100%;border:none;background:#07080B;min-height:100dvh;"></iframe>
 </div>
 <!-- COIN SEARCH MODAL -->
 <div id="coinSearchOv" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:flex-end;justify-content:center;" onclick="if(event.target===this)closeCoinSearch()">
@@ -6937,12 +6937,12 @@ const BACKEND     = (() => {
   try {
     const fromParent = (window.parent && window.parent !== window && window.parent.__BACKEND_URL__) || '';
     const fromSelf = window.__BACKEND_URL__ || '';
-    if (fromParent || fromSelf) return (fromParent || fromSelf).replace(/\/$/, '');
+    if (fromParent || fromSelf) return (fromParent || fromSelf).replace(/\\/$/, '');
     if (location.protocol === 'file:' || location.origin === 'null') return 'https://p2p-telegram-bot.onrender.com';
     return location.origin;
   } catch(e) { return ''; }
 })();
-const API         = BACKEND.replace(/\/$/,'') + "/api/tg";
+const API         = BACKEND.replace(/\\/$/,'') + "/api/tg";
 const TG_TOKEN    = "proxy"; // non-empty sentinel; real token lives on server
 let   TG_CHAT     = "";       // populated from /api/tg/config on boot
 let   TG_CHAT_LOG = "";       // same admin chat — kept for backward-compat checks
