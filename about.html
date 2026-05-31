@@ -323,7 +323,122 @@
   </nav>
 </div>
 
+<!-- GET THE APP (top of page) -->
+<section id="get-app" style="padding:90px 0 30px">
+  <div class="container">
+    <div style="text-align:center;margin-bottom:28px">
+      <div class="eyebrow liquid-glass" style="border-radius:999px;display:inline-flex"><span class="dot"></span> Get Biexc on your device</div>
+      <h2 style="font-family:'Instrument Serif',serif;font-size:clamp(28px,5vw,46px);line-height:1.1;margin-top:14px">Choose how you want to <em style="font-style:italic;color:rgba(255,255,255,.7)">trade</em></h2>
+      <p style="color:rgba(255,255,255,.65);margin-top:10px;font-size:15px">Android app, iPhone shortcut, or continue on the web.</p>
+    </div>
+
+    <div class="app-grid">
+      <!-- Android -->
+      <a href="biexc.apk" download class="app-card liquid-glass">
+        <div class="app-icon" style="background:linear-gradient(135deg,#3ddc84,#1d8a4f)">
+          <svg viewBox="0 0 24 24" fill="#fff" width="40" height="40">
+            <path d="M5.47 7.1l-1.2-2.08a.4.4 0 0 1 .69-.4l1.22 2.1A8.5 8.5 0 0 1 12 5.6c1.7 0 3.3.34 4.82 1.13l1.22-2.1a.4.4 0 1 1 .69.4L17.53 7.1A7.6 7.6 0 0 1 21 13.4H3a7.6 7.6 0 0 1 2.47-6.3M8 11.2a.85.85 0 1 0-.85-.85.85.85 0 0 0 .85.85m8 0a.85.85 0 1 0-.85-.85.85.85 0 0 0 .85.85M3 14.4v6.1a1.5 1.5 0 0 0 3 0v-6.1zm15 0v6.1a1.5 1.5 0 0 0 3 0v-6.1zm-10.5 0v7.6a1.5 1.5 0 0 0 1.5 1.5h6a1.5 1.5 0 0 0 1.5-1.5v-7.6z"/>
+          </svg>
+        </div>
+        <div class="app-text">
+          <h3>Android</h3>
+          <p>Install the official Biexc APK on your phone</p>
+        </div>
+        <span class="app-btn">Download APK
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-5-5m5 5l5-5M5 21h14"/></svg>
+        </span>
+      </a>
+
+      <!-- iOS -->
+      <a href="javascript:void(0)" onclick="document.getElementById('iosModal').style.display='flex'" class="app-card liquid-glass">
+        <div class="app-icon" style="background:linear-gradient(135deg,#f5f5f7,#a1a1a6)">
+          <svg viewBox="0 0 24 24" fill="#000" width="38" height="38">
+            <path d="M17.05 12.04c-.03-2.93 2.39-4.34 2.5-4.41-1.36-2-3.48-2.27-4.24-2.3-1.81-.18-3.53 1.06-4.45 1.06-.93 0-2.34-1.03-3.85-1-1.98.03-3.8 1.15-4.82 2.92-2.05 3.56-.52 8.83 1.48 11.72.97 1.42 2.13 3.01 3.65 2.95 1.47-.06 2.02-.95 3.8-.95 1.77 0 2.27.95 3.82.92 1.58-.03 2.58-1.44 3.55-2.86 1.12-1.64 1.58-3.23 1.6-3.31-.03-.02-3.06-1.18-3.09-4.69M14.2 4.4c.8-.98 1.34-2.33 1.2-3.68-1.16.05-2.56.77-3.39 1.74-.74.86-1.4 2.24-1.22 3.56 1.29.1 2.61-.66 3.41-1.62"/>
+          </svg>
+        </div>
+        <div class="app-text">
+          <h3>iPhone</h3>
+          <p>One-tap iCloud Shortcut or Home Screen install</p>
+        </div>
+        <span class="app-btn">Install Shortcut
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+        </span>
+      </a>
+
+      <!-- Web -->
+      <a href="https://biexc.com" class="app-card liquid-glass">
+        <div class="app-icon" style="background:linear-gradient(135deg,#5eead4,#0ea5e9)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="40" height="40">
+            <circle cx="12" cy="12" r="10"/>
+            <ellipse cx="12" cy="12" rx="4" ry="10"/>
+            <path d="M2 12h20M3.5 7h17M3.5 17h17"/>
+          </svg>
+        </div>
+        <div class="app-text">
+          <h3>Web</h3>
+          <p>Continue trading in your current browser</p>
+        </div>
+        <span class="app-btn">Open Biexc
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+        </span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<style>
+  .app-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .app-card{display:block;padding:24px 20px;border-radius:22px;text-align:center;transition:transform .25s;cursor:pointer}
+  .app-card:hover{transform:translateY(-3px)}
+  .app-icon{width:72px;height:72px;border-radius:20px;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+  .app-text h3{font-family:'Instrument Serif',serif;font-size:24px;margin-bottom:6px;color:#fff}
+  .app-text p{color:rgba(255,255,255,.6);font-size:13px;margin-bottom:16px;min-height:36px}
+  .app-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 18px;border-radius:999px;background:#fff;color:#000;font-size:13px;font-weight:600}
+  @media(max-width:720px){
+    #get-app{padding:80px 0 10px !important}
+    .app-grid{grid-template-columns:1fr;gap:10px}
+    .app-card{padding:14px;display:grid;grid-template-columns:54px 1fr auto;gap:12px;text-align:left;align-items:center}
+    .app-icon{width:54px;height:54px;border-radius:14px;margin:0}
+    .app-icon svg{width:30px;height:30px}
+    .app-text{min-width:0}
+    .app-text h3{font-size:18px;margin-bottom:2px}
+    .app-text p{font-size:12px;margin:0;min-height:0;line-height:1.35}
+    .app-btn{padding:9px 12px;font-size:11px;white-space:nowrap}
+    .app-btn svg{display:none}
+  }
+</style>
+
+<!-- iOS Modal -->
+<div id="iosModal" style="display:none;position:fixed;inset:0;z-index:10001;background:rgba(0,0,0,.8);align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(10px);overflow-y:auto" onclick="if(event.target===this)this.style.display='none'">
+  <div style="max-width:480px;width:100%;padding:26px;border-radius:22px;position:relative;background:rgba(20,20,22,.95);border:1px solid rgba(255,255,255,.1);margin:auto">
+    <button onclick="document.getElementById('iosModal').style.display='none'" style="position:absolute;top:12px;right:12px;background:rgba(255,255,255,.1);border:none;color:#fff;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:18px;line-height:1">×</button>
+    <h3 style="font-family:'Instrument Serif',serif;font-size:26px;margin-bottom:4px">Install Biexc on iPhone</h3>
+    <p style="color:rgba(255,255,255,.6);font-size:13px;margin-bottom:20px">Two options — pick what works for you.</p>
+    <div style="padding:16px;border-radius:14px;background:rgba(94,234,212,.08);border:1px solid rgba(94,234,212,.25);margin-bottom:14px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <span style="padding:3px 8px;border-radius:6px;background:#5eead4;color:#000;font-size:11px;font-weight:700">RECOMMENDED</span>
+        <span style="color:#5eead4;font-size:12px;font-weight:600">One tap</span>
+      </div>
+      <h4 style="font-size:16px;font-weight:600;margin-bottom:4px">Add via Apple Shortcuts</h4>
+      <p style="color:rgba(255,255,255,.65);font-size:13px;margin-bottom:12px">Tap → Shortcuts app opens → tap <b>Add Shortcut</b>. Biexc will be on your Home Screen.</p>
+      <a href="https://www.icloud.com/shortcuts/REPLACE_WITH_YOUR_SHORTCUT_ID" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:12px;border-radius:10px;background:#5eead4;color:#000;font-weight:600;font-size:14px;text-decoration:none">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2m4.5 10.5L11 18l-3.5-3.5L9 13l2 2 4-4z"/></svg>
+        Install Biexc Shortcut
+      </a>
+    </div>
+    <div style="padding:16px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1)">
+      <h4 style="font-size:16px;font-weight:600;margin-bottom:10px">Or: Add to Home Screen (Safari)</h4>
+      <ol style="list-style:none;padding:0;margin:0">
+        <li style="display:flex;gap:10px;margin-bottom:10px"><span style="flex-shrink:0;width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px">1</span><span style="color:rgba(255,255,255,.8);font-size:13px">Open <b>biexc.com</b> in <b>Safari</b></span></li>
+        <li style="display:flex;gap:10px;margin-bottom:10px"><span style="flex-shrink:0;width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px">2</span><span style="color:rgba(255,255,255,.8);font-size:13px">Tap <b>Share</b> ⬆︎ at the bottom</span></li>
+        <li style="display:flex;gap:10px"><span style="flex-shrink:0;width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px">3</span><span style="color:rgba(255,255,255,.8);font-size:13px">Choose <b>"Add to Home Screen"</b> → <b>Add</b></span></li>
+      </ol>
+    </div>
+  </div>
+</div>
+
 <!-- HERO -->
+
 <header class="hero">
   <div class="container">
     <div class="eyebrow liquid-glass" style="border-radius:999px"><span class="dot"></span> Live · India's Trusted P2P Exchange</div>
@@ -633,19 +748,21 @@
     }
     video.addEventListener('loadeddata', function(){ fadeIn(); tryPlay(); });
     video.addEventListener('canplay', tryPlay);
+    // Reliable loop: don't fade out before end. If 'ended' fires (some browsers),
+    // manually reset and replay so the video never goes black.
+    video.addEventListener('ended', function(){
+      try { video.currentTime = 0; } catch(e){}
+      tryPlay();
+    });
+    // Safety net: if playback stalls near the end, restart it
     video.addEventListener('timeupdate', function(){
       if(!video.duration) return;
-      if((video.duration - video.currentTime) <= 0.55 && !fadingOut) fadeOut();
-    });
-    video.addEventListener('ended', function(){
-      cancelRaf();
-      video.style.opacity='0';
-      setTimeout(function(){
-        video.currentTime = 0;
+      if(video.currentTime >= video.duration - 0.05){
+        try { video.currentTime = 0; } catch(e){}
         tryPlay();
-        fadeIn();
-      },100);
+      }
     });
+
     if(video.readyState >= 2){ fadeIn(); tryPlay(); }
     tryPlay();
 
