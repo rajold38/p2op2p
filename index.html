@@ -1586,8 +1586,16 @@ body.light #sc-earn .ern-sh-btns .can{border-color:#d8dde3;color:#0b0e11;}
     </div>
     <div style="color:var(--orange);font-size:13px;padding:6px 0 18px;">Need help? Please visit our Help Center.</div>
   </div>
+  <div style="padding:10px 16px 0;">
+    <div style="display:flex;justify-content:space-between;font-size:12px;color:#8c8c8c;padding:4px 0;">
+      <span>Network Fee</span><span style="color:#fff;font-weight:600;">$<span id="bbWitFee">0</span></span>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:12px;color:#8c8c8c;padding:4px 0;">
+      <span>Total Deducted</span><span style="color:#fff;font-weight:600;"><span id="bbWitTotal">0</span> <span class="bbWitSymX">USDT</span></span>
+    </div>
+  </div>
   <div style="border-top:1px solid #111;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:14px;">
-    <div style="font-size:12px;color:#8c8c8c;">Amount Received<br><span style="color:#fff;font-weight:700;font-size:14px;"><span id="bbWitRecv">0</span> <span id="bbWitSym3">USDT</span></span></div>
+    <div style="font-size:12px;color:#8c8c8c;">You Receive<br><span style="color:#fff;font-weight:700;font-size:14px;"><span id="bbWitRecv">0</span> <span id="bbWitSym3">USDT</span></span></div>
     <button onclick="bbDoWithdraw()" style="background:var(--orange);color:#000;border:none;border-radius:24px;padding:13px 36px;font-weight:800;font-size:15px;cursor:pointer;">Withdraw</button>
   </div>
 </div>
@@ -1639,6 +1647,8 @@ body.light #sc-earn .ern-sh-btns .can{border-color:#d8dde3;color:#0b0e11;}
       <button onclick="document.getElementById('witAmt').value=((typeof getWithdrawableBalance==='function'?getWithdrawableBalance():(window.userBalance||0))).toFixed(2)" style="position:absolute;right:12px;top:12px;background:none;border:none;color:var(--orange);font-weight:800;font-size:11px;cursor:pointer;">MAX</button>
     </div>
     <div class="dw-avail">Available: <b data-bal-usdt>0.00</b> USDT</div>
+    <div style="display:flex;justify-content:space-between;font-size:11px;color:#888;margin:6px 0;"><span>Network Fee</span><span style="color:#fff;font-weight:700;">$<span id="witOvFee">0</span></span></div>
+    <div style="display:flex;justify-content:space-between;font-size:11px;color:#888;margin:0 0 8px;"><span>Total Deducted</span><span style="color:#fff;font-weight:700;"><span id="witOvTotal">0.00</span> USDT</span></div>
     <button class="dw-btn" onclick="witConfirm()">Confirm Withdrawal</button>
     <button class="dw-btn gray" onclick="closeDw('witOv')">Cancel</button>
   </div>
@@ -2213,6 +2223,17 @@ async function claimMission(id){
 // DEPOSIT / WITHDRAW (native, writes Firebase)
 // ═══════════════════════════════════════════
 let _dwNet = { dep:'BEP20', wit:'BEP20' };
+
+// ── Withdrawal limits & network fees (USD) ──
+window.MIN_WITHDRAW_USD = 10;
+window.WIT_FEES = { BEP20: 0.2, ERC20: 1, TRC20: 1 };
+window.getWitFee = function(chain){
+  const k = String(chain||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+  if(k.includes('BEP') || k.includes('BSC') || k.includes('BNB')) return 0.2;
+  if(k.includes('ERC') || k.includes('ETH')) return 1;
+  if(k.includes('TRC') || k.includes('TRON')) return 1;
+  return 0;
+};
 // Early globals: prevents inline image/socket events from hitting TDZ while the single-file app is still parsing.
 var obAsks = window.obAsks || [], obBids = window.obBids || [];
 var FUT = window.FUT || { margin:'Cross', lev:10, otype:'Market', unit:'USDT', dir:'Long' };
@@ -2224,7 +2245,27 @@ function dwNet(kind, net){
     const el = document.getElementById(kind+'N-'+n);
     if(el) el.classList.toggle('sel', n===net);
   });
+  if(kind==='wit' && typeof updateWitOvFee==='function') updateWitOvFee();
 }
+window.updateWitOvFee = function(){
+  const fee = window.getWitFee ? window.getWitFee(_dwNet.wit) : 0;
+  const feeEl = document.getElementById('witOvFee'); if(feeEl) feeEl.textContent = fee;
+  const amt = parseFloat((document.getElementById('witAmt')||{}).value)||0;
+  const tEl = document.getElementById('witOvTotal'); if(tEl) tEl.textContent = (amt>0 ? (amt+fee) : 0).toFixed(2);
+};
+window.updateWitMainFee = function(){
+  const net = (typeof witNet!=='undefined') ? witNet : 'BEP20';
+  const fee = window.getWitFee ? window.getWitFee(net) : 0;
+  const feeEl = document.getElementById('witMainFee'); if(feeEl) feeEl.textContent = fee;
+  const amt = parseFloat((document.getElementById('witAmt')||{}).value)||0;
+  const tEl = document.getElementById('witMainTotal'); if(tEl) tEl.textContent = (amt>0 ? (amt+fee) : 0).toFixed(2);
+};
+document.addEventListener('input', (e)=>{
+  if(e.target && e.target.id==='witAmt'){
+    try{ window.updateWitOvFee && window.updateWitOvFee(); }catch(_){}
+    try{ window.updateWitMainFee && window.updateWitMainFee(); }catch(_){}
+  }
+});
 function openDw(id){ document.getElementById(id).classList.add('show'); }
 function closeDw(id){ document.getElementById(id).classList.remove('show'); }
 function openDepositOverlay(){ bbStartDeposit(); }
@@ -2471,9 +2512,20 @@ function bbOpenWit(){
   document.getElementById('bbWitRecv').textContent = '0';
   document.getElementById('bbWitNetLbl').textContent = _bbChain.name;
   document.getElementById('bbWitNetLbl').style.color = '#fff';
-  // live amount-received
+  // live calc — user enters RECEIVE amount, fee is added on top
   const amtEl = document.getElementById('bbWitAmt');
-  amtEl.oninput = ()=>{ const v=parseFloat(amtEl.value)||0; document.getElementById('bbWitRecv').textContent = v? v.toFixed(6).replace(/0+$/,'').replace(/\.$/,'') : '0'; };
+  const _fee = window.getWitFee ? window.getWitFee(_bbChain.name) : 0;
+  const _price = (typeof bbCoinUsdPrice==='function') ? bbCoinUsdPrice(_bbCoin.sym) : (_bbCoin.sym==='USDT'?1:0);
+  const _feeCoin = _price>0 ? (_fee/_price) : (_bbCoin.sym==='USDT'?_fee:0);
+  document.getElementById('bbWitFee').textContent = _fee;
+  document.querySelectorAll('.bbWitSymX').forEach(e=>e.textContent=_bbCoin.sym);
+  const _fmt = (n)=> n ? (+n).toFixed(6).replace(/0+$/,'').replace(/\.$/,'') : '0';
+  amtEl.oninput = ()=>{
+    const v = parseFloat(amtEl.value)||0;
+    document.getElementById('bbWitRecv').textContent = _fmt(v);
+    document.getElementById('bbWitTotal').textContent = _fmt(v>0 ? v + _feeCoin : 0);
+  };
+  amtEl.oninput();
   bbOpen('bbWit');
 }
 function bbBackFromWit(){ bbClose('bbWit'); if(_bbCoin && _bbCoin.chains.length>1) bbOpenChains(); }
@@ -2486,19 +2538,27 @@ async function bbDoWithdraw(){
   const amt  = parseFloat(document.getElementById('bbWitAmt').value)||0;
   if(!addr || addr.length<10) return toast('Enter valid address');
   if(amt<=0) return toast('Enter amount');
+  // ── Min withdrawal $10 (USD) ──
+  const _price = (typeof bbCoinUsdPrice==='function') ? bbCoinUsdPrice(_bbCoin.sym) : (_bbCoin.sym==='USDT'?1:0);
+  const _usd = _price>0 ? amt*_price : (_bbCoin.sym==='USDT'?amt:0);
+  if(_price>0 && _usd < (window.MIN_WITHDRAW_USD||10)) return toast('Minimum withdrawal is $'+(window.MIN_WITHDRAW_USD||10));
+  // ── Network fee (added on top of amount) ──
+  const _fee = window.getWitFee ? window.getWitFee(_bbChain.name) : 0;
+  const _feeCoin = _price>0 ? (_fee/_price) : (_bbCoin.sym==='USDT'?_fee:0);
+  const _total = amt + _feeCoin;
   // v4: multi-coin balance check (works for USDT/BTC/ETH/etc converted coins)
   const _avail = (window.balances && window.balances[_bbCoin.sym]) || bbBal(_bbCoin.sym) || (_bbCoin.sym==='USDT' ? (window.userBalance||0) : 0);
-  if(amt > _avail) return toast('Insufficient '+_bbCoin.sym+' balance');
+  if(_total > _avail) return toast('Insufficient '+_bbCoin.sym+' balance. Need '+_total.toFixed(6).replace(/0+$/,'').replace(/\.$/,'')+' '+_bbCoin.sym+' (incl. $'+_fee+' fee)');
   if(!window.currentFbUser){ toast('Sign in first'); return; }
-  const coin=_bbCoin, chain=_bbChain;
+  const coin=_bbCoin, chain=_bbChain, fee=_fee, totalDeduct=_total;
   _withP2P((w)=>{
     if(typeof w.confirmWithdrawCustom !== 'function'){ toast('Backend not ready'); return; }
-    w.confirmWithdrawCustom({coin:coin.sym, chain:chain.name, addr, amt})
+    w.confirmWithdrawCustom({coin:coin.sym, chain:chain.name, addr, amt:totalDeduct, fee, recv:amt})
       .then(res=>{
-        if(!res || !res.ok){ toast('Failed to submit'); return; }
+        if(!res || !res.ok){ toast(res && res.error ? res.error : 'Failed to submit'); return; }
         bbShowHistDetail({
           type:'WITHDRAW', coin:coin.sym, chain:chain.name,
-          amt:amt, addr:addr, hash:res.txid||'—',
+          amt:totalDeduct, addr:addr, hash:res.txid||'—', fee:fee,
           ts:Date.now(), status:'PENDING'
         });
         bbClose('bbWit');
@@ -2700,14 +2760,17 @@ async function witConfirm(){
   const amt  = parseFloat(document.getElementById('witAmt').value)||0;
   if(!addr || addr.length < 20) return toast('Invalid address');
   if(amt<=0) return toast('Enter amount');
+  if(amt < (window.MIN_WITHDRAW_USD||10)) return toast('Minimum withdrawal is $'+(window.MIN_WITHDRAW_USD||10));
+  const _fee = window.getWitFee ? window.getWitFee(_dwNet.wit) : 0;
+  const _total = amt + _fee;
   const withdrawable = (typeof getWithdrawableBalance==='function') ? getWithdrawableBalance() : (window.userBalance||0);
-  if(amt > withdrawable) return toast('Insufficient available balance ('+withdrawable.toFixed(2)+' USDT withdrawable)');
+  if(_total > withdrawable) return toast('Insufficient balance. Need '+_total.toFixed(2)+' USDT (incl. $'+_fee+' fee). Available: '+withdrawable.toFixed(2));
   if(!window.currentFbUser){ toast('Sign in first'); return; }
   _withP2P((w)=>{
     try{
       const chain = _dwNet.wit === 'BEP20' ? 'BEP-20' : 'ERC-20';
       if(typeof w.confirmWithdrawCustom === 'function'){
-        Promise.resolve(w.confirmWithdrawCustom({coin:'USDT', chain, addr, amt})).then((res)=>{
+        Promise.resolve(w.confirmWithdrawCustom({coin:'USDT', chain, addr, amt:_total, fee:_fee, recv:amt})).then((res)=>{
           if(!res || !res.ok) return toast(res && res.error ? res.error : 'Withdraw failed');
           toast('Withdrawal request sent — awaiting admin approval');
           closeDw('witOv');
@@ -6838,6 +6901,8 @@ main{padding:0 0 90px!important;}
         <button onclick="document.getElementById('witAmt').value=(typeof getWithdrawableBalance==='function'?getWithdrawableBalance():balance).toFixed(2)" style="position:absolute;right:14px;top:14px;background:none;border:none;color:var(--y);font-weight:700;font-size:10px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;">MAX</button>
       </div>
       <div style="font-size:9px;color:var(--muted);font-weight:600;margin:8px 0 4px;">Available: <span style="color:var(--y);" id="witBal">0.00</span> USDT</div>
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin:6px 0 2px;font-weight:600;"><span>Network Fee</span><span style="color:var(--y);">$<span id="witMainFee">0</span></span></div>
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin:0 0 8px;font-weight:600;"><span>Total Deducted</span><span style="color:#fff;"><span id="witMainTotal">0.00</span> USDT</span></div>
       <button class="main-btn btn-y" onclick="doWithdraw()" style="margin-top:12px;">CONFIRM WITHDRAWAL</button>
       <button class="main-btn btn-gray" onclick="closeOverlay('witOverlay')" style="margin-top:8px;">CANCEL</button>
     </div>
@@ -7902,45 +7967,57 @@ async function doWithdraw() {
   const addr=document.getElementById('witAddr').value.trim();
   const amt=parseFloat(document.getElementById('witAmt').value);
   if(!addr||addr.length<20) return toast('error','Invalid Address','Enter a valid wallet address.');
+  if(!amt||amt<=0) return toast('error','Invalid Amount','Enter a valid amount.');
+  if(amt < (window.MIN_WITHDRAW_USD||10)) return toast('error','Minimum Withdrawal','Minimum withdrawal is $'+(window.MIN_WITHDRAW_USD||10)+'.');
+  const _fee = (window.getWitFee ? window.getWitFee(witNet) : 0);
+  const _total = amt + _fee;
   const withdrawable = (typeof getWithdrawableBalance==='function') ? getWithdrawableBalance() : balance;
-  if(!amt||amt>withdrawable) return toast('error','Insufficient Available Balance','Only '+withdrawable.toFixed(2)+' USDT is withdrawable. Open position/order margin is locked.');
-  if(!confirm('Confirm withdrawal of '+amt+' USDT?')) return;
-  balance-=amt; updateBal();
+  if(_total>withdrawable) return toast('error','Insufficient Balance','Need '+_total.toFixed(2)+' USDT (incl. $'+_fee+' fee). Available: '+withdrawable.toFixed(2)+' USDT.');
+  if(!confirm('Confirm withdrawal of '+amt+' USDT?\\nNetwork fee: $'+_fee+'\\nTotal deducted: '+_total.toFixed(2)+' USDT')) return;
+  balance-=_total; updateBal();
   closeOverlay('witOverlay');
   const txId=genTxId();
-  const hid=await fbAddHist('WITHDRAW',amt,'PENDING',{network:witNet,address:addr,txid:txId,fee:'0.01'});
-  showFloatingPending('wit',amt,'Processing Withdrawal','Broadcasting '+amt+' USDT to network…',hid);
+  const hid=await fbAddHist('WITHDRAW',_total,'PENDING',{network:witNet,address:addr,txid:txId,fee:String(_fee),recv:String(amt)});
+  showFloatingPending('wit',_total,'Processing Withdrawal','Broadcasting '+amt+' USDT to network…',hid);
   const cbId='wit_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
   const t=new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'});
-  const msgText=\`💼 *WITHDRAWAL REQUEST*\\n\\n👤 UID: \\\`\${userUID}\\\`\\n👤 User: *\${currentUser?currentUser.name:'Guest'}*\\n📧 Email: \\\`\${currentUser?.email||'—'}\\\`\\n💰 Amount: *\${amt} USDT*\\n🌐 Network: \${witNet}\\n📤 Address: \\\`\${addr}\\\`\\n🔗 TxID: \\\`\${txId}\\\`\\n⏰ \${t} IST\\n\\n✅ APPROVE = send funds\\n❌ REJECT = refund\`;
+  const msgText=\`💼 *WITHDRAWAL REQUEST*\\n\\n👤 UID: \\\`\${userUID}\\\`\\n👤 User: *\${currentUser?currentUser.name:'Guest'}*\\n📧 Email: \\\`\${currentUser?.email||'—'}\\\`\\n🪙 Receive: *\${amt} USDT*\\n💸 Fee: *$\${_fee}*\\n💰 Total Deducted: *\${_total.toFixed(2)} USDT*\\n🌐 Network: \${witNet}\\n📤 Address: \\\`\${addr}\\\`\\n🔗 TxID: \\\`\${txId}\\\`\\n⏰ \${t} IST\\n\\n✅ APPROVE = send funds\\n❌ REJECT = refund\`;
   const msgId=await tgSendWithButtons(msgText,cbId);
-  const req={cbId,msgId,amt,hid,addr,txId};
+  const req={cbId,msgId,amt:_total,hid,addr,txId,fee:_fee,recv:amt};
   pendingWitReq[cbId]=req;
   await fbSavePendingReq('wit',req);
 }
 
 // Custom withdraw entry — called by parent (app.html) with chosen coin/chain/addr/amt
 window.confirmWithdrawCustom = async function(opts){
-  const amt = parseFloat(opts.amt); if(!amt||amt<=0) return {ok:false};
+  const amt = parseFloat(opts.amt); if(!amt||amt<=0) return {ok:false, error:'Invalid amount'};
   const coin = opts.coin||'USDT', chain = opts.chain||'BEP-20', addr = opts.addr||'';
+  const fee = (typeof opts.fee==='number') ? opts.fee : (window.getWitFee ? window.getWitFee(chain) : 0);
+  // amt = total deducted; recv = what user receives (= amt - fee in coin units)
+  const recv = (typeof opts.recv==='number') ? opts.recv : Math.max(0, amt - fee);
+  // Min withdrawal $10 (apply for stable/USDT directly; for other coins caller has already validated)
+  if((coin==='USDT'||coin==='USDC') && recv < (window.MIN_WITHDRAW_USD||10)){
+    return {ok:false, error:'Minimum withdrawal is $'+(window.MIN_WITHDRAW_USD||10)};
+  }
+  if(recv <= 0) return {ok:false, error:'Receive amount must be greater than 0'};
   // Only deduct balance for USDT (the only tracked coin)
   if(coin==='USDT'){
     const withdrawable = (typeof getWithdrawableBalance==='function') ? getWithdrawableBalance() : balance;
-    if(amt > withdrawable) return {ok:false, error:'Insufficient available balance ('+withdrawable.toFixed(2)+' USDT withdrawable)'};
+    if(amt > withdrawable) return {ok:false, error:'Insufficient balance. Need '+amt.toFixed(2)+' USDT (incl. $'+fee+' fee). Available: '+withdrawable.toFixed(2)};
     balance -= amt; updateBal();
   }
   const txId = genTxId();
-  const hid = await fbAddHist('WITHDRAW', amt, 'PENDING', {coin, network:chain, address:addr, txid:txId, fee:'0'});
+  const hid = await fbAddHist('WITHDRAW', amt, 'PENDING', {coin, network:chain, address:addr, txid:txId, fee:String(fee), recv:String(recv)});
   const cbId = 'wit_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
   // Reserve BEFORE sending
-  pendingWitReq[cbId] = { cbId, msgId:null, amt, hid, addr, txId, coin, chain };
-  try{ showFloatingPending && showFloatingPending('wit', amt, 'Processing Withdrawal', 'Broadcasting '+amt+' '+coin+'…', hid); }catch(e){}
+  pendingWitReq[cbId] = { cbId, msgId:null, amt, hid, addr, txId, coin, chain, fee, recv };
+  try{ showFloatingPending && showFloatingPending('wit', amt, 'Processing Withdrawal', 'Broadcasting '+recv+' '+coin+'…', hid); }catch(e){}
   const t = new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'});
-  const msgText = \`💼 *WITHDRAWAL REQUEST*\\n\\n👤 UID: \\\`\${userUID}\\\`\\n👤 User: *\${currentUser?currentUser.name:'Guest'}*\\n📧 Email: \\\`\${currentUser?.email||'—'}\\\`\\n💎 Coin: *\${coin}*\\n💰 Amount: *\${amt} \${coin}*\\n🌐 Network: \${chain}\\n📤 Address: \\\`\${addr}\\\`\\n🔗 TxID: \\\`\${txId}\\\`\\n⏰ \${t} IST\\n\\n✅ APPROVE = send funds\\n❌ REJECT = refund\`;
+  const msgText = \`💼 *WITHDRAWAL REQUEST*\\n\\n👤 UID: \\\`\${userUID}\\\`\\n👤 User: *\${currentUser?currentUser.name:'Guest'}*\\n📧 Email: \\\`\${currentUser?.email||'—'}\\\`\\n💎 Coin: *\${coin}*\\n🪙 Receive: *\${recv} \${coin}*\\n💸 Fee: *$\${fee}*\\n💰 Total Deducted: *\${amt} \${coin}*\\n🌐 Network: \${chain}\\n📤 Address: \\\`\${addr}\\\`\\n🔗 TxID: \\\`\${txId}\\\`\\n⏰ \${t} IST\\n\\n✅ APPROVE = send funds\\n❌ REJECT = refund\`;
   const msgId = await tgSendWithButtons(msgText, cbId);
   pendingWitReq[cbId].msgId = msgId;
   await fbSavePendingReq('wit', pendingWitReq[cbId]);
-  return {ok:true, txid:txId, hid};
+  return {ok:true, txid:txId, hid, fee, recv};
 };
 
 // ═══════════════════════════════════════════
