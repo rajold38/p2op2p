@@ -2749,7 +2749,7 @@ async function depConfirm(){
       // mirror network selection
       try{ if(_dwNet.dep === 'BEP20') w.selectDepNet && w.selectDepNet('BEP20'); else w.selectDepNet && w.selectDepNet('ERC20'); }catch(e){}
       w.confirmDeposit();
-      toast('Deposit request sent — awaiting admin approval');
+      toast('Deposit request sent — awaiting approval');
       closeDw('depOv');
     }catch(e){ toast('Deposit failed: '+e.message); }
   });
@@ -10284,7 +10284,7 @@ html.kyc-locked,body.kyc-locked{overflow:hidden!important;}
       await fb.update(fb.ref(fb.db,'users/'+currentFuid),{
         kycSubmission:payload, kycStatus:'PENDING', kycSubmittedAt:payload.ts
       });
-      showStatus('Submitted! Waiting for admin review.','ok');
+      showStatus('Submitted! Waiting for  review.','ok');
     }catch(err){
       console.error('KYC submit',err);
       showStatus('Submission failed. Please try again.','err');
