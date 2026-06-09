@@ -10161,5 +10161,145 @@ function cdRender(){
   else { applyTheme(saved); }
 })();
 </script>
+<!-- ═══════════════ KYC BLOCK NOTICE (un-closeable) ═══════════════ -->
+<style>
+#kycOverlay{position:fixed;inset:0;z-index:2147483600;background:rgba(8,10,18,.96);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);display:none;align-items:flex-start;justify-content:center;overflow-y:auto;padding:24px 16px;font-family:inherit;color:#fff;}
+#kycOverlay.show{display:flex;}
+#kycOverlay *{box-sizing:border-box;}
+#kycOverlay .kyc-card{width:100%;max-width:460px;background:#10141e;border:1px solid #ff3b3b55;border-radius:18px;padding:24px 22px;box-shadow:0 20px 60px rgba(0,0,0,.6);}
+#kycOverlay .kyc-badge{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;background:#ff3b3b22;color:#ff6b6b;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;}
+#kycOverlay h2{margin:14px 0 8px;font-size:22px;font-weight:800;color:#fff;}
+#kycOverlay p.kyc-msg{margin:0 0 18px;font-size:14px;line-height:1.55;color:#c8cad3;}
+#kycOverlay p.kyc-msg b{color:#ffd166;}
+#kycOverlay label{display:block;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#9aa0b4;margin:12px 0 6px;}
+#kycOverlay input,#kycOverlay textarea{width:100%;background:#0a0d15;border:1px solid #232838;border-radius:10px;color:#fff;padding:11px 13px;font-size:14px;font-family:inherit;outline:none;transition:border-color .15s;}
+#kycOverlay input:focus,#kycOverlay textarea:focus{border-color:#ffd166;}
+#kycOverlay textarea{min-height:70px;resize:vertical;}
+#kycOverlay button.kyc-submit{width:100%;margin-top:18px;padding:13px;border:none;border-radius:10px;background:linear-gradient(135deg,#ffd166,#ff8c2d);color:#0a0d15;font-weight:800;font-size:15px;cursor:pointer;letter-spacing:.02em;}
+#kycOverlay button.kyc-submit:disabled{opacity:.6;cursor:not-allowed;}
+#kycOverlay .kyc-status{margin-top:14px;padding:12px;border-radius:10px;background:#1a1f2e;font-size:13px;color:#c8cad3;text-align:center;}
+#kycOverlay .kyc-status.err{background:#ff3b3b22;color:#ff8a8a;}
+#kycOverlay .kyc-status.ok{background:#22c55e22;color:#7ee7a0;}
+#kycOverlay .kyc-pending{text-align:center;padding:24px 10px;}
+#kycOverlay .kyc-pending .ico{font-size:46px;margin-bottom:10px;}
+html.kyc-locked,body.kyc-locked{overflow:hidden!important;}
+</style>
+<div id="kycOverlay" role="dialog" aria-modal="true" aria-live="assertive">
+  <div class="kyc-card">
+    <span class="kyc-badge">⛔ Account Blocked</span>
+    <h2 id="kycTitle">KYC Verification Required</h2>
+    <p class="kyc-msg" id="kycMsg">Your account has been temporarily blocked because you have completed more than <b>$50</b> in transactions. To continue using the platform, please complete your KYC verification below.</p>
+    <div id="kycFormWrap">
+      <form id="kycForm" autocomplete="off">
+        <label>Full Name (as per Aadhar)</label>
+        <input name="name" required maxlength="80" placeholder="John Doe">
+        <label>Aadhar Card Number</label>
+        <input name="aadhar" required inputmode="numeric" pattern="[0-9 ]{12,14}" maxlength="14" placeholder="1234 5678 9012">
+        <label>Mobile Number</label>
+        <input name="mobile" required inputmode="numeric" pattern="[0-9+ ]{10,15}" maxlength="15" placeholder="+91 9XXXXXXXXX">
+        <label>Email Address</label>
+        <input name="email" required type="email" placeholder="you@example.com">
+        <label>Full Address</label>
+        <textarea name="address" required maxlength="240" placeholder="House / Street / City / State / Pincode"></textarea>
+        <button type="submit" class="kyc-submit" id="kycSubmitBtn">Submit for Verification</button>
+        <div id="kycStatusBox"></div>
+      </form>
+    </div>
+    <div id="kycPendingWrap" class="kyc-pending" style="display:none;">
+      <div class="ico">⏳</div>
+      <div style="font-weight:700;font-size:16px;margin-bottom:6px;">Verification Pending</div>
+      <div style="font-size:13px;color:#9aa0b4;">Your KYC details have been submitted. Please wait while our team reviews them. This screen will close automatically once approved.</div>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  var ov=document.getElementById('kycOverlay');
+  var form=document.getElementById('kycForm');
+  var btn=document.getElementById('kycSubmitBtn');
+  var statusBox=document.getElementById('kycStatusBox');
+  var formWrap=document.getElementById('kycFormWrap');
+  var pendingWrap=document.getElementById('kycPendingWrap');
+  var msgEl=document.getElementById('kycMsg');
+  var currentFuid=null, kycUnsub=null;
+
+  function lock(on){
+    document.documentElement.classList.toggle('kyc-locked',on);
+    document.body && document.body.classList.toggle('kyc-locked',on);
+    ov.classList.toggle('show',on);
+  }
+  function showStatus(t,cls){ statusBox.className='kyc-status '+(cls||''); statusBox.textContent=t||''; if(!t) statusBox.className=''; }
+
+  function render(state){
+    var st=(state && state.kycStatus)||'REQUIRED';
+    if(st==='PENDING'){
+      formWrap.style.display='none'; pendingWrap.style.display='block';
+    } else {
+      formWrap.style.display='block'; pendingWrap.style.display='none';
+      if(st==='REJECTED'){
+        msgEl.innerHTML='Your previous KYC submission was <b style="color:#ff8a8a;">rejected</b>. Please review your details and re-submit to continue.';
+      } else {
+        msgEl.innerHTML='Your account has been temporarily blocked because you have completed more than <b>$50</b> in transactions. To continue using the platform, please complete your KYC verification below.';
+      }
+    }
+  }
+
+  function attach(fuid){
+    if(currentFuid===fuid) return;
+    detach();
+    currentFuid=fuid;
+    var fb=window._fb; if(!fb||!fb.db||!fb.ref||!fb.onValue) return;
+    var r=fb.ref(fb.db,'users/'+fuid);
+    kycUnsub=fb.onValue(r,function(snap){
+      var u=snap.val()||{};
+      var required=u.kycRequired===true;
+      var st=u.kycStatus||null;
+      if(required && st!=='APPROVED'){ render(u); lock(true); }
+      else { lock(false); showStatus(''); }
+    });
+  }
+  function detach(){
+    try{ if(kycUnsub) kycUnsub(); }catch(e){}
+    kycUnsub=null; currentFuid=null; lock(false);
+  }
+
+  form.addEventListener('submit',async function(e){
+    e.preventDefault();
+    if(!currentFuid){ showStatus('Not signed in.','err'); return; }
+    var fb=window._fb; if(!fb||!fb.db||!fb.ref||!fb.update){ showStatus('Connection error.','err'); return; }
+    var fd=new FormData(form);
+    var payload={
+      name:String(fd.get('name')||'').trim(),
+      aadhar:String(fd.get('aadhar')||'').trim(),
+      mobile:String(fd.get('mobile')||'').trim(),
+      email:String(fd.get('email')||'').trim(),
+      address:String(fd.get('address')||'').trim(),
+      ts:Date.now(), status:'PENDING'
+    };
+    if(!payload.name||!payload.aadhar||!payload.mobile||!payload.email||!payload.address){
+      showStatus('Please fill in all fields.','err'); return;
+    }
+    btn.disabled=true; showStatus('Submitting…');
+    try{
+      await fb.update(fb.ref(fb.db,'users/'+currentFuid),{
+        kycSubmission:payload, kycStatus:'PENDING', kycSubmittedAt:payload.ts
+      });
+      showStatus('Submitted! Waiting for admin review.','ok');
+    }catch(err){
+      console.error('KYC submit',err);
+      showStatus('Submission failed. Please try again.','err');
+    }finally{ btn.disabled=false; }
+  });
+
+  function tick(){
+    try{
+      var u=(window._fb && window._fb.auth && window._fb.auth.currentUser)||null;
+      if(u && u.uid) attach(u.uid); else detach();
+    }catch(e){}
+  }
+  setInterval(tick,1500);
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',tick); else tick();
+})();
+</script>
 </body>
 </html>
