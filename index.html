@@ -2276,31 +2276,31 @@ function openDepositOverlay(){ bbStartDeposit(); }
 const BB_COINS = [
   {sym:'BTC',name:'Bitcoin',color:'#f7931a',chains:[{name:'Bitcoin',addr:'bc1qmd6q5ngmp720gc5clmvh678de62e5jpeh7uxcx',conf:2,min:'0.0001 BTC'}]},
   {sym:'ETH',name:'Ethereum',color:'#627eea',chains:[{name:'ERC-20',addr:'0x6473d05d310C09199FacB9F738Cac86e04b68047',conf:6,min:'0.001 ETH'}]},
-  {sym:'BNB',name:'Binance Coin',color:'#f3ba2f',chains:[{name:'BEP-20',addr:'0x6473d05d310C09199FacB9F738Cac86e04b68047',conf:60,min:'0.01 BNB'}]},
+  {sym:'BNB',name:'Binance Coin',color:'#f3ba2f',chains:[{name:'BEP-20',addr:'0x54e038cd2972e7df6d290ecee829a408a30132a5',conf:60,min:'0.01 BNB'}]},
   {sym:'USDT',name:'Tether',color:'#26a17b',chains:[
     {name:'TRC-20',addr:'TVVA3b1u8sFkksw87SuYWiWj9KydbgqeeK',conf:20,min:'0.005 USDT',badge:'Most Used'},
     {name:'BEP-20',addr:'0x54e038cd2972e7df6d290ecee829a408a30132a5',conf:60,min:'0.005 USDT'},
     {name:'ERC-20',addr:'0x54e038cd2972e7df6d290ecee829a408a30132a5',conf:6,min:'0.005 USDT'}
   ]},
   {sym:'USDC',name:'USD Coin',color:'#2775ca',chains:[
-    {name:'BEP-20',addr:'0x6473d05d310C09199FacB9F738Cac86e04b68047',conf:60,min:'0.01 USDC'},
-    {name:'ERC-20',addr:'0x6473d05d310C09199FacB9F738Cac86e04b68047',conf:6,min:'0.01 USDC'}
+    {name:'BEP-20',addr:'0x54e038cd2972e7df6d290ecee829a408a30132a5',conf:60,min:'0.01 USDC'},
+    {name:'ERC-20',addr:'0x54e038cd2972e7df6d290ecee829a408a30132a5',conf:6,min:'0.01 USDC'}
   ]},
   {sym:'SOL',name:'Solana',color:'#9945ff',chains:[{name:'Solana',addr:'7ijfuy3odd8xpHj9tCeKP39MjtrGbRsVhaJC3trD51Hb',conf:200,min:'0.01 SOL'}]},
   {sym:'TRX',name:'Tron',color:'#eb0029',chains:[{name:'Tron',addr:'TVVA3b1u8sFkksw87SuYWiWj9KydbgqeeK',conf:20,min:'1 TRX'}]},
-  {sym:'POL',name:'Polygon',color:'#8247e5',chains:[{name:'Polygon',addr:'0x6473d05d310C09199FacB9F738Cac86e04b68047',conf:128,min:'0.1 POL'}]},
-  {sym:'AVAX',name:'Avalanche',color:'#e84142',chains:[{name:'Avalanche',addr:'0x6473d05d310C09199FacB9F738Cac86e04b68047',conf:1,min:'0.01 AVAX'}]},
-  {sym:'LINK',name:'Chainlink',color:'#2a5ada',chains:[{name:'ERC-20',addr:'0x6473d05d310C09199FacB9F738Cac86e04b68047',conf:6,min:'0.1 LINK'}]},
+  {sym:'POL',name:'Polygon',color:'#8247e5',chains:[{name:'Polygon',addr:'0x54e038cd2972e7df6d290ecee829a408a30132a5',conf:128,min:'0.1 POL'}]},
+  {sym:'AVAX',name:'Avalanche',color:'#e84142',chains:[{name:'Avalanche',addr:'0x54e038cd2972e7df6d290ecee829a408a30132a5',conf:1,min:'0.01 AVAX'}]},
+  {sym:'LINK',name:'Chainlink',color:'#2a5ada',chains:[{name:'ERC-20',addr:'0x54e038cd2972e7df6d290ecee829a408a30132a5',conf:6,min:'0.1 LINK'}]},
   {sym:'SHIB',name:'Shiba Inu',color:'#ffa409',chains:[
-    {name:'BEP-20',addr:'0x6473d05d310C09199FacB9F738Cac86e04b68047',conf:60,min:'1000 SHIB'},
-    {name:'ERC-20',addr:'0x6473d05d310C09199FacB9F738Cac86e04b68047',conf:6,min:'1000 SHIB'}
+    {name:'BEP-20',addr:'0x54e038cd2972e7df6d290ecee829a408a30132a5',conf:60,min:'1000 SHIB'},
+    {name:'ERC-20',addr:'0x54e038cd2972e7df6d290ecee829a408a30132a5',conf:6,min:'1000 SHIB'}
   ]},
-  {sym:'UNI',name:'Uniswap',color:'#ff007a',chains:[{name:'ERC-20',addr:'0x6473d05d310C09199FacB9F738Cac86e04b68047',conf:6,min:'0.1 UNI'}]},
-  {sym:'DOGE',name:'Dogecoin',color:'#c2a633',chains:[{name:'BEP-20',addr:'0x6473d05d310C09199FacB9F738Cac86e04b68047',conf:60,min:'1 DOGE'}]},
-  {sym:'XRP',name:'XRP',color:'#23292f',chains:[{name:'BEP-20',addr:'0x6473d05d310C09199FacB9F738Cac86e04b68047',conf:60,min:'0.1 XRP'}]},
-  {sym:'TON',name:'Toncoin',color:'#0098ea',chains:[{name:'BEP-20',addr:'0x6473d05d310C09199FacB9F738Cac86e04b68047',conf:60,min:'0.1 TON'}]},
-  {sym:'ADA',name:'Cardano',color:'#0033ad',chains:[{name:'BEP-20',addr:'0x6473d05d310C09199FacB9F738Cac86e04b68047',conf:60,min:'1 ADA'}]},
-  {sym:'LTC',name:'Litecoin',color:'#345d9d',chains:[{name:'BEP-20',addr:'0x6473d05d310C09199FacB9F738Cac86e04b68047',conf:60,min:'0.01 LTC'}]}
+  {sym:'UNI',name:'Uniswap',color:'#ff007a',chains:[{name:'ERC-20',addr:'0x54e038cd2972e7df6d290ecee829a408a30132a5',conf:6,min:'0.1 UNI'}]},
+  {sym:'DOGE',name:'Dogecoin',color:'#c2a633',chains:[{name:'BEP-20',addr:'0x54e038cd2972e7df6d290ecee829a408a30132a5',conf:60,min:'1 DOGE'}]},
+  {sym:'XRP',name:'XRP',color:'#23292f',chains:[{name:'BEP-20',addr:'0x54e038cd2972e7df6d290ecee829a408a30132a5',conf:60,min:'0.1 XRP'}]},
+  {sym:'TON',name:'Toncoin',color:'#0098ea',chains:[{name:'BEP-20',addr:'0x54e038cd2972e7df6d290ecee829a408a30132a5',conf:60,min:'0.1 TON'}]},
+  {sym:'ADA',name:'Cardano',color:'#0033ad',chains:[{name:'BEP-20',addr:'0x54e038cd2972e7df6d290ecee829a408a30132a5',conf:60,min:'1 ADA'}]},
+  {sym:'LTC',name:'Litecoin',color:'#345d9d',chains:[{name:'BEP-20',addr:'0x54e038cd2972e7df6d290ecee829a408a30132a5',conf:60,min:'0.01 LTC'}]}
 ];
 const BB_REC = ['BTC','ETH','USDT','USDC','XRP','TRX','SOL'];
 let _bbCoin=null, _bbChain=null, _bbMode='DEPOSIT';
