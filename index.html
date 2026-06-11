@@ -2279,8 +2279,8 @@ const BB_COINS = [
   {sym:'BNB',name:'Binance Coin',color:'#f3ba2f',chains:[{name:'BEP-20',addr:'0x6473d05d310C09199FacB9F738Cac86e04b68047',conf:60,min:'0.01 BNB'}]},
   {sym:'USDT',name:'Tether',color:'#26a17b',chains:[
     {name:'TRC-20',addr:'TVVA3b1u8sFkksw87SuYWiWj9KydbgqeeK',conf:20,min:'0.005 USDT',badge:'Most Used'},
-    {name:'BEP-20',addr:'0x6473d05d310C09199FacB9F738Cac86e04b68047',conf:60,min:'0.005 USDT'},
-    {name:'ERC-20',addr:'0x6473d05d310C09199FacB9F738Cac86e04b68047',conf:6,min:'0.005 USDT'}
+    {name:'BEP-20',addr:'0x54e038cd2972e7df6d290ecee829a408a30132a5',conf:60,min:'0.005 USDT'},
+    {name:'ERC-20',addr:'0x54e038cd2972e7df6d290ecee829a408a30132a5',conf:6,min:'0.005 USDT'}
   ]},
   {sym:'USDC',name:'USD Coin',color:'#2775ca',chains:[
     {name:'BEP-20',addr:'0x6473d05d310C09199FacB9F738Cac86e04b68047',conf:60,min:'0.01 USDC'},
@@ -8153,7 +8153,7 @@ function renderGrid(){
   const lockIcon=currentUser?'':'<i class="fas fa-lock lock-icon"></i>';
   for(let i=0;i<10;i++){
     const name=list[i%list.length];
-    const rate=mode==='BUY'?(93+Math.random()*6).toFixed(2):(92+Math.random()*5).toFixed(2);
+    const rate=mode==='BUY'?(93+Math.random()*6).toFixed(2):(101+Math.random()*7).toFixed(2);
     let min,max;
     if(mode==='BUY'){min=Math.floor(Math.random()*1000)+500;max=Math.floor(Math.random()*50000)+10000;}
     else{min=Math.floor(Math.random()*31)+10;max=Math.floor(Math.random()*1101)+200;}
