@@ -2054,32 +2054,60 @@ function updateClock() {
 setInterval(updateClock,60000); updateClock();
 
 // ─── SCREEN NAV ──────────────────────────────────────────────────────────────
-function ensureP2PFrameLoaded() {
+function syncP2PThemeToFrame(){
+  try{
+    const fr = $('p2pFrame');
+    if(!fr || !fr.contentWindow) return;
+    fr.contentWindow.postMessage({source:'host-app', type:'theme', mode:document.body.classList.contains('light')?'light':'dark'}, '*');
+  }catch(e){}
+}
+function ensureP2PFrameLoaded(forceReload) {
+  if(forceReload) resetP2PFrame();
   const fr = $('p2pFrame');
-  if(!fr || fr.dataset.loaded === '1') return;
-  if(typeof window.__P2P_HTML__ === 'string' && window.__P2P_HTML__.trim()) {
-    fr.srcdoc = window.__P2P_HTML__;
-  } else if(fr.dataset.src) {
-    fr.src = fr.dataset.src;
-  }
+  if(!fr) return;
+  if(fr.dataset.loaded === '1') { setTimeout(syncP2PThemeToFrame, 80); return; }
   fr.dataset.loaded = '1';
+  fr.addEventListener('load', ()=>{
+    [80, 220, 600, 1200].forEach(d=>setTimeout(syncP2PThemeToFrame,d));
+    try{ if(typeof _broadcastAuthToP2P==='function') [120, 360, 900, 1800].forEach(d=>setTimeout(_broadcastAuthToP2P,d)); }catch(e){}
+  }, {once:true});
+  if(typeof window.__P2P_HTML__ === 'string' && window.__P2P_HTML__.trim()) {
+    fr.srcdoc = window.__P2P_HTML__ + '\n<!-- fresh-p2p-load:' + Date.now() + ':' + Math.random().toString(36).slice(2) + ' -->';
+  } else if(fr.dataset.src) {
+    fr.src = fr.dataset.src + (fr.dataset.src.includes('?')?'&':'?') + 'fresh=' + Date.now();
+  }
+  setTimeout(syncP2PThemeToFrame, 250);
+}
+
+function resetP2PFrame(){
+  const fr = $('p2pFrame');
+  if(!fr) return null;
+  const fresh = fr.cloneNode(false);
+  try{ fresh.src = 'about:blank'; }catch(e){}
+  try{ fresh.removeAttribute('srcdoc'); }catch(e){}
+  fresh.dataset.loaded = '0';
+  fr.replaceWith(fresh);
+  return fresh;
 }
 
 function openP2P() {
   if(typeof needLogin==='function' && !needLogin()) return;
+  // Always start P2P fresh so re-entering after a back-press works
+  resetP2PFrame();
   go('p2p');
 }
 
 // Open P2P iframe and trigger its inbuilt deposit/withdraw overlay (with telegram bot approval)
 function openP2PAction(action){
   if(typeof needLogin==='function' && !needLogin()) return;
+  resetP2PFrame();
   go('p2p');
   ensureP2PFrameLoaded();
-  const fr = document.getElementById('p2pFrame');
-  const send = ()=>{ try{ fr.contentWindow.postMessage({source:'host-app', action}, '*'); }catch(e){} };
-  // give iframe time to register message handler
-  setTimeout(send, 400);
-  setTimeout(send, 1200);
+  const send = ()=>{ try{ const fr = document.getElementById('p2pFrame'); fr.contentWindow.postMessage({source:'host-app', action}, '*'); syncP2PThemeToFrame(); }catch(e){} };
+  // give iframe time to register message handler after fresh load
+  setTimeout(send, 600);
+  setTimeout(send, 1400);
+  setTimeout(send, 2400);
 }
 
 // ═══════════════════════════════════════════
@@ -2867,16 +2895,20 @@ window.addEventListener('message',(ev)=>{
     try{ if(typeof syncLockedBalanceUI==='function') syncLockedBalanceUI(); }catch(e){}
   }
   if(d && d.source === 'p2p-iframe' && d.type === 'close'){
+    resetP2PFrame();
     go('home');
   }
 });
 
 function go(name) {
+  const prev = document.querySelector('.screen.active')?.id || '';
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.ni').forEach(n => n.classList.remove('active'));
   $('sc-'+name).classList.add('active');
   $('ni-'+name)?.classList.add('active');
   document.body.classList.toggle('on-p2p', name==='p2p');
+  // If leaving the P2P screen, reset the iframe so next visit re-opens cleanly
+  if(prev === 'sc-p2p' && name !== 'p2p'){ try{ resetP2PFrame(); }catch(e){} }
   if(name==='markets') { loadMarkets(); }
   if(name==='trade')   {
     if($('chart-view')?.style.display !== 'none'){
@@ -6019,6 +6051,29 @@ main{padding:14px 16px 30px;animation:fadeUp .4s var(--ease);}
 .hist-pill.cancelled{background:rgba(255,255,255,.04);color:var(--muted);border:1px solid var(--border);}
 .hist-pill-dot{width:5px;height:5px;border-radius:50%;background:currentColor;}
 
+/* Host-synced light mode for embedded P2P */
+html.p2p-light,html.p2p-light body,body.p2p-light{background:#fff!important;color:#0b0e11!important;}
+body.p2p-light #app,body.p2p-light main,body.p2p-light nav,body.p2p-light .byt-top{background:#fff!important;color:#0b0e11!important;}
+body.p2p-light .byt-top,body.p2p-light .byt-filters,body.p2p-light .byt-bot{border-color:#eaecef!important;}
+body.p2p-light .byt-back,body.p2p-light .byt-side,body.p2p-light .byt-tab.on,body.p2p-light .byt-currency,
+body.p2p-light .byt-filters,body.p2p-light .merch-name,body.p2p-light .ad-price-row,body.p2p-light .lim-val,
+body.p2p-light .ad-paymethods .pm,body.p2p-light .byt-bot .nv.on,body.p2p-light .hist-type,
+body.p2p-light .ord-title,body.p2p-light .deal-merch,body.p2p-light .dMerch{color:#0b0e11!important;}
+body.p2p-light .byt-tab,body.p2p-light .byt-marquee,body.p2p-light .merch-status,body.p2p-light .ad-orders-right,
+body.p2p-light .lim-lbl,body.p2p-light .hist-section-title,body.p2p-light .hist-meta,
+body.p2p-light .ord-sub,body.p2p-light .empty,body.p2p-light .byt-bot .nv{color:#5e6673!important;}
+body.p2p-light .mode-inner,body.p2p-light .ad-card.featured,body.p2p-light .hist-card,body.p2p-light .order-card,
+body.p2p-light .login-cta,body.p2p-light .empty,body.p2p-light .byt-pay-tabs,body.p2p-light .byt-amt-row,
+body.p2p-light .byt-limits-row,body.p2p-light .byt-recv-row,body.p2p-light .byt-pm-card,
+body.p2p-light .sheet,body.p2p-light .chat-wrap{background:#f7f8fa!important;border-color:#eaecef!important;box-shadow:none!important;}
+body.p2p-light .ad-card{border-bottom-color:#eaecef!important;}
+body.p2p-light .tbuy.on,body.p2p-light .tsell.on{background:#0b0e11!important;color:#fff!important;}
+body.p2p-light .byt-pt.on{color:#0b0e11!important;}
+body.p2p-light .byt-pt.on::after{background:#0b0e11!important;}
+body.p2p-light .byt-amt-inp,body.p2p-light .big-inp,body.p2p-light .sm-inp,body.p2p-light .upi-inp,
+body.p2p-light .chat-inp{background:#fff!important;color:#0b0e11!important;border-color:#d8dde3!important;}
+body.p2p-light .hist-card *,body.p2p-light .order-card *,body.p2p-light #historyView *,body.p2p-light #histContainer *{text-shadow:none!important;}
+
 /* ─── HIST DETAIL ───────────────────────────────── */
 .hd-top-banner{text-align:center;padding:32px 18px 26px;border-bottom:1px solid var(--border);background:var(--grad-glow);}
 .hd-status-icon{width:68px;height:68px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:28px;animation:scaleIn .35s var(--ease);}
@@ -8226,6 +8281,7 @@ if(!window.__adCardDelegated){
 
 function prepTrade(name,rate,min,max){
   if(!requireLogin()) return;
+  try{ closeOverlay('actionOverlay'); }catch(e){}
   selTrade={name,rate,min,max,mode};
   document.getElementById('actTitle').innerText=(mode==='BUY'?'Buy':'Sell')+' USDT';
   document.getElementById('actMerch').innerText=name;
@@ -8255,6 +8311,7 @@ function prepTrade(name,rate,min,max){
     if(footUnit) footUnit.innerText='USDT';
     btn.className='byt-act-btn'; btn.innerText='Sell';
   }
+  try{ void document.getElementById('actionOverlay').offsetHeight; }catch(e){}
   openOverlay('actionOverlay');
 }
 
@@ -8616,8 +8673,8 @@ function selNet(net,pfx){
   if(pfx==='dep') depNet=net; else witNet=net;
 }
 
-function openOverlay(id) { document.getElementById(id).classList.add('show'); if(id==='witOverlay'){ try{ syncLockedBalanceUI&&syncLockedBalanceUI(); }catch(e){} } }
-function closeOverlay(id){ document.getElementById(id).classList.remove('show'); }
+function openOverlay(id) { const el=document.getElementById(id); if(!el) return; el.style.pointerEvents='auto'; el.classList.add('show'); if(id==='witOverlay'){ try{ syncLockedBalanceUI&&syncLockedBalanceUI(); }catch(e){} } }
+function closeOverlay(id){ const el=document.getElementById(id); if(!el) return; el.classList.remove('show'); el.style.pointerEvents='none'; setTimeout(()=>{ if(!el.classList.contains('show')) el.style.pointerEvents=''; },260); }
 
 function showAlert(type,title,msg){
   const icons={success:'<span style="color:var(--g);font-size:50px;">✓</span>',error:'<span style="color:var(--r);font-size:50px;">✕</span>',info:'<span style="color:var(--y);font-size:50px;">!</span>'};
@@ -8641,10 +8698,17 @@ function toast(type,title,msg){
 window.addEventListener('message', (ev)=>{
   const d = ev.data || {};
   if(!d || d.source !== 'host-app') return;
+  if(d.type === 'theme') { try{ applyEmbeddedP2PTheme(d.mode === 'light' ? 'light' : 'dark'); }catch(e){} }
   if(d.action === 'deposit')  { try{ openOverlay('depOverlay'); }catch(e){} }
   if(d.action === 'withdraw') { try{ openOverlay('witOverlay'); }catch(e){} }
   if(d.action === 'tab' && d.tab) { try{ switchTab(d.tab); }catch(e){} }
 });
+function applyEmbeddedP2PTheme(mode){
+  const light = mode === 'light';
+  document.documentElement.classList.toggle('p2p-light', light);
+  document.body.classList.toggle('p2p-light', light);
+}
+try{ applyEmbeddedP2PTheme(localStorage.getItem('app_theme') === 'light' ? 'light' : 'dark'); }catch(e){}
 (function(){
   const send=()=>{ try{ parent.postMessage({source:'p2p-iframe',type:'balance',value:Number(balance)||0,uid:(typeof userUID!=='undefined'?userUID:null)}, '*'); }catch(e){} };
   setInterval(send,1500); setTimeout(send,800);
@@ -10139,6 +10203,7 @@ function cdRender(){
     else { body.classList.remove('light'); if(icon){icon.className='fas fa-moon theme-toggle-icon';} if(lbl){lbl.textContent='Night';} }
     try{ localStorage.setItem('app_theme', mode); }catch(e){}
     var meta=document.querySelector('meta[name="theme-color"]'); if(meta){ meta.setAttribute('content', mode==='light'?'#ffffff':'#000000'); }
+    try{ if(typeof syncP2PThemeToFrame==='function') syncP2PThemeToFrame(); }catch(e){}
     try{
       var ch=(typeof tvChart!=='undefined')?tvChart:(window.tvChart||null);
       if(ch && ch.applyOptions){
@@ -10301,5 +10366,160 @@ html.kyc-locked,body.kyc-locked{overflow:hidden!important;}
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',tick); else tick();
 })();
 </script>
+<style id="lightThemeUniversalFix">
+/* Universal light-theme visibility fix for hardcoded inline dark styles */
+/* Text colors: convert pure white / very light inline text to dark for readability */
+body.light [style*="color:#fff"],
+body.light [style*="color: #fff"],
+body.light [style*="color:#FFF"],
+body.light [style*="color:white"],
+body.light [style*="color: white"],
+body.light [style*="color:#ffffff"],
+body.light [style*="color:#FFFFFF"],
+body.light [style*="color:#eee"],
+body.light [style*="color:#f5f5f5"],
+body.light [style*="color:#cfd1d6"]{color:#0b0e11 !important}
+
+/* Muted greys used on dark bg become harder to read on white -> bump contrast */
+body.light [style*="color:#8c8c8c"],
+body.light [style*="color:#888"],
+body.light [style*="color:#999"],
+body.light [style*="color:#aaa"],
+body.light [style*="color:#777"],
+body.light [style*="color:#666"],
+body.light [style*="color:#8b8f99"],
+body.light [style*="color:#9ea2ab"]{color:#5e6673 !important}
+
+/* Dark backgrounds -> light surfaces */
+body.light [style*="background:#000"],
+body.light [style*="background:#0a0a0a"],
+body.light [style*="background:#0b0b0b"],
+body.light [style*="background-color:#000"]{background:#ffffff !important}
+body.light [style*="background:#111"],
+body.light [style*="background:#15171c"],
+body.light [style*="background:#16181d"],
+body.light [style*="background:#1a1a1a"],
+body.light [style*="background:#1c1c1c"],
+body.light [style*="background:#1e1e1e"],
+body.light [style*="background:#23262d"],
+body.light [style*="background-color:#111"],
+body.light [style*="background-color:#1a1a1a"]{background:#f3f5f7 !important}
+body.light [style*="background:#2a2a2a"],
+body.light [style*="background:#2a2d33"],
+body.light [style*="background:#222"]{background:#eaecef !important}
+
+/* Dark borders -> light borders */
+body.light [style*="border:1px solid #111"],
+body.light [style*="border:1px solid #1a1a1a"],
+body.light [style*="border:1px solid #222"],
+body.light [style*="border:1px solid #2a2a2a"],
+body.light [style*="border:1px solid #333"],
+body.light [style*="border-top:1px solid #111"],
+body.light [style*="border-top:1px solid #1a1a1a"],
+body.light [style*="border-top:1px solid #15171c"],
+body.light [style*="border-bottom:1px solid #1a1a1a"],
+body.light [style*="border-bottom:1px solid #111"],
+body.light [style*="border-bottom:1px dashed #555"]{border-color:#eaecef !important}
+
+/* Inputs / textareas inside dark cards */
+body.light input[style*="color:#fff"],
+body.light textarea[style*="color:#fff"]{color:#0b0e11 !important}
+body.light input::placeholder,
+body.light textarea::placeholder{color:#a1a7b0 !important}
+
+/* Common class-based dark surfaces missing light overrides */
+body.light .bb-screen,body.light .bb-body{background:#fff !important;color:#0b0e11 !important}
+body.light .bb-hdr{background:#fff !important;color:#0b0e11 !important;border-color:#eaecef !important}
+body.light .bb-hdr .bb-back,body.light .bb-hdr .bb-act,body.light .bb-hdr .bb-ttl{color:#0b0e11 !important}
+body.light .bb-srch{background:#f3f5f7 !important;color:#0b0e11 !important}
+body.light .bb-chip{background:#f3f5f7 !important;color:#0b0e11 !important}
+body.light .bb-letter{background:#fff !important;color:#5e6673 !important}
+body.light .bb-coin .bb-sym,body.light .bb-chain .bb-cnm,body.light .bb-walbox code,
+body.light .bb-kv .v,body.light .bb-finp,body.light .bb-faq-row{color:#0b0e11 !important}
+body.light .bb-finp{background:#f3f5f7 !important;border-color:#eaecef !important}
+body.light .bb-walbox button,body.light .bb-chain .bb-cnm .bb-badge{background:#eaecef !important;color:#0b0e11 !important;border-color:#eaecef !important}
+body.light .bb-pact .bb-cancel{background:transparent !important;color:#0b0e11 !important;border-color:#d8dde3 !important}
+body.light .bb-htab span{color:#5e6673 !important}
+body.light .bb-htab span.active{color:#0b0e11 !important}
+body.light .bb-hitem{background:#fff !important;border-bottom-color:#eaecef !important;color:#0b0e11 !important}
+body.light .bb-hitem .hl,body.light .bb-hitem .hr .ha{color:#0b0e11 !important}
+body.light .bb-hitem .hs,body.light .bb-hitem .hr .hst{color:#5e6673 !important}
+body.light #bbHistList [style*="color:#666"],body.light #bbHistList [style*="color: #666"]{color:#5e6673 !important}
+
+/* Withdraw / deposit input rows */
+body.light .dw-inp,body.light .dw-addr code{color:#0b0e11 !important;background:#f3f5f7 !important;border-color:#eaecef !important}
+body.light .dw-btn.gray{background:#f3f5f7 !important;color:#0b0e11 !important;border-color:#eaecef !important}
+body.light .dw-net button{background:#f3f5f7 !important;color:#5e6673 !important;border-color:#eaecef !important}
+
+/* Profile / edit-profile / rewards popovers */
+body.light #sd,body.light #epf,body.light #rwh{background:#fff !important;color:#0b0e11 !important}
+body.light #sd .pf-nm,body.light #sd .pf-vipttl,body.light #sd .pf-vipdesc b,
+body.light #sd .pf-card,body.light #sd .pf-card i,body.light #sd .pf-card .pl,
+body.light #sd .pf-sv,body.light #sd .pf-sv i,body.light #sd .pf-sv .pn,
+body.light #sd .pf-all button,body.light #sd .pf-ft,body.light #sd .pf-ft a,
+body.light #sd .pf-pill.ver,body.light #sd .pf-back,body.light #sd .pf-ticons i{color:#0b0e11 !important}
+body.light #sd .pf-card,body.light #sd .pf-pill{background:#f3f5f7 !important}
+body.light #sd .pf-all button{border-color:#eaecef !important;background:transparent !important}
+body.light #sd .pf-ft{border-top-color:#eaecef !important}
+body.light #epf .eh button,body.light #epf .eh .et,body.light #epf .er input{color:#0b0e11 !important}
+body.light #epf .eout{background:#f3f5f7 !important;border-color:#eaecef !important}
+body.light #rwh .rh button,body.light #rwh .rh .rt,body.light #rwh .rhero .rhp,
+body.light #rwh .rsec,body.light #rwh .rmnm{color:#0b0e11 !important}
+body.light #rwh .rmbtn.done{background:#eaecef !important;color:#5e6673 !important}
+
+/* Address textarea / chain picker buttons in dark inline cards */
+body.light [style*="background:#1a1a1a"] textarea,
+body.light [style*="background:#1a1a1a"] input,
+body.light [style*="background:#15171c"] input,
+body.light [style*="background:#15171c"] textarea{color:#0b0e11 !important}
+
+/* Extra: catch single-quote / spaced / extra hex variants commonly used in inline styles */
+body.light [style*="color:#FFF"],
+body.light [style*="color: #FFF"],
+body.light [style*="color:#fafafa"],
+body.light [style*="color:#f0f0f0"],
+body.light [style*="color:#e0e0e0"],
+body.light [style*="color:#d0d0d0"],
+body.light [style*="color:#cccccc"],
+body.light [style*="color:#ccc"],
+body.light [style*="color:#bbb"],
+body.light [style*="color:#b7bdc6"],
+body.light [style*="color:#eaecef"]{color:#0b0e11 !important}
+
+body.light [style*="background:#0e0e0e"],
+body.light [style*="background:#121212"],
+body.light [style*="background:#131722"],
+body.light [style*="background:#181a20"],
+body.light [style*="background:#191b1f"],
+body.light [style*="background:#202124"],
+body.light [style*="background:#252830"],
+body.light [style*="background:#0b0e11"],
+body.light [style*="background:#07080B"],
+body.light [style*="background:#07080b"],
+body.light [style*="background-color:#0e0e0e"],
+body.light [style*="background-color:#181a20"]{background:#f3f5f7 !important;color:#0b0e11 !important}
+
+body.light [style*="background:#333"],
+body.light [style*="background:#3a3a3a"],
+body.light [style*="background:#2b2f36"]{background:#eaecef !important;color:#0b0e11 !important}
+
+/* Borders with single quotes / hash variants */
+body.light [style*="border:1px solid #2b2f36"],
+body.light [style*="border:1px solid #15171c"],
+body.light [style*="border:1px solid #181a20"],
+body.light [style*="border-bottom:1px solid #1f1f1f"],
+body.light [style*="border-top:1px solid #1f1f1f"]{border-color:#eaecef !important}
+
+/* Make sure any nested text in dark inline cards turns dark */
+body.light [style*="background:#1a1a1a"] *,
+body.light [style*="background:#0e0e0e"] *,
+body.light [style*="background:#15171c"] *,
+body.light [style*="background:#181a20"] *,
+body.light [style*="background:#111"] *{color:inherit}
+body.light [style*="background:#1a1a1a"],
+body.light [style*="background:#0e0e0e"],
+body.light [style*="background:#15171c"],
+body.light [style*="background:#181a20"]{color:#0b0e11 !important}
+</style>
 </body>
 </html>
