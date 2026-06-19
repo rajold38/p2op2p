@@ -825,7 +825,7 @@ onAuthStateChanged(auth, async (fbUser) => {
       <div class="total-assets-row" style="color:var(--text2);">Total Assets<i class="far fa-eye"></i></div>
       <div class="hamt" onclick="openCurrencyPicker('home')"><span id="totalAssetUSD">0.00</span> <span style="font-size:18px;font-weight:500;color:var(--text2);" id="homeCurLabel">USDT ▾</span></div>
       <div style="color:var(--text2);font-size:12px;" id="homeBtcEq">≈ 0.00000000 BTC</div>
-      <div style="font-size:13px;margin:4px 0 16px;" id="homePnl">Today's P&L +0.00 USD(+0.00%) ∨</div>
+      <div style="font-size:13px;margin:4px 0 16px;" id="homePnl">Today's P&L +0.00 USD(+0.00%)</div>
       <div class="hbtns">
         <button class="hbm" onclick="openDeposit()">Deposit crypto</button>
         <button class="hbs" onclick="openP2P()" style="flex:1;"><i class="fas fa-exchange-alt"></i>P2P trading</button>
@@ -1317,7 +1317,7 @@ body.light #sc-earn .ern-sh-btns .can{border-color:#d8dde3;color:#0b0e11;}
       <div style="color:var(--text2);font-size:13px;display:flex;align-items:center;gap:5px;"><i class="far fa-eye"></i>Total Assets</div>
       <div class="bigamt" onclick="openCurrencyPicker('assets')" style="cursor:pointer;"><span id="assetsTotalUSD">0.00</span> <span style="font-size:18px;font-weight:500;color:var(--text2);" id="assetsCurLabel">USDT ▾</span></div>
       <div class="btceq" id="assetsBtcEq">≈ 0.00000000 BTC</div>
-      <div class="pnl" style="color:var(--green);">Today's P&L +0.00 USDT(+0.00%) ›</div>
+      <div class="pnl" style="color:var(--green);">Today's P&L +0.00 USDT(+0.00%)</div>
       <div class="avail-row">
         <div class="avi"><div class="albl">Available balance</div><div class="aval"><span id="assetsAvail">0.00</span> USDT</div></div>
         <div class="avi"><div class="albl">In Use</div><div class="aval"><span id="assetsInUse">0.00</span> USDT</div></div>
@@ -1349,7 +1349,7 @@ body.light #sc-earn .ern-sh-btns .can{border-color:#d8dde3;color:#0b0e11;}
   <div class="pf-top">
     <button class="pf-back" onclick="closeSideDrawer()"><i class="fas fa-arrow-left"></i></button>
     <div class="pf-ticons">
-      <i class="fas fa-headphones" title="Support" onclick="window.open('https://t.me/biexc10','_blank')"></i>
+      <i class="fas fa-headphones" title="Support" onclick="openSupportChat()" style="cursor:pointer"></i>
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round" style="cursor:pointer" onclick="window.open('https://t.me/BIEXCin','_blank')"><polygon points="12,2 22,8.5 22,15.5 12,22 2,15.5 2,8.5"/></svg>
       <i class="fas fa-address-book" onclick="window.open('https://www.instagram.com/biexc.in','_blank')"></i>
     </div>
@@ -4620,28 +4620,52 @@ async function renderAssetList(){
     if(be) be.textContent = btcEqTxt;
     if(beH) beH.textContent = btcEqTxt;
   }
-  // === Today's P&L (computed against a stored baseline, not the total balance) ===
+  // === Today's P&L — ONLY trading (spot + futures) realised + unrealised.
+  //     Deposits / withdrawals / admin credits do NOT move this value.
   try{
-    const BASELINE_KEY = 'pnlBaselineUSDT';
-    let baseline = parseFloat(localStorage.getItem(BASELINE_KEY));
-    if(!Number.isFinite(baseline) || baseline <= 0){
-      baseline = total;
-      try{ localStorage.setItem(BASELINE_KEY, String(baseline)); }catch(e){}
-    }
-    const diff = total - baseline;
-    const pct  = baseline > 0 ? (diff / baseline) * 100 : 0;
+    const startOfDay = new Date(); startOfDay.setHours(0,0,0,0);
+    const startTs = startOfDay.getTime();
+    let realised = 0;
+    try{
+      (STATE.orders || []).forEach(o=>{
+        if(!o || !o.ts || o.ts < startTs) return;
+        // Only count trade rows that carry a realised pnl number
+        // (Perp Close rows + spot trades that book pnl). Deposits/credits never
+        // touch STATE.orders, so they are automatically excluded.
+        if(typeof o.pnl === 'number' && isFinite(o.pnl)) realised += o.pnl;
+      });
+    }catch(e){}
+    let unrealised = 0;
+    try{
+      (STATE.positions || []).forEach(p=>{
+        if(!p) return;
+        const mark = (typeof getMarkPrice==='function')
+          ? getMarkPrice(p.sym, 'linear')
+          : (p.entry || 0);
+        if(typeof calcPositionPnl === 'function'){
+          const r = calcPositionPnl(p, mark);
+          if(r && isFinite(r.pnl)) unrealised += r.pnl;
+        }
+      });
+    }catch(e){}
+    const diff = realised + unrealised;
+    // Denominator for % = sum of position margin (futures) OR a safe fallback.
+    let denom = 0;
+    try{ (STATE.positions || []).forEach(p=>{ denom += (parseFloat(p.margin)||0); }); }catch(e){}
+    if(denom <= 0) denom = Math.max(Math.abs(diff), 1);
+    const pct  = (diff / denom) * 100;
     const sign = diff >= 0 ? '+' : '';
     const color = diff >= 0 ? 'var(--green)' : 'var(--red)';
     const fmtDiff = diff.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
     const pnlH = document.getElementById('homePnl');
     if(pnlH){
       pnlH.style.color = color;
-      pnlH.textContent = `Today's P&L ${sign}${fmtDiff} USD(${sign}${pct.toFixed(2)}%) ∨`;
+      pnlH.textContent = `Today's P&L ${sign}${fmtDiff} USD(${sign}${pct.toFixed(2)}%)`;
     }
     const pnlA = document.querySelector('#sc-assets .pnl');
     if(pnlA){
       pnlA.style.color = color;
-      pnlA.textContent = `Today's P&L ${sign}${fmtDiff} USDT(${sign}${pct.toFixed(2)}%) ›`;
+      pnlA.textContent = `Today's P&L ${sign}${fmtDiff} USDT(${sign}${pct.toFixed(2)}%)`;
     }
   }catch(e){}
 }
@@ -6765,7 +6789,7 @@ main{padding:0 0 90px!important;}
       <a class="sb-item sb-item-tg" href="https://t.me/BIEXCin" target="_blank" rel="noopener"><i class="fab fa-telegram"></i><div><div class="sb-item-label">Telegram Channel</div><div class="sb-item-sub">@BIEXCin · Updates &amp; News</div></div></a>
       <a class="sb-item sb-item-ig" href="https://www.instagram.com/biexc.in?igsh=MTRlN2R1dnRhMWhsNQ==" target="_blank" rel="noopener"><i class="fab fa-instagram"></i><div><div class="sb-item-label">Instagram</div><div class="sb-item-sub">@biexc.in · Follow Us</div></div></a>
       <div class="sb-section">Support</div>
-      <a class="sb-item sb-item-support" href="https://t.me/biexc10" target="_blank" rel="noopener"><i class="fas fa-headset"></i><div><div class="sb-item-label">Customer Care</div><div class="sb-item-sub">t.me/biexc10 · Live Support</div></div></a>
+      <a class="sb-item sb-item-support" href="javascript:void(0)" onclick="closeSideDrawer&&closeSideDrawer();openSupportChat()"><i class="fas fa-headset"></i><div><div class="sb-item-label">Customer Care</div><div class="sb-item-sub">24/7 AI Support · Live Agent</div></div></a>
       <div class="sb-section">Account</div>
       <div class="sb-item" onclick="copyUID()"><i class="fas fa-fingerprint" style="color:var(--y);"></i><div><div class="sb-item-label">Your UID</div><div class="sb-item-sub" id="sbUidCopy">Tap to copy</div></div></div>
     </div>
@@ -8746,9 +8770,264 @@ window.addEventListener('load',()=>{
   setInterval(()=>{ if(!openId) renderGrid(); },5*60*1000);
 });
 <\/script>
+
 </body>
 </html>`;
 </script>
+<!-- ════════════════ BIEXC SUPPORT CHAT (AI + Live) ════════════════ -->
+<style>
+#bxSupOv{display:none;position:fixed;inset:0;background:#0b0b0b;z-index:99999;flex-direction:column;color:#fff;font-family:inherit;}
+#bxSupOv.show{display:flex;}
+.bxSupHdr{display:flex;align-items:center;gap:14px;padding:14px 14px;border-bottom:1px solid #1b1b1b;background:#0b0b0b;}
+.bxSupHdr .bxBack{font-size:22px;color:#fff;cursor:pointer;background:none;border:0;padding:4px 8px;}
+.bxSupHdr .bxTitle{flex:1;text-align:center;font-weight:700;font-size:16px;}
+.bxSupHdr .bxAct{font-size:18px;color:#fff;cursor:pointer;margin-left:8px;opacity:.85;}
+#bxSupBody{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;background:#0b0b0b;}
+.bxHist{align-self:center;color:#7a7a7a;font-size:12px;display:flex;align-items:center;gap:6px;margin:6px 0 10px;}
+.bxMsg{max-width:78%;padding:10px 14px;border-radius:14px;font-size:14px;line-height:1.45;white-space:pre-wrap;word-break:break-word;}
+.bxBot{align-self:flex-start;background:#1a1a1a;color:#eaeaea;border-bottom-left-radius:4px;}
+.bxUser{align-self:flex-end;background:#3a2a12;color:#FFE7C2;border-bottom-right-radius:4px;}
+.bxSys{align-self:center;background:transparent;color:#888;font-size:12px;}
+.bxMeta{font-size:10px;color:#777;margin-top:2px;}
+.bxHelpful{align-self:flex-start;background:#1a1a1a;padding:8px 12px;border-radius:12px;display:flex;align-items:center;gap:10px;font-size:13px;color:#ccc;}
+.bxHelpful button{background:#2a2a2a;border:0;color:#fff;width:30px;height:30px;border-radius:50%;cursor:pointer;}
+.bxHelpful button:hover{background:#FF8C2D;color:#000;}
+.bxEscalate{align-self:flex-start;background:#1a1a1a;padding:12px 14px;border-radius:12px;max-width:80%;}
+.bxEscalate .b{background:#FF8C2D;color:#000;border:0;font-weight:700;padding:9px 16px;border-radius:8px;margin-top:10px;cursor:pointer;font-size:13px;}
+#bxSupTyping{align-self:flex-start;color:#888;font-size:12px;padding:4px 10px;}
+.bxSupFooter{border-top:1px solid #1b1b1b;padding:10px 12px;display:flex;gap:10px;align-items:center;background:#0b0b0b;}
+.bxSupFooter input{flex:1;background:#1a1a1a;border:0;color:#fff;padding:13px 16px;border-radius:24px;font-size:14px;outline:none;}
+.bxSupFooter input::placeholder{color:#666;}
+.bxSupSend{background:#FF8C2D;border:0;width:44px;height:44px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.bxSupSend svg{width:20px;height:20px;fill:#000;}
+.bxStatus{font-size:11px;color:#16c784;margin-left:8px;}
+.bxStatus.wait{color:#FF8C2D;}
+.bxStatus.off{color:#888;}
+.bxDot{display:inline-block;width:7px;height:7px;border-radius:50%;background:currentColor;margin-right:5px;animation:bxPulse 1.4s infinite;}
+@keyframes bxPulse{0%,100%{opacity:.4}50%{opacity:1}}
+</style>
+
+<div id="bxSupOv">
+  <div class="bxSupHdr">
+    <button class="bxBack" onclick="closeSupportChat()">←</button>
+    <div class="bxTitle">24/7 Dedicated Support<span id="bxModeBadge" class="bxStatus"></span></div>
+    <i class="fas fa-globe bxAct" title="Language"></i>
+    <i class="fas fa-power-off bxAct" title="End" onclick="endSupportSession()"></i>
+  </div>
+  <div id="bxSupBody">
+    <div class="bxHist"><i class="far fa-clock"></i> View Chat History</div>
+  </div>
+  <div class="bxSupFooter">
+    <input id="bxSupInput" placeholder="Drop your question(s) here" onkeydown="if(event.key==='Enter')bxSupSend()"/>
+    <button class="bxSupSend" onclick="bxSupSend()"><svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2v7z"/></svg></button>
+  </div>
+</div>
+
+<script>
+(function(){
+  const BX_SESSION_KEY = 'bxSupSessionV1';
+  const BX_MSGS_KEY    = 'bxSupMsgsV1';
+  const API_BASE = (location.origin || '');
+  let mode = 'bot';        // 'bot' | 'live'
+  let sessionId = null;
+  let msgs = [];           // {role:'user'|'bot'|'agent'|'sys', text, ts}
+  let pollTimer = null;
+  let lastSeenAgentTs = 0;
+  let escalateOffered = false;
+
+  function uid(){ return 's_'+Math.random().toString(36).slice(2,10)+Date.now().toString(36); }
+  function nowHM(){
+    const d = new Date();
+    return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0');
+  }
+  function load(){
+    try{
+      const s = JSON.parse(localStorage.getItem(BX_SESSION_KEY)||'{}');
+      sessionId = s.id || null; mode = s.mode || 'bot'; lastSeenAgentTs = s.lastSeen||0; escalateOffered = !!s.eo;
+      msgs = JSON.parse(localStorage.getItem(BX_MSGS_KEY)||'[]') || [];
+    }catch(e){ msgs=[]; sessionId=null; mode='bot'; }
+  }
+  function save(){
+    try{
+      localStorage.setItem(BX_SESSION_KEY, JSON.stringify({id:sessionId,mode,lastSeen:lastSeenAgentTs,eo:escalateOffered}));
+      localStorage.setItem(BX_MSGS_KEY, JSON.stringify(msgs.slice(-200)));
+    }catch(e){}
+  }
+  function userInfo(){
+    let uidv='', email='', name='Guest';
+    try{
+      if(window.firebase && firebase.auth && firebase.auth().currentUser){
+        const u = firebase.auth().currentUser;
+        uidv = u.uid; email = u.email||''; name = u.displayName||email||'User';
+      }
+      if(!uidv) uidv = localStorage.getItem('biexcUID') || '';
+    }catch(e){}
+    return {uid:uidv, email, name};
+  }
+  function render(){
+    const body = document.getElementById('bxSupBody');
+    if(!body) return;
+    body.innerHTML = '<div class="bxHist"><i class="far fa-clock"></i> View Chat History</div>';
+    msgs.forEach(m=>{
+      const div = document.createElement('div');
+      if(m.role==='user'){ div.className='bxMsg bxUser'; div.textContent = m.text; }
+      else if(m.role==='sys'){ div.className='bxMsg bxSys'; div.textContent = m.text; }
+      else { div.className='bxMsg bxBot'; div.textContent = m.text; }
+      body.appendChild(div);
+      const meta = document.createElement('div');
+      meta.className='bxMeta'; meta.style.alignSelf = m.role==='user' ? 'flex-end':'flex-start';
+      meta.textContent = m.hm || '';
+      body.appendChild(meta);
+    });
+    if(mode==='bot' && escalateOffered){
+      const esc = document.createElement('div');
+      esc.className='bxEscalate';
+      esc.innerHTML = "Need a human? Our live agent is online.<br><button class='b' onclick='bxEscalate()'>Connect to Live Support</button>";
+      body.appendChild(esc);
+    }
+    body.scrollTop = body.scrollHeight;
+    const badge = document.getElementById('bxModeBadge');
+    if(badge){
+      if(mode==='live'){ badge.className='bxStatus wait'; badge.innerHTML = '<span class="bxDot"></span>Live agent'; }
+      else { badge.className='bxStatus'; badge.innerHTML = '<span class="bxDot"></span>Bybot AI'; }
+    }
+  }
+  function pushMsg(role, text, opts){
+    msgs.push({role, text, ts:Date.now(), hm: nowHM(), ...(opts||{})});
+    save(); render();
+  }
+  function setTyping(on){
+    let t = document.getElementById('bxSupTyping');
+    if(on){
+      if(!t){ t=document.createElement('div'); t.id='bxSupTyping'; t.textContent='Bybot is typing…'; document.getElementById('bxSupBody').appendChild(t); }
+      document.getElementById('bxSupBody').scrollTop = 1e9;
+    } else if(t){ t.remove(); }
+  }
+
+  window.openSupportChat = function(){
+    load();
+    if(!sessionId){
+      sessionId = uid();
+      const u = userInfo();
+      msgs = [];
+      pushMsg('bot', `Hello! 👋 Welcome to BIEXC support! I'm your AI assistant. I can help with deposits, withdrawals, P2P trades, spot/futures trading, KYC, account & security. What can I help you with today?`);
+      try{
+        fetch(API_BASE+'/api/support/session', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({sessionId, user:u})
+        });
+      }catch(e){}
+    }
+    save();
+    document.getElementById('bxSupOv').classList.add('show');
+    render();
+    if(mode==='live') startPoll();
+    setTimeout(()=>{ const i=document.getElementById('bxSupInput'); if(i) i.focus(); }, 80);
+  };
+  window.closeSupportChat = function(){
+    document.getElementById('bxSupOv').classList.remove('show');
+    stopPoll();
+  };
+  window.endSupportSession = function(){
+    if(!confirm('End this support session?')) return;
+    stopPoll();
+    try{ fetch(API_BASE+'/api/support/end',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId})}); }catch(e){}
+    sessionId=null; msgs=[]; mode='bot'; escalateOffered=false; lastSeenAgentTs=0;
+    try{ localStorage.removeItem(BX_SESSION_KEY); localStorage.removeItem(BX_MSGS_KEY); }catch(e){}
+    closeSupportChat();
+  };
+
+  window.bxSupSend = async function(){
+    const inp = document.getElementById('bxSupInput'); if(!inp) return;
+    const text = inp.value.trim(); if(!text) return;
+    inp.value='';
+    pushMsg('user', text);
+    const u = userInfo();
+    if(mode==='live'){
+      try{
+        await fetch(API_BASE+'/api/support/user-msg',{
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({sessionId, text, user:u})
+        });
+      }catch(e){ pushMsg('sys','⚠️ Network error — message not delivered.'); }
+      return;
+    }
+    // BOT mode
+    setTyping(true);
+    try{
+      const r = await fetch(API_BASE+'/api/support/ai',{
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({sessionId, text, user:u, history: msgs.slice(-12).map(m=>({role:m.role,text:m.text}))})
+      });
+      const d = await r.json();
+      setTyping(false);
+      if(d && d.reply){
+        pushMsg('bot', d.reply);
+        if(!escalateOffered && (d.escalate || /\b(human|agent|live|representative|manager)\b/i.test(text))){
+          escalateOffered = true; save(); render();
+        }
+        // Always offer escalation after 2+ exchanges
+        const userTurns = msgs.filter(m=>m.role==='user').length;
+        if(!escalateOffered && userTurns >= 2){ escalateOffered = true; save(); render(); }
+      } else {
+        pushMsg('bot', "Sorry, I couldn't process that. Tap 'Connect to Live Support' to talk to a human agent.");
+        escalateOffered = true; save(); render();
+      }
+    }catch(e){
+      setTyping(false);
+      pushMsg('bot', "I'm having trouble right now. Tap below to connect to a live agent.");
+      escalateOffered = true; save(); render();
+    }
+  };
+
+  window.bxEscalate = async function(){
+    if(mode==='live') return;
+    mode='live'; save();
+    pushMsg('sys', '⏳ Connecting you to a live agent… please wait.');
+    const u = userInfo();
+    const transcript = msgs.slice(-30).map(m=>`${m.role==='user'?'User':m.role==='bot'?'Bot':'System'}: ${m.text}`).join('\n');
+    try{
+      const r = await fetch(API_BASE+'/api/support/escalate',{
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({sessionId, user:u, transcript})
+      });
+      const d = await r.json();
+      if(!d.ok) throw new Error(d.error||'fail');
+      pushMsg('sys', '✅ Connected. An agent will reply here shortly.');
+      startPoll();
+    }catch(e){
+      pushMsg('sys', '⚠️ Could not reach live support. Please try again later.');
+      mode='bot'; save(); render();
+    }
+  };
+
+  async function pollOnce(){
+    if(!sessionId || mode!=='live') return;
+    try{
+      const r = await fetch(`${API_BASE}/api/support/poll?sessionId=${encodeURIComponent(sessionId)}&since=${lastSeenAgentTs}`);
+      const d = await r.json();
+      if(d && Array.isArray(d.messages) && d.messages.length){
+        d.messages.forEach(m=>{
+          msgs.push({role:'bot', text:m.text, ts:m.ts, hm: new Date(m.ts).toTimeString().slice(0,5)});
+          if(m.ts > lastSeenAgentTs) lastSeenAgentTs = m.ts;
+        });
+        save(); render();
+      }
+      if(d && d.closed){ pushMsg('sys','Session closed by agent.'); stopPoll(); }
+    }catch(e){}
+  }
+  function startPoll(){ stopPoll(); pollOnce(); pollTimer = setInterval(pollOnce, 3500); }
+  function stopPoll(){ if(pollTimer){ clearInterval(pollTimer); pollTimer=null; } }
+
+  // Resume polling on load if user was in live mode
+  load();
+  if(mode==='live' && sessionId){
+    // don't auto-open, but keep messages ready
+  }
+})();
+</script>
+<!-- ════════════════ /BIEXC SUPPORT CHAT ════════════════ -->
+
 
 <!-- ============ REFER & EARN ============ -->
 <style>
