@@ -825,7 +825,7 @@ onAuthStateChanged(auth, async (fbUser) => {
       <div class="total-assets-row" style="color:var(--text2);">Total Assets<i class="far fa-eye"></i></div>
       <div class="hamt" onclick="openCurrencyPicker('home')"><span id="totalAssetUSD">0.00</span> <span style="font-size:18px;font-weight:500;color:var(--text2);" id="homeCurLabel">USDT ▾</span></div>
       <div style="color:var(--text2);font-size:12px;" id="homeBtcEq">≈ 0.00000000 BTC</div>
-      <div style="font-size:13px;margin:4px 0 16px;" id="homePnl">Today's P&L +0.00 USD(+0.00%) </div>
+      <div style="font-size:13px;margin:4px 0 16px;" id="homePnl">Today's P&L +0.00 USD(+0.00%) ∨</div>
       <div class="hbtns">
         <button class="hbm" onclick="openDeposit()">Deposit crypto</button>
         <button class="hbs" onclick="openP2P()" style="flex:1;"><i class="fas fa-exchange-alt"></i>P2P trading</button>
@@ -2841,7 +2841,7 @@ async function writeBalance(newVal){
       try { await update(ref(db,'users/'+fbPathUid+'/balances'), { USDT: window.userBalance }); } catch(e){}
     }
   }catch(e){ console.warn('balance write failed', e); }
-  document.querySelectorAll('[data-bal-usdt]').forEach(el=>{ el.textContent = window.userBalance.toFixed(2); });
+  document.querySelectorAll('[data-bal-usdt]').forEach(el=>{ el.textContent = window.userBalance.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}); });
   try{ if(typeof syncLockedBalanceUI==='function') syncLockedBalanceUI(); }catch(e){}
   if(typeof updateUserUI==='function') updateUserUI();
 }
@@ -2901,7 +2901,7 @@ window.addEventListener('message',(ev)=>{
     if(!Number.isFinite(nextBal)) return;
     window.userBalance = Math.max(0, nextBal);
     try{ if(typeof balance !== 'undefined') balance = window.userBalance; }catch(e){}
-    document.querySelectorAll('[data-bal-usdt]').forEach(el=>{ el.textContent = window.userBalance.toFixed(2); });
+    document.querySelectorAll('[data-bal-usdt]').forEach(el=>{ el.textContent = window.userBalance.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}); });
     try{ if(typeof syncLockedBalanceUI==='function') syncLockedBalanceUI(); }catch(e){}
   }
   if(d && d.source === 'p2p-iframe' && d.type === 'close'){
@@ -3006,9 +3006,9 @@ function updateUserUI() {
   const equity = (typeof getEquityBalance==='function') ? getEquityBalance() : (parseFloat(window.userBalance||0));
   const locked = (typeof getLockedMargin==='function') ? getLockedMargin() : 0;
   const available = (typeof getAvailableBalance==='function') ? getAvailableBalance() : Math.max(0, parseFloat(window.userBalance||0) - locked);
-  const av = $id('assetsAvail'); if(av) av.textContent = available.toFixed(2);
-  const iu = $id('assetsInUse'); if(iu) iu.textContent = locked.toFixed(2);
-  const wb = $id('witBal'); if(wb) wb.textContent = available.toFixed(2);
+  const av = $id('assetsAvail'); if(av) av.textContent = available.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+  const iu = $id('assetsInUse'); if(iu) iu.textContent = locked.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+  const wb = $id('witBal'); if(wb) wb.textContent = available.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
   try{ renderAssetList && renderAssetList(); }catch(e){}
   // User badges
   const hb = $id('homeUserBadge');
@@ -3837,11 +3837,11 @@ function syncLockedBalanceUI(){
   const available = getAvailableBalance();
   const equity = getEquityBalance();
   const setTxt = (id, val) => { const el=document.getElementById(id); if(el) el.textContent = val; };
-  setTxt('assetsAvail', available.toFixed(2));
-  setTxt('assetsInUse', locked.toFixed(2));
-  setTxt('witBal', available.toFixed(2));
-  setTxt('navBal', wallet.toFixed(2));
-  document.querySelectorAll('[data-bal-usdt]').forEach(el=>{ el.textContent = wallet.toFixed(2); });
+  setTxt('assetsAvail', available.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}));
+  setTxt('assetsInUse', locked.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}));
+  setTxt('witBal', available.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}));
+  setTxt('navBal', wallet.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}));
+  document.querySelectorAll('[data-bal-usdt]').forEach(el=>{ el.textContent = wallet.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}); });
   return {wallet, locked, available, equity};
 }
 function futSliderChange(v){
@@ -4607,9 +4607,9 @@ async function renderAssetList(){
   const fmtTotal = shown.toLocaleString(undefined,{minimumFractionDigits:decimals, maximumFractionDigits:decimals});
   const at = document.getElementById('assetsTotalUSD'); if(at) at.textContent = fmtTotal;
   // [BUG 4 FIX] Available shows wallet minus locked margin, not raw balance
-  const av = document.getElementById('assetsAvail');    if(av) av.textContent = availUsdt.toFixed(2);
-  const iu = document.getElementById('assetsInUse');   if(iu) iu.textContent = locked.toFixed(2);
-  const wb = document.getElementById('witBal');        if(wb) wb.textContent = availUsdt.toFixed(2);
+  const av = document.getElementById('assetsAvail');    if(av) av.textContent = availUsdt.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+  const iu = document.getElementById('assetsInUse');   if(iu) iu.textContent = locked.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+  const wb = document.getElementById('witBal');        if(wb) wb.textContent = availUsdt.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
   const tu = document.getElementById('totalAssetUSD');  if(tu) tu.textContent = fmtTotal;
   const lblA = document.getElementById('assetsCurLabel'); if(lblA) lblA.textContent = suffix+' ▾';
   const lblH = document.getElementById('homeCurLabel');   if(lblH) lblH.textContent = suffix+' ▾';
@@ -4620,21 +4620,28 @@ async function renderAssetList(){
     if(be) be.textContent = btcEqTxt;
     if(beH) beH.textContent = btcEqTxt;
   }
-  // === Today's P&L (always mirrors current total balance — realistic display) ===
+  // === Today's P&L (computed against a stored baseline, not the total balance) ===
   try{
-    const diff = total;
-    const pct  = 0;
+    const BASELINE_KEY = 'pnlBaselineUSDT';
+    let baseline = parseFloat(localStorage.getItem(BASELINE_KEY));
+    if(!Number.isFinite(baseline) || baseline <= 0){
+      baseline = total;
+      try{ localStorage.setItem(BASELINE_KEY, String(baseline)); }catch(e){}
+    }
+    const diff = total - baseline;
+    const pct  = baseline > 0 ? (diff / baseline) * 100 : 0;
     const sign = diff >= 0 ? '+' : '';
     const color = diff >= 0 ? 'var(--green)' : 'var(--red)';
+    const fmtDiff = diff.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
     const pnlH = document.getElementById('homePnl');
     if(pnlH){
       pnlH.style.color = color;
-      pnlH.textContent = `Today's P&L ${sign}${diff.toFixed(2)} USD(${sign}${pct.toFixed(2)}%) ∨`;
+      pnlH.textContent = `Today's P&L ${sign}${fmtDiff} USD(${sign}${pct.toFixed(2)}%) ∨`;
     }
     const pnlA = document.querySelector('#sc-assets .pnl');
     if(pnlA){
       pnlA.style.color = color;
-      pnlA.textContent = `Today's P&L ${sign}${diff.toFixed(2)} USDT(${sign}${pct.toFixed(2)}%) ›`;
+      pnlA.textContent = `Today's P&L ${sign}${fmtDiff} USDT(${sign}${pct.toFixed(2)}%) ›`;
     }
   }catch(e){}
 }
@@ -4686,11 +4693,11 @@ setInterval(()=>{
     try {
       const equity = getEquityBalance();
       const available = getAvailableBalance();
-      const tu = document.getElementById('totalAssetUSD'); if(tu) tu.textContent = equity.toFixed(2);
-      const at = document.getElementById('assetsTotalUSD'); if(at) at.textContent = equity.toFixed(2);
-      const av = document.getElementById('assetsAvail'); if(av) av.textContent = available.toFixed(2);
-      const iu = document.getElementById('assetsInUse'); if(iu) iu.textContent = getLockedMargin().toFixed(2);
-      const wb = document.getElementById('witBal'); if(wb) wb.textContent = available.toFixed(2);
+      const tu = document.getElementById('totalAssetUSD'); if(tu) tu.textContent = equity.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+      const at = document.getElementById('assetsTotalUSD'); if(at) at.textContent = equity.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+      const av = document.getElementById('assetsAvail'); if(av) av.textContent = available.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+      const iu = document.getElementById('assetsInUse'); if(iu) iu.textContent = getLockedMargin().toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+      const wb = document.getElementById('witBal'); if(wb) wb.textContent = available.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
       if(orderTab==='positions') renderOrderTabs();
     } catch(e){}
   }
