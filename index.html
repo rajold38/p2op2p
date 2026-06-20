@@ -8921,7 +8921,10 @@ window.addEventListener('load',()=>{
     } else if(t){ t.remove(); }
   }
   function wantsLiveSupport(text){
-    return /\b(live\s*support|live\s*chat|human|agent|representative|manager|customer\s*support|support\s*agent|cs|complaint)\b|\b(insaan|aadmi|admin|operator|support se|agent se|baat kar|bat kar|call karo)\b/i.test(String(text||''));
+    const t = String(text||'').trim().toLowerCase();
+    if(!t) return false;
+    if(/^(live|chat|human|agent|admin|support|cs|operator|insaan|aadmi)[\s!.,?]*$/i.test(t)) return true;
+    return /\b(live\s*support|live\s*chat|live\s*agent|human|agent|representative|manager|customer\s*support|support\s*agent|talk\s*to\s*(support|agent|human)|connect.*(agent|support|human)|complaint)\b|\b(insaan|aadmi|admin|operator|support se|agent se|baat kar|bat kar|call karo)\b/i.test(t);
   }
 
   window.openSupportChat = function(){
@@ -9000,11 +9003,10 @@ window.addEventListener('load',()=>{
     mode='live'; liveStatus='waiting'; save();
     pushMsg('sys', '⏳ Waiting for a live agent to join…');
     const u = userInfo();
-    const transcript = msgs.slice(-30).map(m=>`${m.role==='user'?'User':m.role==='bot'?'Bot':'System'}: ${m.text}`).join('\n');
     try{
       const r = await fetch(API_BASE+'/api/support/escalate',{
         method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({sessionId, user:u, transcript})
+        body: JSON.stringify({sessionId, user:u})
       });
       const d = await r.json();
       if(!d.ok) throw new Error(d.error||'fail');
