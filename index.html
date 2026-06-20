@@ -8834,10 +8834,10 @@ window.addEventListener('load',()=>{
       return (fromParent || fromSelf || 'https://p2p-telegram-bot.onrender.com').replace(/\/$/, '');
     } catch(e) { return 'https://p2p-telegram-bot.onrender.com'; }
   })();
-  let mode = 'bot';        // 'bot' | 'live'
-  let liveStatus = 'bot';  // 'bot' | 'waiting' | 'joined' | 'closed'
+  let mode = 'bot';
+  let liveStatus = 'bot';
   let sessionId = null;
-  let msgs = [];           // {role:'user'|'bot'|'agent'|'sys', text, ts}
+  let msgs = [];
   let pollTimer = null;
   let lastSeenAgentTs = 0;
   let escalateOffered = false;
@@ -8850,7 +8850,9 @@ window.addEventListener('load',()=>{
   function load(){
     try{
       const s = JSON.parse(localStorage.getItem(BX_SESSION_KEY)||'{}');
-      sessionId = s.id || null; mode = s.mode || 'bot'; liveStatus = s.liveStatus || (mode === 'live' ? 'waiting' : 'bot'); lastSeenAgentTs = s.lastSeen||0; escalateOffered = !!s.eo;
+      sessionId = s.id || null; mode = s.mode || 'bot';
+      liveStatus = s.liveStatus || (mode === 'live' ? 'waiting' : 'bot');
+      lastSeenAgentTs = s.lastSeen||0; escalateOffered = !!s.eo;
       msgs = JSON.parse(localStorage.getItem(BX_MSGS_KEY)||'[]') || [];
     }catch(e){ msgs=[]; sessionId=null; mode='bot'; liveStatus='bot'; }
   }
@@ -8889,7 +8891,7 @@ window.addEventListener('load',()=>{
       meta.textContent = (m.hm || '') + (m.role==='user' && mode==='live' ? (liveStatus==='joined' ? ' ✓✓' : ' ✓') : '');
       body.appendChild(meta);
     });
-    if(mode==='live' && liveStatus!=='joined'){
+    if(mode==='live' && liveStatus!=='joined' && liveStatus!=='closed'){
       const wait = document.createElement('div');
       wait.className='bxEscalate';
       wait.textContent='⏳ Waiting for a live agent to join…';
@@ -8925,6 +8927,19 @@ window.addEventListener('load',()=>{
     if(!t) return false;
     if(/^(live|chat|human|agent|admin|support|cs|operator|insaan|aadmi)[\s!.,?]*$/i.test(t)) return true;
     return /\b(live\s*support|live\s*chat|live\s*agent|human|agent|representative|manager|customer\s*support|support\s*agent|talk\s*to\s*(support|agent|human)|connect.*(agent|support|human)|complaint)\b|\b(insaan|aadmi|admin|operator|support se|agent se|baat kar|bat kar|call karo)\b/i.test(t);
+  }
+
+  // Build a CLEAN history payload for the AI: user/bot only, no sys.
+  function cleanHistoryForAI(){
+    const out = [];
+    for (const m of msgs.slice(-12)){
+      if (!m || !m.text) continue;
+      if (m.role === 'sys' || m.role === 'system' || m.role === 'agent') continue;
+      out.push({ role: m.role === 'user' ? 'user' : 'bot', text: m.text });
+    }
+    // Drop the leading bot greeting so server's first turn is `user`
+    while (out.length && out[0].role !== 'user') out.shift();
+    return out;
   }
 
   window.openSupportChat = function(){
@@ -8968,10 +8983,12 @@ window.addEventListener('load',()=>{
     const u = userInfo();
     if(mode==='live'){
       try{
-        await fetch(API_BASE+'/api/support/user-msg',{
+        const r = await fetch(API_BASE+'/api/support/user-msg',{
           method:'POST', headers:{'Content-Type':'application/json'},
           body: JSON.stringify({sessionId, text, user:u})
         });
+        const d = await r.json().catch(()=>({}));
+        if (!d.ok) pushMsg('sys','⚠️ Could not deliver message: '+(d.error||'unknown'));
       }catch(e){ pushMsg('sys','⚠️ Network error — message not delivered.'); }
       return;
     }
@@ -8980,9 +8997,9 @@ window.addEventListener('load',()=>{
     try{
       const r = await fetch(API_BASE+'/api/support/ai',{
         method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({sessionId, text, user:u, history: msgs.slice(-12).map(m=>({role:m.role,text:m.text}))})
+        body: JSON.stringify({sessionId, text, user:u, history: cleanHistoryForAI()})
       });
-      const d = await r.json();
+      const d = await r.json().catch(()=>null);
       setTyping(false);
       if(d && d.reply){
         pushMsg('bot', d.reply);
@@ -8990,11 +9007,13 @@ window.addEventListener('load',()=>{
           escalateOffered = true; save(); render();
         }
       } else {
-        pushMsg('bot', "Sorry, I couldn't process that. Please try again in a moment or ask in a different way.");
+        pushMsg('bot', "Sorry, I couldn't process that. Tap 'Connect to Live Support' below to chat with a human.");
+        if (!escalateOffered){ escalateOffered = true; save(); render(); }
       }
     }catch(e){
       setTyping(false);
-      pushMsg('bot', "I'm having trouble right now. Please try again in a moment.");
+      pushMsg('bot', "I'm having trouble reaching the server. Please check your connection and try again.");
+      if (!escalateOffered){ escalateOffered = true; save(); render(); }
     }
   };
 
@@ -9013,7 +9032,7 @@ window.addEventListener('load',()=>{
       render();
       startPoll();
     }catch(e){
-      pushMsg('sys', '⚠️ Live support notification is slow right now. Your chat stays here — please wait, or tap send again after a few seconds.');
+      pushMsg('sys', '⚠️ Could not notify live support right now ('+e.message+'). Polling will keep trying.');
       startPoll();
     }
   };
@@ -9023,28 +9042,32 @@ window.addEventListener('load',()=>{
     try{
       const r = await fetch(`${API_BASE}/api/support/poll?sessionId=${encodeURIComponent(sessionId)}&since=${lastSeenAgentTs}`);
       const d = await r.json();
-      if(d && d.status){
-        liveStatus = d.status === 'joined' ? 'joined' : (d.status === 'closed' ? 'closed' : 'waiting');
-      }
-      if(d && Array.isArray(d.messages) && d.messages.length){
+      if (!d || !d.ok) return;
+      // Source of truth = server status
+      if (d.status === 'joined'){ liveStatus='joined'; }
+      else if (d.status === 'closed'){ liveStatus='closed'; }
+      else { liveStatus='waiting'; }
+      if (Array.isArray(d.messages) && d.messages.length){
         d.messages.forEach(m=>{
-          msgs.push({role:(m.role === 'sys' || m.role === 'system') ? 'sys' : 'agent', text:m.text, ts:m.ts, hm: new Date(m.ts).toTimeString().slice(0,5)});
+          msgs.push({
+            role:(m.role === 'sys' || m.role === 'system') ? 'sys' : 'agent',
+            text:m.text, ts:m.ts,
+            hm: new Date(m.ts).toTimeString().slice(0,5)
+          });
           if(m.ts > lastSeenAgentTs) lastSeenAgentTs = m.ts;
         });
-        save(); render();
       }
-      if(d && (d.joined || liveStatus==='joined')){ liveStatus='joined'; save(); render(); }
-      if(d && d.closed){ liveStatus='closed'; pushMsg('sys', d.reason === 'timeout' ? '⏱️ Session closed due to inactivity.' : 'Session closed by agent.'); stopPoll(); }
+      save(); render();
+      if(d.closed){
+        pushMsg('sys', d.closedReason === 'timeout' ? '⏱️ Session closed due to inactivity.' : 'Session closed by agent.');
+        stopPoll();
+      }
     }catch(e){}
   }
   function startPoll(){ stopPoll(); pollOnce(); pollTimer = setInterval(pollOnce, 3500); }
   function stopPoll(){ if(pollTimer){ clearInterval(pollTimer); pollTimer=null; } }
 
-  // Resume polling on load if user was in live mode
   load();
-  if(mode==='live' && sessionId){
-    // don't auto-open, but keep messages ready
-  }
 })();
 </script>
 <!-- ════════════════ /BIEXC SUPPORT CHAT ════════════════ -->
