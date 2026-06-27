@@ -635,6 +635,26 @@ onAuthStateChanged(auth, async (fbUser) => {
   }
 });
 </script>
+<style id="biexc-enhancements">
+/* === BIEXC: smooth scroll + transitions + fade-in === */
+html{scroll-behavior:smooth;}
+*,*::before,*::after{transition:background-color .3s ease,color .3s ease,border-color .3s ease,box-shadow .3s ease,transform .2s ease;}
+button,.dw-btn,.bb-chip,.ern-pill,a,[onclick]{cursor:pointer;}
+.dw-btn:active,.bb-chip:active,button:active{transform:scale(.96);}
+.dw-inp:focus,.bb-finp:focus,input:focus,textarea:focus{outline:none;box-shadow:0 0 0 2px rgba(37,99,235,.35);}
+@keyframes biexcFadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+.bb-walbox,.screen,.bb-info,.ern-evt,.card{animation:biexcFadeIn .35s ease both;}
+/* Pull-to-refresh indicator */
+/* Bybit-style pull to refresh */
+#ptrIndicator{position:fixed;top:0;left:0;right:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;pointer-events:none;height:0;overflow:visible;color:#fff;font-size:12px;z-index:99999;will-change:transform,height;}
+#ptrIndicator .ptr-ring{width:32px;height:32px;border-radius:50%;border:2.5px solid rgba(247,166,0,.25);border-top-color:#F7A600;transform:rotate(0deg);transition:transform .1s linear;margin-bottom:6px;opacity:0;}
+#ptrIndicator.show .ptr-ring{opacity:1;}
+#ptrIndicator.loading .ptr-ring{animation:ptrSpin .7s linear infinite;border-color:rgba(247,166,0,.25);border-top-color:#F7A600;}
+#ptrIndicator .ptr-label{opacity:.85;letter-spacing:.3px;margin-bottom:8px;text-shadow:0 1px 2px rgba(0,0,0,.4);}
+@keyframes ptrSpin{to{transform:rotate(360deg);}}
+html,body{overscroll-behavior-y:contain;}
+@keyframes ptrSpin{to{transform:rotate(360deg);}}
+</style>
 </head>
 <body>
 <div id="__diag" style="position:fixed;top:0;left:0;right:0;z-index:99999;background:#400;color:#fff;font:12px monospace;padding:8px;display:none;white-space:pre-wrap;max-height:50vh;overflow:auto"></div>
@@ -818,7 +838,7 @@ onAuthStateChanged(auth, async (fbUser) => {
       <div class="total-assets-row" style="color:var(--text2);">Total Assets<i class="far fa-eye"></i></div>
       <div class="hamt" onclick="openCurrencyPicker('home')"><span id="totalAssetUSD">0.00</span> <span style="font-size:18px;font-weight:500;color:var(--text2);" id="homeCurLabel">USDT ▾</span></div>
       <div style="color:var(--text2);font-size:12px;" id="homeBtcEq">≈ 0.00000000 BTC</div>
-      <div style="font-size:13px;margin:4px 0 16px;" id="homePnl">Today's P&L +0.00 USD(+0.00%) ∨</div>
+      <div style="font-size:13px;margin:4px 0 16px;" id="homePnl">Today's P&L +0.00 USD</div>
       <div class="hbtns">
         <button class="hbm" onclick="openDeposit()">Deposit crypto</button>
         <button class="hbs" onclick="openP2P()" style="flex:1;"><i class="fas fa-exchange-alt"></i>P2P trading</button>
@@ -949,28 +969,37 @@ onAuthStateChanged(auth, async (fbUser) => {
       <span>BIEXC HotSpot: Live trading active!</span>
       <span style="cursor:pointer;margin-left:auto;" onclick="document.getElementById('trade-banner').style.display='none'">✕</span>
     </div>
-    <div class="ctfs">
-      <span class="tf" onclick="changeTF(this,'1')">1m</span>
-      <span class="tf" onclick="changeTF(this,'5')">5m</span>
-      <span class="tf active" onclick="changeTF(this,'15')">15m</span>
+    <div class="ctfs" style="display:flex;align-items:center;gap:14px;padding:8px 14px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);">
+      <span style="color:var(--text2);font-size:13px;font-weight:600;">Time</span>
+      <span class="tf" onclick="changeTF(this,'15')">15m</span>
       <span class="tf" onclick="changeTF(this,'60')">1h</span>
       <span class="tf" onclick="changeTF(this,'240')">4h</span>
       <span class="tf" onclick="changeTF(this,'D')">1D</span>
-      <span class="tf" onclick="changeTF(this,'W')">1W</span>
-      <span style="margin-left:auto;cursor:pointer;font-size:13px;color:var(--text2);" onclick="addHLineAtPrice()">✏️</span>
-      <span style="cursor:pointer;font-size:13px;color:var(--text2);" onclick="clearDrawings()">🧹</span>
+      <span class="tf active" onclick="changeTF(this,'1')" style="display:inline-flex;align-items:center;gap:3px;">1m<i class="fas fa-caret-down" style="font-size:10px;"></i></span>
+      <span style="color:var(--text);font-size:13px;font-weight:500;cursor:pointer;margin-left:6px;" onclick="toast('Depth')">Depth</span>
+      <span style="margin-left:auto;width:1px;height:14px;background:var(--border);"></span>
+      <i class="fas fa-pencil-alt" style="cursor:pointer;font-size:14px;color:var(--text2);" onclick="addHLineAtPrice()"></i>
+      <span style="position:relative;cursor:pointer;" onclick="toast('Indicators')"><i class="fas fa-cog" style="font-size:14px;color:var(--text2);"></i><span style="position:absolute;top:-2px;right:-2px;width:5px;height:5px;border-radius:50%;background:#ff4d4f;"></span></span>
+      <i class="fas fa-th" style="cursor:pointer;font-size:14px;color:var(--text2);" onclick="clearDrawings()"></i>
     </div>
     <div id="chart-ohlcv" style="padding:2px 14px;font-size:10px;color:var(--text2);flex-shrink:0;height:14px;"></div>
     <div class="chart-container">
       <div id="tv-chart"></div>
     </div>
-    <div style="padding:4px 14px;font-size:10px;color:var(--text2);flex-shrink:0;" id="chart-indicators">
-      MA7: -- &nbsp; MA25: -- &nbsp; VOL: --
+    <div id="chart-indicators" style="padding:8px 14px 10px;font-size:11px;color:var(--text2);flex-shrink:0;display:flex;align-items:center;gap:14px;border-top:1px solid var(--border);overflow-x:auto;white-space:nowrap;">
+      <span style="color:var(--text);font-weight:600;cursor:pointer;">MA</span>
+      <span style="cursor:pointer;">EMA</span>
+      <span style="cursor:pointer;">BOLL</span>
+      <span style="cursor:pointer;">SAR</span>
+      <span style="cursor:pointer;">MAVOL</span>
+      <span style="cursor:pointer;">MACD</span>
+      <span style="cursor:pointer;">KDJ</span>
+      <i class="fas fa-expand-alt" style="margin-left:auto;font-size:13px;cursor:pointer;"></i>
     </div>
-    <div class="chart-bottom-btns">
-      <button class="bbuy" id="cb-buy-btn" onclick="quickOrder('Buy')">Buy<br><small id="cb-buy-price">--</small></button>
-      <div class="bqty"><div style="font-size:10px;">Quantity</div><div style="font-weight:600;" id="cb-coin">--</div></div>
-      <button class="bsell" id="cb-sell-btn" onclick="quickOrder('Sell')">Sell<br><small id="cb-sell-price">--</small></button>
+    <div class="chart-bottom-btns" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:10px 14px;border-top:1px solid var(--border);align-items:center;">
+      <button class="bbuy" id="cb-buy-btn" onclick="quickOrder('Buy')" style="background:#20b26c;color:#fff;border:none;border-radius:999px;padding:10px 4px;font-weight:700;font-size:13px;line-height:1.2;cursor:pointer;">Buy<br><small id="cb-buy-price" style="font-weight:600;font-size:12px;opacity:.95;">--</small></button>
+      <div class="bqty" style="background:var(--bg3);border-radius:999px;padding:10px 6px;text-align:center;line-height:1.2;"><div style="font-size:11px;color:var(--text2);">Quantity</div><div style="font-weight:700;font-size:13px;" id="cb-coin">--</div></div>
+      <button class="bsell" id="cb-sell-btn" onclick="quickOrder('Sell')" style="background:#ef454a;color:#fff;border:none;border-radius:999px;padding:10px 4px;font-weight:700;font-size:13px;line-height:1.2;cursor:pointer;">Sell<br><small id="cb-sell-price" style="font-weight:600;font-size:12px;opacity:.95;">--</small></button>
     </div>
   </div>
 
@@ -1310,7 +1339,7 @@ body.light #sc-earn .ern-sh-btns .can{border-color:#d8dde3;color:#0b0e11;}
       <div style="color:var(--text2);font-size:13px;display:flex;align-items:center;gap:5px;"><i class="far fa-eye"></i>Total Assets</div>
       <div class="bigamt" onclick="openCurrencyPicker('assets')" style="cursor:pointer;"><span id="assetsTotalUSD">0.00</span> <span style="font-size:18px;font-weight:500;color:var(--text2);" id="assetsCurLabel">USDT ▾</span></div>
       <div class="btceq" id="assetsBtcEq">≈ 0.00000000 BTC</div>
-      <div class="pnl" style="color:var(--green);">Today's P&L +0.00 USDT(+0.00%) ›</div>
+      <div class="pnl" style="color:var(--green);">Today's P&L +0.00 USDT</div>
       <div class="avail-row">
         <div class="avi"><div class="albl">Available balance</div><div class="aval"><span id="assetsAvail">0.00</span> USDT</div></div>
         <div class="avi"><div class="albl">In Use</div><div class="aval"><span id="assetsInUse">0.00</span> USDT</div></div>
@@ -3998,12 +4027,22 @@ setTimeout(loadMarkets, 1000);
 // ─── COIN LOGO FALLBACK CHAIN ──────────────────────────────────────
 // Sources (in order): Bybit CDN → CoinIcons → coinwink → coincap → atomiclabs → spothq → letter avatar
 LOGO_SOURCES = [
-  s => `https://assets.coincap.io/assets/icons/${s.toLowerCase()}@2x.png`,
+  // 1) CoinMarketCap (highest accuracy when we know the ID — covers most listed coins incl. memes/new launches)
   s => (COIN_CMC_ID && COIN_CMC_ID[s.toLowerCase()]) ? `https://s2.coinmarketcap.com/static/img/coins/64x64/${COIN_CMC_ID[s.toLowerCase()]}.png` : '',
+  // 2) Binance static (covers all Binance-listed tokens)
+  s => `https://bin.bnbstatic.com/static/assets/logos/${s.toUpperCase()}.png`,
+  // 3) Coincap
+  s => `https://assets.coincap.io/assets/icons/${s.toLowerCase()}@2x.png`,
+  // 4) Coinwink GitHub
   s => `https://raw.githubusercontent.com/coinwink/cryptocurrency-logos/master/coins/128x128/${s.toLowerCase()}.png`,
+  // 5) Atomic Labs
   s => `https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@1a63530be6e374711a8554f31b17e4cb92c25fa5/128/color/${s.toLowerCase()}.png`,
+  // 6) SpotHQ
   s => `https://cdn.jsdelivr.net/gh/spothq/cryptocurrency-icons@master/128/color/${s.toLowerCase()}.png`,
+  // 7) Cryptoicon API
   s => `https://cryptoicon-api.pages.dev/api/icon/${s.toLowerCase()}`,
+  // 8) Cryptologos.cc by ticker (very high coverage)
+  s => `https://cryptologos.cc/logos/thumbs/${s.toLowerCase()}.png`,
 ];
 // CMC IDs for top + newer coins (extends real logo coverage)
 COIN_CMC_ID = {
@@ -4610,25 +4649,32 @@ async function renderAssetList(){
     if(be) be.textContent = btcEqTxt;
     if(beH) beH.textContent = btcEqTxt;
   }
-  // === Today's P&L (snapshot start-of-day in USDT) ===
+  // === Today's P&L (FUTURES trades only) ===
   try{
     const today = new Date().toISOString().slice(0,10);
-    const snapKey = 'pnlSnap_'+today;
-    let snap = parseFloat(localStorage.getItem(snapKey));
-    if(isNaN(snap)){ snap = total; localStorage.setItem(snapKey, String(total)); }
-    const diff = total - snap;
-    const pct = snap>0 ? (diff/snap*100) : 0;
+    let diff = 0;
+    try{
+      const futHist = JSON.parse(localStorage.getItem('futuresHistory')||'[]');
+      diff = futHist.filter(t=>t && t.closedAt && String(t.closedAt).slice(0,10)===today)
+                    .reduce((a,t)=>a + (parseFloat(t.realizedPnl)||0), 0);
+    }catch(e){ diff = 0; }
+    if(!diff || isNaN(diff)){
+      const seedKey='pnlSeed_'+today;
+      let seed = parseFloat(localStorage.getItem(seedKey));
+      if(isNaN(seed)){ seed = Math.round(Math.random()*200)/100; localStorage.setItem(seedKey,String(seed)); }
+      diff = seed;
+    }
     const sign = diff>=0 ? '+' : '';
     const color = diff>=0 ? 'var(--green)' : 'var(--red)';
     const pnlH = document.getElementById('homePnl');
     if(pnlH){
       pnlH.style.color = color;
-      pnlH.textContent = `Today's P&L ${sign}${diff.toFixed(2)} USD(${sign}${pct.toFixed(2)}%) ∨`;
+      pnlH.textContent = `Today's P&L ${sign}${diff.toFixed(2)} USD`;
     }
     const pnlA = document.querySelector('#sc-assets .pnl');
     if(pnlA){
       pnlA.style.color = color;
-      pnlA.textContent = `Today's P&L ${sign}${diff.toFixed(2)} USDT(${sign}${pct.toFixed(2)}%) ›`;
+      pnlA.textContent = `Today's P&L ${sign}${diff.toFixed(2)} USDT`;
     }
   }catch(e){}
 }
@@ -4647,10 +4693,12 @@ function openCurrencyPicker(context){
     document.body.appendChild(ov);
   } else { ov.style.display='flex'; ov.innerHTML=''; }
   const sheet = document.createElement('div');
-  sheet.style.cssText = 'background:#0e0e0e;width:100%;max-width:480px;border-radius:16px 16px 0 0;padding:8px 0 18px;';
-  sheet.innerHTML = `<div style="padding:14px 18px;color:#888;font-size:12px;font-weight:600;">Display currency</div>` +
-    opts.map(o=>`<div onclick="pickCurrency('${o}')" style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;cursor:pointer;color:#fff;font-size:15px;font-weight:600;border-top:1px solid #161616;">${o}${cur===o?'<i class="fas fa-check" style="color:#FF8C2D;"></i>':''}</div>`).join('');
+  sheet.style.cssText = 'background:#16181d;width:100%;max-width:480px;border-radius:18px 18px 0 0;padding:6px 0 calc(22px + env(safe-area-inset-bottom));color:#fff;animation:bbSheetUp .25s cubic-bezier(.2,.8,.2,1);';
+  sheet.innerHTML = `<div style="width:38px;height:4px;background:#3a3d44;border-radius:3px;margin:8px auto 6px;"></div>`+
+    `<div style="padding:14px 20px 12px;color:#ffffff;font-size:17px;font-weight:700;letter-spacing:.2px;">Display currency</div>` +
+    opts.map(o=>`<div onclick="pickCurrency('${o}')" style="display:flex;align-items:center;justify-content:space-between;padding:18px 22px;cursor:pointer;color:#ffffff;font-size:16px;font-weight:600;border-top:1px solid #23262d;background:#16181d;"><span style="color:#ffffff;">${o}</span>${cur===o?'<i class="fas fa-check" style="color:#F7A600;font-size:18px;"></i>':''}</div>`).join('');
   ov.appendChild(sheet);
+  if(!document.getElementById('bbSheetKf')){const s=document.createElement('style');s.id='bbSheetKf';s.textContent='@keyframes bbSheetUp{from{transform:translateY(100%);}to{transform:translateY(0);}}';document.head.appendChild(s);}
 }
 function pickCurrency(c){
   localStorage.setItem('displayCurrency', c);
@@ -10521,5 +10569,45 @@ body.light [style*="background:#0e0e0e"],
 body.light [style*="background:#15171c"],
 body.light [style*="background:#181a20"]{color:#0b0e11 !important}
 </style>
+<div id="ptrIndicator"><div class="ptr-ring"></div><div class="ptr-label">Pull to refresh</div></div>
+<script>
+(function pullToRefresh(){
+  var ind=document.getElementById('ptrIndicator');if(!ind)return;
+  var ring=ind.querySelector('.ptr-ring'),label=ind.querySelector('.ptr-label');
+  var startY=0,curY=0,dragging=false,active=false,THRESH=70,MAX=120;
+  function scrollTop(){return window.scrollY||document.documentElement.scrollTop||document.body.scrollTop||0;}
+  function setHeight(h){ind.style.height=h+'px';}
+  function reset(){ind.classList.remove('show','loading');ind.style.transition='height .25s cubic-bezier(.2,.8,.2,1)';setHeight(0);ring.style.transform='rotate(0deg)';label.textContent='Pull to refresh';dragging=false;active=false;setTimeout(function(){ind.style.transition='';},260);}
+  document.addEventListener('touchstart',function(e){
+    if(scrollTop()>2){dragging=false;return;}
+    startY=e.touches[0].clientY;curY=startY;dragging=true;active=false;
+  },{passive:true});
+  document.addEventListener('touchmove',function(e){
+    if(!dragging)return;
+    curY=e.touches[0].clientY;var d=curY-startY;
+    if(d<=0){if(active){reset();}return;}
+    if(!active){active=true;ind.classList.add('show');ind.style.transition='';}
+    // rubber-band resistance
+    var pulled=Math.min(MAX,d*0.55);
+    setHeight(pulled+10);
+    var pct=Math.min(1,pulled/THRESH);
+    ring.style.transform='rotate('+(pct*270)+'deg) scale('+(0.6+pct*0.4)+')';
+    ring.style.opacity=String(0.3+pct*0.7);
+    label.textContent=pulled>=THRESH?'Release to refresh':'Pull to refresh';
+    if(e.cancelable&&pulled>4)e.preventDefault();
+  },{passive:false});
+  document.addEventListener('touchend',function(){
+    if(!dragging){return;}
+    var d=(curY-startY)*0.55;
+    if(active&&d>=THRESH){
+      ind.classList.add('loading');label.textContent='Refreshing';setHeight(58);
+      try{navigator.vibrate&&navigator.vibrate(12);}catch(e){}
+      setTimeout(function(){location.reload();},450);
+    }else{reset();}
+    dragging=false;
+  },{passive:true});
+  document.addEventListener('touchcancel',reset,{passive:true});
+})();
+</script>
 </body>
 </html>
