@@ -651,9 +651,15 @@ button,.dw-btn,.bb-chip,.ern-pill,a,[onclick]{cursor:pointer;}
 #ptrIndicator{position:absolute;left:0;right:0;top:88px;display:flex;align-items:center;justify-content:center;pointer-events:none;height:0;overflow:hidden;z-index:50;opacity:0;transition:opacity .15s ease;}
 #sc-home.ptr-active #ptrIndicator,#sc-home.ptr-loading #ptrIndicator{opacity:1;}
 #sc-home.ptr-anim #ptrIndicator{transition:height .32s cubic-bezier(.22,.85,.3,1),opacity .15s ease;}
-#ptrIndicator .ptr-ring{width:26px;height:26px;border-radius:50%;border:2.4px solid rgba(247,166,0,.22);border-top-color:#F7A600;transform:rotate(0deg);}
-#sc-home.ptr-loading #ptrIndicator .ptr-ring{animation:ptrSpin .75s linear infinite;}
-@keyframes ptrSpin{to{transform:rotate(360deg);}}
+/* BIEXC wordmark */
+.ptr-mark{position:relative;display:inline-flex;font-family:-apple-system,'SF Pro Display','Helvetica Neue',Arial,sans-serif;font-weight:800;font-size:22px;letter-spacing:1.5px;line-height:1;color:#c9ccd1;user-select:none;}
+body.dark .ptr-mark{color:#3a3d44;}
+.ptr-mark .ptr-letter{position:relative;display:inline-block;}
+.ptr-mark .ptr-letter .ptr-fill{position:absolute;inset:0;color:#F7A600;overflow:hidden;clip-path:inset(calc((1 - var(--ptr-fill,0)) * 100%) 0 0 0);transition:clip-path .08s linear;pointer-events:none;}
+/* Loading: orange sweep across the whole word, left -> right */
+#sc-home.ptr-loading .ptr-mark .ptr-letter .ptr-fill{clip-path:inset(0 0 0 0);animation:none;}
+#sc-home.ptr-loading .ptr-mark::after{content:attr(data-text);position:absolute;inset:0;color:#F7A600;clip-path:inset(0 100% 0 0);animation:ptrSweep 1.05s cubic-bezier(.45,.05,.55,.95) infinite;pointer-events:none;font:inherit;letter-spacing:inherit;}
+@keyframes ptrSweep{0%{clip-path:inset(0 100% 0 0);}50%{clip-path:inset(0 0 0 0);}100%{clip-path:inset(0 0 0 100%);}}
 html,body{overscroll-behavior-y:contain;}
 </style>
 </head>
@@ -818,7 +824,7 @@ html,body{overscroll-behavior-y:contain;}
 
 <!-- ─── HOME ─── -->
 <div class="screen active" id="sc-home">
-  <div id="ptrIndicator"><div class="ptr-ring"></div></div>
+  <div id="ptrIndicator"><div class="ptr-mark" data-text="BIEXC">B<span class="ptr-letter">I<span class="ptr-fill">I</span></span>EXC</div></div>
   <div class="sb">
     <span id="htime">2:47</span>
     <div class="sb-r"><i class="fas fa-signal"></i><span>5G</span><i class="fas fa-battery-three-quarters"></i></div>
@@ -10530,8 +10536,8 @@ body.light [style*="background:#181a20"]{color:#0b0e11 !important}
   if(!home) return;
   var scroller=home.querySelector('.scroll');
   var ind=document.getElementById('ptrIndicator');
-  var ring=ind && ind.querySelector('.ptr-ring');
-  if(!scroller||!ind||!ring) return;
+  var mark=ind && ind.querySelector('.ptr-mark');
+  if(!scroller||!ind||!mark) return;
 
   var TRIGGER=64, MAX=110, HOLD=58;
   var startY=0, curY=0, dragging=false, active=false, loading=false, pulled=0;
@@ -10544,8 +10550,7 @@ body.light [style*="background:#181a20"]{color:#0b0e11 !important}
     scroller.style.transform='translate3d(0,'+px+'px,0)';
     ind.style.height=px+'px';
     var pct=Math.min(1,px/TRIGGER);
-    ring.style.transform='rotate('+(pct*300)+'deg)';
-    ring.style.opacity=String(0.25+pct*0.75);
+    mark.style.setProperty('--ptr-fill', pct.toFixed(3));
   }
   function clearAnim(){ home.classList.remove('ptr-anim'); scroller.style.transition=''; }
   function animate(){ home.classList.add('ptr-anim'); scroller.style.transition='transform .32s cubic-bezier(.22,.85,.3,1)'; }
