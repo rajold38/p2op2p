@@ -7255,7 +7255,14 @@ window.onFirebaseUser = async function(fbUser) {
     closeAuth();
     updateNavState();
     updateSidebarUser();
-    toast('success', '✅ Logged In', 'Welcome back, ' + userData.name + '!');
+    // [HIDE] Suppress "Logged In / Welcome back" toast when running inside parent app iframe (P2P shell)
+    try {
+      if (!(window.parent && window.parent !== window)) {
+        toast('success', '✅ Logged In', 'Welcome back, ' + userData.name + '!');
+      }
+    } catch(e) {
+      toast('success', '✅ Logged In', 'Welcome back, ' + userData.name + '!');
+    }
   } catch(e) {
     console.error(e);
     document.getElementById('fbLoadingScreen').style.display = 'none';
@@ -8088,6 +8095,8 @@ window.confirmWithdrawCustom = async function(opts){
 // ═══════════════════════════════════════════
 function showFloatingPending(type,amt,title,sub,hid) {
   removeFloatingPending(type);
+  // [HIDE] When running inside parent app iframe, suppress floating pending popups (Processing Withdrawal / Checking Blockchain)
+  try { if (window.parent && window.parent !== window) return; } catch(e) {}
   const el=document.createElement('div'); el.className='pending-floating'; el.id='pf_'+type;
   const spin=type==='dep'?'':'green';
   el.innerHTML=\`<div class="pf-spinner \${spin}"></div><div class="pf-info"><div class="pf-title">\${title}</div><div class="pf-sub">\${sub}</div></div><button class="pf-hist-btn" onclick="switchTab('history');removeFloatingPending('\${type}')"><i class="fas fa-history"></i> HISTORY</button><button class="pf-close" onclick="removeFloatingPending('\${type}')"><i class="fas fa-times"></i></button>\`;
