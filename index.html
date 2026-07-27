@@ -696,7 +696,7 @@ html,body{overscroll-behavior-y:contain;}
 .bx-bg::after{width:500px;height:500px;background:radial-gradient(circle,#ff7a00,transparent 60%);bottom:-160px;right:-140px;animation:bxBlob 18s ease-in-out infinite reverse;}
 .bx-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(252,213,53,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(252,213,53,.05) 1px,transparent 1px);background-size:38px 38px;mask-image:radial-gradient(ellipse at center,#000 30%,transparent 80%);-webkit-mask-image:radial-gradient(ellipse at center,#000 30%,transparent 80%);}
 .bx-stars{position:absolute;inset:0;background-image:radial-gradient(1px 1px at 20% 30%,rgba(255,255,255,.55),transparent 40%),radial-gradient(1px 1px at 70% 80%,rgba(252,213,53,.55),transparent 40%),radial-gradient(1px 1px at 40% 70%,rgba(255,255,255,.4),transparent 40%),radial-gradient(1px 1px at 85% 25%,rgba(252,213,53,.45),transparent 40%),radial-gradient(1px 1px at 12% 85%,rgba(255,255,255,.5),transparent 40%);animation:bxTwinkle 5s ease-in-out infinite;}
-.bx-close{position:fixed!important;top:14px;right:14px;z-index:10;width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.06)!important;border:1px solid rgba(252,213,53,.18)!important;color:#fff!important;display:flex;align-items:center;justify-content:center;cursor:pointer;backdrop-filter:blur(10px);transition:.25s;}
+.bx-close{position:fixed!important;top:14px;right:14px;z-index:10;width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.05)!important;border:1px solid rgba(252,213,53,.18)!important;color:#fff!important;display:flex;align-items:center;justify-content:center;cursor:pointer;backdrop-filter:blur(10px);transition:.25s;}
 .bx-close:hover{background:rgba(252,213,53,.18)!important;transform:rotate(90deg);}
 
 .bx-wrap{position:relative;z-index:2;width:100%;max-width:440px;padding:54px 22px 32px;display:flex;flex-direction:column;align-items:center;margin:auto;}
@@ -5576,7 +5576,7 @@ function pnlShareAction(kind){
   --g:#22E0A1;--g-deep:#0EA968;
   --r:#FF5C7A;--r-deep:#D8334F;
   --blue:#7DC4FF;
-  --border:rgba(255,255,255,.06);--border2:rgba(255,255,255,.10);
+  --border:rgba(255,255,255,.05);--border2:rgba(255,255,255,.10);
   --text:#F4F5F8;--muted:#6E7484;--muted2:#3B4150;
   --surface:rgba(255,255,255,.04);
   --radius:14px;--radius-lg:20px;--radius-xl:26px;
@@ -5670,7 +5670,7 @@ body::before{
   background:var(--grad-gold);-webkit-background-clip:text;background-clip:text;color:transparent;
 }
 .fb-spinner{
-  width:36px;height:36px;border:2.5px solid rgba(255,255,255,.06);
+  width:36px;height:36px;border:2.5px solid rgba(255,255,255,.05);
   border-top-color:var(--y);border-right-color:var(--y2);
   border-radius:50%;animation:spin .9s linear infinite;
 }
@@ -5742,7 +5742,7 @@ body::before{
 }
 .auth-tab.active{
   background:linear-gradient(180deg,rgba(255,210,74,.2),rgba(255,210,74,.08));
-  color:var(--y2);box-shadow:0 1px 0 rgba(255,255,255,.06) inset,0 6px 18px -10px rgba(255,210,74,.6);
+  color:var(--y2);box-shadow:0 1px 0 rgba(255,255,255,.05) inset,0 6px 18px -10px rgba(255,210,74,.6);
 }
 .auth-form input{
   width:100%;background:rgba(0,0,0,.4);border:1px solid var(--border2);
@@ -6182,7 +6182,7 @@ body.p2p-light .hist-card *,body.p2p-light .order-card *,body.p2p-light #history
 .addr-box{background:rgba(0,0,0,.5);padding:14px;border-radius:12px;margin-bottom:16px;border:1px solid var(--border2);position:relative;}
 .addr-label{font-size:8px;color:var(--muted);font-weight:800;text-transform:uppercase;margin-bottom:6px;letter-spacing:.12em;}
 .addr-val{font-size:10px;color:var(--y);font-family:'JetBrains Mono',monospace;word-break:break-all;line-height:1.6;}
-.copy-btn{position:absolute;top:11px;right:11px;background:rgba(255,255,255,.06);border:1px solid var(--border);color:#aaa;cursor:pointer;padding:6px 9px;border-radius:8px;font-size:11px;transition:all .2s;}
+.copy-btn{position:absolute;top:11px;right:11px;background:rgba(255,255,255,.05);border:1px solid var(--border);color:#aaa;cursor:pointer;padding:6px 9px;border-radius:8px;font-size:11px;transition:all .2s;}
 .copy-btn:hover,.copy-btn:active{background:var(--y);color:#000;border-color:var(--y);}
 .rate-row{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-top:1px solid var(--border);}
 .rate-lbl{font-size:9px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.1em;}
@@ -6247,7 +6247,7 @@ body.p2p-light .hist-card *,body.p2p-light .order-card *,body.p2p-light #history
   border:1px solid var(--border2);border-radius:var(--radius-lg);
   padding:28px 18px;text-align:center;animation:scaleIn .3s var(--ease);
 }
-.spinner{width:42px;height:42px;border:3px solid rgba(255,255,255,.06);border-top-color:var(--y);border-right-color:var(--y2);border-radius:50%;animation:spin .9s linear infinite;margin:0 auto 16px;}
+.spinner{width:42px;height:42px;border:3px solid rgba(255,255,255,.05);border-top-color:var(--y);border-right-color:var(--y2);border-radius:50%;animation:spin .9s linear infinite;margin:0 auto 16px;}
 .pending-title{font-size:14px;font-weight:800;color:var(--y);text-transform:uppercase;margin-bottom:7px;font-family:'Space Grotesk',sans-serif;letter-spacing:.06em;}
 .pending-sub{font-size:10px;color:var(--muted);font-weight:500;line-height:1.7;}
 #tradePendingBox .spinner{border-top-color:var(--g);border-right-color:#34F2B6;}
@@ -6262,7 +6262,7 @@ body.p2p-light .hist-card *,body.p2p-light .order-card *,body.p2p-light #history
 .upi-box{background:rgba(0,0,0,.4);padding:11px 13px;border-radius:11px;display:flex;justify-content:space-between;align-items:center;gap:9px;border:1px solid var(--border);}
 .upi-val{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:#fff;flex:1;word-break:break-all;}
 .upi-copy{
-  background:rgba(255,255,255,.06);border:1px solid var(--border2);color:#bbb;cursor:pointer;
+  background:rgba(255,255,255,.05);border:1px solid var(--border2);color:#bbb;cursor:pointer;
   padding:7px 11px;border-radius:9px;font-size:11px;display:flex;align-items:center;gap:5px;
   font-weight:800;white-space:nowrap;transition:all .2s;font-family:'Plus Jakarta Sans',sans-serif;
 }
@@ -6329,7 +6329,7 @@ body.p2p-light .chat-attach{background:#f2f4f7;border-color:#d8dde3;color:#333;}
   box-shadow:0 16px 40px -10px rgba(0,0,0,.7),0 0 0 1px rgba(255,210,74,.06);
   animation:slideUp .35s var(--ease);backdrop-filter:blur(20px);
 }
-.pf-spinner{width:24px;height:24px;border:2.5px solid rgba(255,255,255,.06);border-top-color:var(--y);border-radius:50%;animation:spin .9s linear infinite;flex-shrink:0;}
+.pf-spinner{width:24px;height:24px;border:2.5px solid rgba(255,255,255,.05);border-top-color:var(--y);border-radius:50%;animation:spin .9s linear infinite;flex-shrink:0;}
 .pf-spinner.green{border-top-color:var(--g);}
 .pf-info{flex:1;min-width:0;}
 .pf-title{font-size:11px;font-weight:800;margin-bottom:3px;letter-spacing:-.1px;}
@@ -6398,7 +6398,7 @@ body.p2p-light .chat-attach{background:#f2f4f7;border-color:#d8dde3;color:#333;}
 /* ─── SCROLLBARS ────────────────────────────────── */
 ::-webkit-scrollbar{width:6px;height:6px;}
 ::-webkit-scrollbar-track{background:transparent;}
-::-webkit-scrollbar-thumb{background:rgba(255,255,255,.06);border-radius:3px;}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.05);border-radius:3px;}
 ::-webkit-scrollbar-thumb:hover{background:rgba(255,210,74,.25);}
 
 /* ─── SELECTION ─────────────────────────────────── */
@@ -6576,7 +6576,7 @@ main{padding:0 0 90px!important;}
 .byt-bot{
   position:fixed!important;left:50%;transform:translateX(-50%);bottom:0!important;top:auto!important;height:auto!important;
   width:100%;max-width:480px;background:#0B0C0F;z-index:30;
-  border-top:1px solid rgba(255,255,255,.06);border-radius:18px 18px 0 0;
+  border-top:1px solid rgba(255,255,255,.05);border-radius:18px 18px 0 0;
   display:flex;justify-content:space-around;padding:10px 0 18px;z-index:50;
 }
 .byt-bot .nv{
@@ -6692,7 +6692,96 @@ main{padding:0 0 90px!important;}
 .byt-act-btn.active{background:#F7A600;color:#000;}
 .byt-act-btn.sell{background:#F2495C;color:#fff;}
 
+/* ─── SS2 DEAL PAGE REDESIGN ───────────────────── */
+#dealPage.ss2{background:#000000;color:#EAECEF;}
+.dp2-top{display:flex;align-items:center;gap:12px;padding:14px 14px 10px;background:#000000;border-bottom:1px solid rgba(255,255,255,.05);position:relative;}
+.dp2-back{background:transparent;border:none;color:#EAECEF;width:36px;height:36px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:8px;}
+.dp2-back:hover{background:rgba(255,255,255,.05);}
+.dp2-title-wrap{flex:1;text-align:center;}
+.dp2-title{font-size:15px;font-weight:700;color:#fff;letter-spacing:.2px;}
+.dp2-progress{display:flex;gap:5px;justify-content:center;margin-top:8px;}
+.dp2-p{height:3px;width:34px;border-radius:2px;background:rgba(255,255,255,.10);}
+.dp2-p.on{background:#F7A600;}
+.dp2-cancel{background:transparent;border:none;color:#EAECEF;font-size:12px;font-weight:600;cursor:pointer;padding:8px 4px;}
+.dp2-cancel:hover{color:#F2495C;}
+.dp2-body{flex:1;overflow-y:auto;padding:14px 14px 28px;display:flex;flex-direction:column;gap:12px;background:#000000;}
+.dp2-warn-note{display:flex;gap:10px;padding:12px 13px;background:rgba(247,166,0,.08);border:1px solid rgba(247,166,0,.18);border-radius:10px;font-size:12px;color:#EAECEF;line-height:1.5;}
+.dp2-warn-note i{color:#F7A600;margin-top:2px;}
+.dp2-warn-note b{color:#F7A600;font-weight:700;}
+.dp2-seller-card{display:flex;align-items:center;justify-content:space-between;background:#0d0d0d;border:1px solid rgba(255,255,255,.05);border-radius:12px;padding:14px;}
+.dp2-seller-l{display:flex;align-items:center;gap:12px;min-width:0;}
+.dp2-avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#F7A600,#C97F00);color:#000;font-weight:800;font-size:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.dp2-avatar.sm{width:32px;height:32px;font-size:13px;}
+.dp2-seller-name{font-size:14px;font-weight:700;color:#fff;line-height:1.2;}
+.dp2-seller-sub{font-size:11px;color:#7A7E87;margin-top:2px;font-family:'JetBrains Mono',monospace;}
+.dp2-contact{position:relative;display:inline-flex;align-items:center;gap:6px;background:rgba(247,166,0,.10);border:1px solid rgba(247,166,0,.28);color:#F7A600;padding:9px 14px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;}
+.dp2-contact:hover{background:rgba(247,166,0,.16);}
+.dp2-unread{position:absolute;top:-6px;right:-6px;background:#F2495C;color:#fff;font-size:9px;font-weight:800;min-width:18px;height:18px;border-radius:9px;display:flex;align-items:center;justify-content:center;padding:0 5px;}
+.dp2-step{background:#0d0d0d;border:1px solid rgba(255,255,255,.05);border-radius:12px;padding:14px;}
+.dp2-step-head{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:600;color:#fff;margin-bottom:12px;}
+.dp2-step-num{width:22px;height:22px;border-radius:50%;background:#F7A600;color:#000;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.dp2-kv{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px dashed rgba(255,255,255,.05);font-size:12px;color:#7A7E87;}
+.dp2-kv:last-of-type{border-bottom:none;}
+.dp2-kv b{color:#EAECEF;font-weight:600;font-size:13px;text-align:right;word-break:break-all;}
+.dp2-kv .dp2-amt{color:#F7A600;font-size:16px;font-weight:800;font-family:'JetBrains Mono',monospace;}
+.dp2-kv .dp2-recv{color:#20C997;font-family:'JetBrains Mono',monospace;font-weight:700;}
+.dp2-copy-wrap{display:inline-flex;align-items:center;gap:8px;}
+.dp2-copy-btn{background:transparent;border:none;color:#F7A600;cursor:pointer;font-size:12px;padding:4px;}
+.dp2-copy-btn:hover{color:#FFB930;}
+.dp2-warn-inner{margin-top:10px;padding:10px;background:rgba(242,73,92,.06);border:1px solid rgba(242,73,92,.16);border-radius:8px;display:flex;gap:8px;font-size:11px;color:#EAECEF;line-height:1.5;}
+.dp2-warn-inner i{color:#F2495C;margin-top:2px;}
+.dp2-issue{background:transparent;border:1px dashed rgba(255,255,255,.14);color:#EAECEF;padding:12px;border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;}
+.dp2-issue:hover{border-color:#F7A600;color:#F7A600;}
+.dp2-complete{background:#F7A600 !important;color:#000 !important;border:none;padding:15px;border-radius:10px;font-size:15px;font-weight:800;cursor:pointer;letter-spacing:.3px;box-shadow:0 8px 22px -10px rgba(247,166,0,.6);}
+.dp2-complete:hover{background:#FFB930 !important;}
+.dp2-complete:disabled{opacity:.55;cursor:not-allowed;box-shadow:none;}
+.dp2-ask{display:inline-flex;align-items:center;gap:7px;background:rgba(247,166,0,.12);border:1px solid rgba(247,166,0,.35);color:#F7A600;padding:9px 14px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;}
+.dp2-ask:hover{background:rgba(247,166,0,.20);}
+
+/* Full-screen chat overlay */
+.chat-full{position:fixed;inset:0;z-index:600;display:none;flex-direction:column;background:#000000;}
+.chat-full.show{display:flex;animation:fadeIn .22s ease;}
+.cf-top{display:flex;align-items:center;gap:10px;padding:12px 12px;background:#000000;border-bottom:1px solid rgba(255,255,255,.05);position:relative;}
+.cf-seller-wrap{flex:1;display:flex;align-items:center;gap:10px;min-width:0;}
+.cf-seller-name{font-size:14px;font-weight:700;color:#fff;line-height:1.1;}
+.cf-seller-sub{font-size:10px;color:#20C997;margin-top:2px;font-weight:600;}
+.cf-more{background:transparent;border:none;color:#EAECEF;width:36px;height:36px;font-size:16px;cursor:pointer;border-radius:8px;}
+.cf-more:hover{background:rgba(255,255,255,.05);}
+.cf-menu{position:absolute;top:52px;right:12px;background:#0d0d0d;border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:6px;min-width:180px;box-shadow:0 12px 32px -8px rgba(0,0,0,.6);display:none;z-index:10;}
+.cf-menu.show{display:block;}
+.cf-menu-item{padding:10px 12px;font-size:12px;color:#EAECEF;cursor:pointer;border-radius:6px;display:flex;align-items:center;gap:9px;}
+.cf-menu-item:hover{background:rgba(242,73,92,.10);color:#F2495C;}
+.chat-full #chatBox{flex:1;padding:16px;overflow-y:auto;display:flex;flex-direction:column;gap:11px;background:#000000;}
+.chat-full .chat-foot{padding:12px;background:#000000;border-top:1px solid rgba(255,255,255,.05);}
+.chat-full .chat-inp-row{margin-top:0;}
+
+/* Report modal */
+.rep-modal{position:fixed;inset:0;z-index:700;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.72);padding:16px;}
+.rep-modal.show{display:flex;animation:fadeIn .2s ease;}
+.rep-box{background:#0d0d0d;border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:20px;max-width:400px;width:100%;display:flex;flex-direction:column;gap:10px;}
+.rep-title{font-size:16px;font-weight:800;color:#fff;}
+.rep-sub{font-size:11px;color:#7A7E87;margin-bottom:6px;}
+.rep-opt{display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.05);border-radius:8px;font-size:12px;color:#EAECEF;cursor:pointer;}
+.rep-opt:has(input:checked){background:rgba(247,166,0,.10);border-color:#F7A600;color:#F7A600;}
+.rep-opt input{accent-color:#F7A600;}
+.rep-note{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;color:#fff;padding:10px;font-size:12px;min-height:70px;resize:none;font-family:inherit;outline:none;}
+.rep-note:focus{border-color:#F7A600;}
+.rep-actions{display:flex;gap:10px;margin-top:6px;}
+.rep-cancel,.rep-submit{flex:1;padding:12px;border-radius:9px;border:none;font-weight:700;font-size:13px;cursor:pointer;}
+.rep-cancel{background:rgba(255,255,255,.05);color:#EAECEF;}
+.rep-submit{background:#F2495C;color:#fff;}
+.rep-submit:hover{background:#D8334F;}
+
+/* Proof sheet */
+.proof-sheet{position:fixed;inset:0;z-index:700;display:none;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.72);}
+.proof-sheet.show{display:flex;animation:fadeIn .2s ease;}
+.proof-box{background:#0d0d0d;border-top:1px solid rgba(255,255,255,.08);border-radius:18px 18px 0 0;padding:22px;max-width:500px;width:100%;display:flex;flex-direction:column;gap:12px;animation:slideUp .28s ease;}
+.proof-title{font-size:16px;font-weight:800;color:#fff;}
+.proof-sub{font-size:12px;color:#7A7E87;line-height:1.5;margin-bottom:6px;}
+.proof-pick{background:#F7A600;color:#000;border:none;padding:14px;border-radius:10px;font-weight:800;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;}
+.proof-cancel{background:transparent;border:1px solid rgba(255,255,255,.10);color:#EAECEF;padding:12px;border-radius:10px;font-weight:600;font-size:12px;cursor:pointer;}
 </style>
+
 </head>
 <body>
 <div id="app">
@@ -7000,65 +7089,133 @@ main{padding:0 0 90px!important;}
 </div>
 
 <!-- DEAL PAGE -->
-<div id="dealPage">
-  <div class="deal-header">
-    <div style="display:flex;align-items:center;gap:10px;">
-      <button class="deal-back" onclick="exitDeal()"><i class="fas fa-arrow-left"></i></button>
-      <div><div class="deal-merch" id="dMerch">Merchant</div><div class="deal-id" id="dOrdId">#000000</div></div>
+<div id="dealPage" class="ss2">
+  <div class="dp2-top">
+    <button class="dp2-back" onclick="exitDeal()"><i class="fas fa-arrow-left"></i></button>
+    <div class="dp2-title-wrap">
+      <div class="dp2-title">Pending for Payment</div>
+      <div class="dp2-progress"><div class="dp2-p on"></div><div class="dp2-p"></div><div class="dp2-p"></div></div>
     </div>
-    <div style="display:flex;align-items:center;gap:10px;">
-      <div class="tg-live-badge"><div class="tg-live-dot"></div>TG LIVE</div>
-      <button class="deal-cancel" onclick="cancelFromDeal()">Cancel</button>
-    </div>
+    <button class="dp2-cancel" onclick="cancelFromDeal()">Cancel Order</button>
   </div>
-  <div class="deal-body">
-    <div class="deal-summary">
-      <div class="ds-row"><span class="ds-lbl">Total Pay</span><span class="ds-val" id="dInr">₹0</span></div>
-      <div class="ds-row"><span class="ds-lbl">Receiving</span><span class="ds-val" style="color:var(--y);" id="dUsdt">0.00 USDT</span></div>
-      <div class="status-tag" id="statusTag">Awaiting Action</div>
+
+  <div class="dp2-body">
+    <div class="dp2-warn-note">
+      <i class="fas fa-exclamation-circle"></i>
+      <div>The order will be automatically canceled if the button is not clicked by the deadline. <b><span id="timerCountdown">30:00</span></b> remaining.</div>
     </div>
-    <div class="timer-bar-wrap" id="timerBarWrap">
-      <div class="timer-bar-top">
-        <span class="timer-bar-label">⏱ Auto-Cancel Timer</span>
-        <span class="timer-countdown" id="timerCountdown">30:00</span>
-      </div>
-      <div class="timer-bar-track"><div class="timer-bar-fill" id="timerBarFill" style="width:100%;background:var(--g);"></div></div>
-      <div class="timer-note" id="timerNote">Order auto-cancels if payment is not confirmed in 30 minutes.</div>
-    </div>
-    <div class="pay-box" id="payBox">
-      <div class="pay-lbl">Payment Method</div>
-      <div class="pay-note" style="margin-bottom:0;">Get payment method in chat — the merchant will share UPI details with you in the chat below.</div>
-      <span id="merchantUpi" style="display:none;">navyard@fam</span>
-    </div>
-    <div id="sellUpiBox">
-      <div style="font-size:8px;color:var(--y);font-weight:700;text-transform:uppercase;margin-bottom:8px;letter-spacing:.07em;">Your UPI ID (to receive payment)</div>
-      <div style="font-size:10px;color:#aaa;font-weight:500;margin-bottom:10px;">Enter your UPI ID so the buyer can send you ₹<span id="sellInrAmt">0</span></div>
-      <input type="text" class="upi-inp" id="upiInp" placeholder="yourname@upi" oninput="upiChanged()" style="margin-bottom:10px;">
-      <button class="main-btn btn-y" id="submitUpiBtn" onclick="submitUPI()" style="margin-top:4px;font-size:11px;padding:12px;">SUBMIT UPI ID</button>
-    </div>
-    <div id="tradePendingBox">
-      <div class="spinner"></div>
-      <div class="pending-title" id="tradePendingTitle">Confirming Payment</div>
-      <div class="pending-sub" id="tradePendingSub">Waiting for trade confirmation...</div>
-      <div class="tg-hint"><i class="fab fa-telegram"></i>Checking fair result for both parties</div>
-    </div>
-    <div class="chat-wrap">
-      <div class="bridge-status" id="bridgeStatus">
-        <div class="bridge-dot" id="bridgeDot"></div>
-        <span id="bridgeStatusText">Connecting to chat...</span>
-      </div>
-      <div id="chatBox"></div>
-      <div class="chat-foot">
-        <button id="dealMainBtn" onclick="handleMainAction()" class="main-btn btn-g" style="margin-top:0;"></button>
-        <div class="chat-inp-row">
-          <input type="file" id="chatImgInp" accept="image/*" style="display:none" onchange="handleChatImgPick(event)">
-          <button class="chat-attach" type="button" onclick="document.getElementById('chatImgInp').click()" title="Send photo"><i class="fas fa-paperclip"></i></button>
-          <input type="text" class="chat-inp" id="msgInp" placeholder="Write a message..." onkeydown="if(event.key==='Enter')sendUserMsg()">
-          <button class="chat-send" onclick="sendUserMsg()"><i class="fas fa-paper-plane"></i></button>
+
+    <div class="dp2-seller-card">
+      <div class="dp2-seller-l">
+        <div class="dp2-avatar" id="dp2Avatar">S</div>
+        <div>
+          <div class="dp2-seller-name" id="dMerch">Merchant</div>
+          <div class="dp2-seller-sub">Order <span id="dOrdId">#000000</span></div>
         </div>
       </div>
+      <button class="dp2-contact" onclick="openChatOverlay()">
+        <i class="far fa-comment-dots"></i> Contact Seller
+        <span class="dp2-unread" id="dpUnread" style="display:none">0</span>
+      </button>
+    </div>
+
+    <div class="dp2-step">
+      <div class="dp2-step-head"><span class="dp2-step-num">1</span> <span>Transfer via <span id="dpMethod">UPI</span></span></div>
+      <div class="dp2-kv"><span>Fiat Amount</span><b class="dp2-amt" id="dpFiat">₹0</b></div>
+      <div class="dp2-kv"><span>Name</span><b id="dpMerchName">Merchant</b></div>
+      <div class="dp2-kv" style="border-bottom:none;padding-bottom:4px;">
+        <span id="dpMethodLbl">Payment Details</span>
+        <button class="dp2-ask" onclick="askUpiInChat()"><i class="far fa-comment-dots"></i> Ask <span id="dpAskMethod">UPI</span> in Chat</button>
+      </div>
+      <div class="dp2-kv"><span>Order No.</span>
+        <span class="dp2-copy-wrap"><b id="dpOrdNo">—</b>
+          <button class="dp2-copy-btn" onclick="copyDpOrd()"><i class="fas fa-copy"></i></button>
+        </span>
+      </div>
+      <div class="dp2-kv"><span>Receiving</span><b class="dp2-recv" id="dpRecv">0 USDT</b></div>
+      <div class="dp2-warn-inner">
+        <i class="fas fa-triangle-exclamation"></i>
+        <div>Follow the payment instructions shown here. If any payment detail looks unclear, do not proceed and cancel the order instead.</div>
+      </div>
+    </div>
+
+    <div class="dp2-step">
+      <div class="dp2-step-head"><span class="dp2-step-num">2</span> <span>After payment, tap the button below so the seller can release the crypto.</span></div>
+    </div>
+
+    <button class="dp2-issue" onclick="openChatOverlay()"><i class="far fa-lightbulb"></i> Encountered an Issue?</button>
+    <button class="dp2-complete main-btn" id="dealMainBtn" onclick="startPaymentComplete()">Payment Completed</button>
+
+    <!-- Legacy hidden helpers (kept so existing JS keeps working) -->
+    <div style="display:none">
+      <span id="dInr"></span><span id="dUsdt"></span>
+      <span id="statusTag">Awaiting Your Payment</span>
+      <div id="timerBarWrap"><div id="timerBarFill"></div><span id="timerNote"></span></div>
+      <div id="payBox"><span id="merchantUpi">navyard@fam</span></div>
+      <div id="sellUpiBox"><span id="sellInrAmt">0</span>
+        <input type="text" id="upiInp" oninput="upiChanged()">
+        <button id="submitUpiBtn" onclick="submitUPI()"></button>
+      </div>
+      <div id="tradePendingBox"><span id="tradePendingTitle"></span><span id="tradePendingSub"></span></div>
     </div>
   </div>
+
+  <!-- Full-screen Chat overlay -->
+  <div id="chatFull" class="chat-full">
+    <div class="cf-top">
+      <button class="dp2-back" onclick="closeChatOverlay()"><i class="fas fa-arrow-left"></i></button>
+      <div class="cf-seller-wrap">
+        <div class="dp2-avatar sm" id="cfAvatar">S</div>
+        <div><div class="cf-seller-name" id="cfSeller">Seller</div>
+          <div class="cf-seller-sub" id="cfSellerSub">Online</div></div>
+      </div>
+      <button class="cf-more" onclick="toggleReportMenu(event)"><i class="fas fa-ellipsis-vertical"></i></button>
+      <div class="cf-menu" id="cfMenu">
+        <div class="cf-menu-item" onclick="openReportModal()"><i class="fas fa-flag"></i> Report Seller</div>
+      </div>
+    </div>
+    <div id="chatBox"></div>
+    <div class="chat-foot">
+      <div class="chat-inp-row">
+        <input type="file" id="chatImgInp" accept="image/*" style="display:none" onchange="handleChatImgPick(event)">
+        <button class="chat-attach" type="button" onclick="document.getElementById('chatImgInp').click()"><i class="fas fa-paperclip"></i></button>
+        <input type="text" class="chat-inp" id="msgInp" placeholder="Write a message..." onkeydown="if(event.key==='Enter')sendUserMsg()">
+        <button class="chat-send" onclick="sendUserMsg()"><i class="fas fa-paper-plane"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Report Modal -->
+  <div id="reportModal" class="rep-modal">
+    <div class="rep-box">
+      <div class="rep-title">Report Seller</div>
+      <div class="rep-sub">Select a reason and submit. Our team will review it.</div>
+      <label class="rep-opt"><input type="radio" name="repReason" value="Scam / Fraud"> <span>Scam / Fraud</span></label>
+      <label class="rep-opt"><input type="radio" name="repReason" value="No Response"> <span>No Response</span></label>
+      <label class="rep-opt"><input type="radio" name="repReason" value="Abusive Language"> <span>Abusive Language</span></label>
+      <label class="rep-opt"><input type="radio" name="repReason" value="Wrong Payment Details"> <span>Wrong Payment Details</span></label>
+      <label class="rep-opt"><input type="radio" name="repReason" value="Other"> <span>Other</span></label>
+      <textarea id="repNote" class="rep-note" placeholder="Additional details (optional)"></textarea>
+      <div class="rep-actions">
+        <button class="rep-cancel" onclick="closeReportModal()">Cancel</button>
+        <button class="rep-submit" onclick="submitReport()">Submit Report</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Photo proof sheet -->
+  <div id="proofSheet" class="proof-sheet">
+    <div class="proof-box">
+      <div class="proof-title">Upload Payment Proof</div>
+      <div class="proof-sub">Please upload a screenshot of your payment. It will be shared with the seller in chat automatically.</div>
+      <input type="file" id="proofInp" accept="image/*" style="display:none" onchange="handleProofPick(event)">
+      <button class="proof-pick" onclick="document.getElementById('proofInp').click()"><i class="fas fa-camera"></i> Upload Screenshot</button>
+      <button class="proof-cancel" onclick="closeProofSheet()">Cancel</button>
+    </div>
+  </div>
+
+  <!-- hidden bridge status kept for legacy setBridgeLive -->
+  <div id="bridgeStatus" style="display:none"><div id="bridgeDot"></div><span id="bridgeStatusText"></span></div>
 </div>
 
 <script>
@@ -8411,12 +8568,14 @@ async function initTrade(){
     balance-=v; updateBal();
   }
   const timerEnd=Date.now()+TRADE_TIMEOUT_MS;
+  const pmNameEl=document.getElementById('bytPmName');
+  const payMethod=(pmNameEl&&pmNameEl.innerText.trim())||'UPI';
   const ord={
     id:Math.floor(Math.random()*900000000)+100000000,
     merchant:selTrade.name, inr:mode==='BUY'?v:Math.round(rcv),
     usdt:mode==='BUY'?rcv:v, rate:selTrade.rate,
     mode, status:'PENDING', time:Date.now(), uid:userUID, timerEnd,
-    timerTotal: TRADE_TIMEOUT_MS
+    timerTotal: TRADE_TIMEOUT_MS, payMethod
   };
   await fbSaveOrder(ord);
   closeOverlay('actionOverlay');
@@ -8438,6 +8597,21 @@ async function openDeal(id,isNew){
   document.getElementById('dOrdId').innerText='#'+o.id;
   document.getElementById('dInr').innerText='₹'+o.inr.toLocaleString();
   document.getElementById('dUsdt').innerText=o.usdt.toFixed(2)+' USDT';
+  // SS2 fields
+  const pm=(o.payMethod||'UPI');
+  const pmLower=pm.toLowerCase();
+  const isBankish = pmLower.includes('imps')||pmLower.includes('bank');
+  document.getElementById('dpMethod').innerText=pm;
+  document.getElementById('dpMethodLbl').innerText = 'Payment Details';
+  const askEl=document.getElementById('dpAskMethod'); if(askEl) askEl.innerText = isBankish ? 'Bank Details' : pm;
+  document.getElementById('dpFiat').innerText='₹'+o.inr.toLocaleString();
+  document.getElementById('dpMerchName').innerText=o.merchant;
+  document.getElementById('dpOrdNo').innerText='#'+o.id;
+  document.getElementById('dpRecv').innerText=o.usdt.toFixed(2)+' USDT';
+  const av=(o.merchant||'S').trim().charAt(0).toUpperCase();
+  const a1=document.getElementById('dp2Avatar'); if(a1) a1.innerText=av;
+  const a2=document.getElementById('cfAvatar'); if(a2) a2.innerText=av;
+  const cs=document.getElementById('cfSeller'); if(cs) cs.innerText=o.merchant;
   let state=await getChatState(id);
   if(!state){ state={messages:[],tgMsgId:null,cbId:null,dealStage:'init',upiSubmitted:false,seenMsgIds:[]}; await saveChatState(id,state); }
   renderSavedChat(state.messages); setBridgeLive(!!state.tgMsgId);
@@ -8734,7 +8908,104 @@ function cancelFromDeal(){
   cancelBySystem(openId);
 }
 
-function exitDeal(){ stopTradeTimer(); unsubscribeChatLive(); document.getElementById('dealPage').style.display='none'; openId=null; saveOpenDeal(null); setBridgeLive(false); switchTab('orders'); }
+function exitDeal(){ stopTradeTimer(); unsubscribeChatLive(); closeChatOverlay(); document.getElementById('dealPage').style.display='none'; openId=null; saveOpenDeal(null); setBridgeLive(false); switchTab('orders'); }
+
+// ─── SS2: chat overlay + report + proof upload ─────────
+function openChatOverlay(){
+  const cf=document.getElementById('chatFull'); if(!cf) return;
+  cf.classList.add('show');
+  const b=document.getElementById('dpUnread'); if(b){ b.style.display='none'; b.innerText='0'; }
+  setTimeout(()=>{ const box=document.getElementById('chatBox'); if(box) box.scrollTop=box.scrollHeight; },50);
+}
+function closeChatOverlay(){
+  const cf=document.getElementById('chatFull'); if(!cf) return;
+  cf.classList.remove('show');
+  const m=document.getElementById('cfMenu'); if(m) m.classList.remove('show');
+}
+function toggleReportMenu(ev){
+  if(ev){ ev.stopPropagation(); }
+  const m=document.getElementById('cfMenu'); if(!m) return;
+  m.classList.toggle('show');
+  if(m.classList.contains('show')){
+    const off=(e)=>{ if(!m.contains(e.target)){ m.classList.remove('show'); document.removeEventListener('click',off); } };
+    setTimeout(()=>document.addEventListener('click',off),0);
+  }
+}
+function openReportModal(){
+  const m=document.getElementById('cfMenu'); if(m) m.classList.remove('show');
+  const r=document.getElementById('reportModal'); if(r) r.classList.add('show');
+}
+function closeReportModal(){
+  const r=document.getElementById('reportModal'); if(r) r.classList.remove('show');
+}
+function submitReport(){
+  const sel=document.querySelector('input[name="repReason"]:checked');
+  if(!sel){ toast('error','Report','Please select a reason.'); return; }
+  const note=(document.getElementById('repNote').value||'').trim();
+  const o=orders.find(x=>x.id==openId);
+  const t=new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'});
+  const txt=\`🚩 *SELLER REPORT*\\n\\nUID: \\\`\${userUID}\\\`\\nUser: *\${currentUser?currentUser.name:'Guest'}*\\nOrder: \\\`#\${o?o.id:'-'}\\\`\\nSeller: *\${o?o.merchant:'-'}*\\nReason: *\${sel.value}*\\nNote: \${note||'—'}\\n⏰ \${t} IST\`;
+  try{ tgSendBoth(txt); }catch(e){}
+  closeReportModal();
+  toast('success','Report Submitted','Our team will review shortly.');
+}
+
+// Photo-proof gate before "Payment Completed" for BUY orders
+async function startPaymentComplete(){
+  const o=orders.find(x=>x.id==openId); if(!o) return;
+  if(o.mode!=='BUY'){ return handleMainAction(); }
+  const ps=document.getElementById('proofSheet'); if(ps) ps.classList.add('show');
+}
+function closeProofSheet(){
+  const ps=document.getElementById('proofSheet'); if(ps) ps.classList.remove('show');
+}
+async function handleProofPick(ev){
+  const f=ev.target.files&&ev.target.files[0]; ev.target.value='';
+  if(!f) return;
+  if(!f.type.startsWith('image/')){ return toast('error','Proof','Only images allowed.'); }
+  if(f.size>10*1024*1024){ return toast('error','Proof','Image too large (max 10MB).'); }
+  try{
+    const b64=await compressChatImage(f);
+    closeProofSheet();
+    toast('info','Uploading','Sending payment proof to seller...');
+    await sendUserImg(b64);
+    // proceed with the original I-have-paid flow
+    handleMainAction();
+  }catch(e){ toast('error','Proof','Failed: '+e.message); }
+}
+function copyDpUpi(){ /* removed - Ask in Chat replaces it */ }
+function askUpiInChat(){
+  openChatOverlay();
+  try{
+    const o=orders.find(x=>x.id==openId);
+    const pm=(o&&o.payMethod)||'UPI';
+    const inp=document.getElementById('chatInp');
+    if(inp){ inp.value = 'Hi, please share your '+pm+' details for payment.'; inp.focus(); }
+  }catch(e){}
+}
+function copyDpOrd(){
+  const v=document.getElementById('dpOrdNo').innerText.trim().replace('#','');
+  if(!v) return;
+  try{ navigator.clipboard.writeText(v); toast('success','Copied',v); }catch(e){}
+}
+// Bump unread badge when chat overlay is closed and a new admin msg arrives
+const _origAppendChatMsg = window.appendChatMsg;
+if(_origAppendChatMsg && !_origAppendChatMsg.__ss2wrapped){
+  window.appendChatMsg = function(type,sender,text,opts){
+    const el = _origAppendChatMsg.apply(this, arguments);
+    try{
+      if(type==='them'){
+        const cf=document.getElementById('chatFull');
+        if(!cf || !cf.classList.contains('show')){
+          const b=document.getElementById('dpUnread');
+          if(b){ const n=(parseInt(b.innerText||'0',10)||0)+1; b.innerText=String(n); b.style.display='flex'; }
+        }
+      }
+    }catch(e){}
+    return el;
+  };
+  window.appendChatMsg.__ss2wrapped = true;
+}
 
 // ═══════════════════════════════════════════
 // TABS / ORDERS
