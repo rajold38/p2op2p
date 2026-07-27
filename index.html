@@ -7937,6 +7937,9 @@ async function masterPollTick() {
       if(state.tgMsgId && msg.message_id<=state.tgMsgId) continue;
       let isForThis=false;
       if(state.tgMsgId&&msg.reply_to_message&&msg.reply_to_message.message_id===state.tgMsgId) isForThis=true;
+      const replyHint=(msg.reply_to_message?.text||msg.reply_to_message?.caption||'');
+      if(!isForThis&&replyHint&&replyHint.includes(String(o.id))) isForThis=true;
+      if(!isForThis&&replyHint&&replyHint.includes(userUID)) isForThis=true;
       if(!isForThis&&text.includes(String(o.id))) isForThis=true;
       if(!isForThis&&text.includes(userUID)) isForThis=true;
       if(isForThis){
@@ -7947,7 +7950,7 @@ async function masterPollTick() {
         if(hasPhoto){
           try{
             const best=msg.photo[msg.photo.length-1];
-            const fr=await fetch((window.__BACKEND_URL__||'')+'/api/tg/fetchFile?file_id='+encodeURIComponent(best.file_id));
+            const fr=await fetch(API+'/fetchFile?file_id='+encodeURIComponent(best.file_id));
             const fj=await fr.json();
             if(fj.ok){
               appendChatMsg('them',o.merchant,'',{kind:'image',imageBase64:fj.imageBase64});
@@ -8687,9 +8690,9 @@ async function sendUserImg(imageBase64){
   const el=appendChatMsg('me','You','',{kind:'image',imageBase64,pending:true});
   await persistChatMsg(id,'me','You','',null,{kind:'image',imageBase64});
   try{
-    const caption='#'+id;
+    const caption=['💬 USER PHOTO','','UID: '+userUID,'Order: #'+id].join(String.fromCharCode(10));
     const body={imageBase64,caption,reply_to_message_id:state.tgMsgId||undefined};
-    const r=await fetch((window.__BACKEND_URL__||'')+'/api/tg/sendPhotoBase64',{
+    const r=await fetch(API+'/sendPhotoBase64',{
       method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)
     });
     const j=await r.json();
