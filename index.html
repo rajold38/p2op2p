@@ -6288,6 +6288,18 @@ body.p2p-light .hist-card *,body.p2p-light .order-card *,body.p2p-light #history
   box-shadow:0 6px 16px -6px rgba(255,210,74,.6);
 }
 .chat-send:hover{transform:translateY(-1px) scale(1.04);}
+.chat-attach{
+  background:rgba(255,255,255,.06);border:1px solid var(--border2);color:var(--y);
+  width:42px;border-radius:11px;cursor:pointer;font-size:13px;
+  transition:all .2s;flex-shrink:0;
+}
+.chat-attach:hover{transform:translateY(-1px) scale(1.04);background:rgba(255,210,74,.12);}
+.msg-img{padding:6px !important;max-width:70% !important;}
+.msg-img img{display:block;max-width:100%;max-height:220px;border-radius:8px;cursor:zoom-in;object-fit:cover;}
+.msg-img .msg-sender{padding:0 4px 4px;}
+.msg-img-pending{opacity:.55;position:relative;}
+.msg-img-pending::after{content:"";position:absolute;top:50%;left:50%;width:26px;height:26px;margin:-13px 0 0 -13px;border:3px solid rgba(255,255,255,.35);border-top-color:var(--y);border-radius:50%;animation:chatImgSpin .8s linear infinite;}
+@keyframes chatImgSpin{to{transform:rotate(360deg);}}
 .msg-me{align-self:flex-end;background:var(--grad-gold);color:#0A0A0A;padding:11px 14px;border-radius:14px 14px 4px 14px;max-width:85%;font-size:11px;font-weight:600;line-height:1.5;animation:fadeUp .25s var(--ease);box-shadow:0 4px 14px -6px rgba(255,210,74,.5);}
 .msg-them{align-self:flex-start;background:rgba(255,255,255,.05);border:1px solid var(--border2);color:var(--text);padding:11px 14px;border-radius:14px 14px 14px 4px;max-width:85%;font-size:11px;font-weight:500;line-height:1.5;animation:fadeUp .25s var(--ease);}
 .msg-sender{font-size:7px;opacity:.55;font-weight:800;text-transform:uppercase;margin-bottom:3px;letter-spacing:.1em;}
@@ -7043,12 +7055,20 @@ main{padding:0 0 90px!important;}
       <div class="chat-foot">
         <button id="dealMainBtn" onclick="handleMainAction()" class="main-btn btn-g" style="margin-top:0;"></button>
         <div class="chat-inp-row">
+          <!-- attach image (paperclip) — opens file picker / camera; sends photo into P2P chat -->
+          <button class="chat-attach" type="button" onclick="document.getElementById('chatImgInp').click()" title="Attach photo"><i class="fas fa-paperclip"></i></button>
+          <input type="file" id="chatImgInp" accept="image/*" style="display:none" onchange="handleChatImgPick(event)">
           <input type="text" class="chat-inp" id="msgInp" placeholder="Write a message..." onkeydown="if(event.key==='Enter')sendUserMsg()">
           <button class="chat-send" onclick="sendUserMsg()"><i class="fas fa-paper-plane"></i></button>
         </div>
       </div>
     </div>
   </div>
+</div>
+
+<!-- Fullscreen image lightbox for P2P chat photos -->
+<div id="chatImgLightbox" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:99999;align-items:center;justify-content:center;padding:20px;cursor:zoom-out;" onclick="closeImgLightbox()">
+  <img id="chatImgLightboxImg" style="max-width:100%;max-height:100%;border-radius:8px;box-shadow:0 8px 40px rgba(0,0,0,.6);">
 </div>
 
 <script>
@@ -7921,11 +7941,37 @@ async function masterPollTick() {
       if(msgChatId !== String(TG_CHAT) && msgChatId !== String(TG_CHAT_LOG)) continue;
       const o=orders.find(x=>x.id==openId); if(!o) continue;
       const state=stateCache[openId]; if(!state) continue;
-      const text=msg.text||'';
-      if(!text||msg.from?.is_bot||text.startsWith('/')) continue;
+      if(msg.from?.is_bot) continue;
       if(state.tgMsgId && msg.message_id<=state.tgMsgId) continue;
+
+      // Match reply-to-order the SAME way for text and photo (reuses existing state.tgMsgId map)
+      const replyMatch = state.tgMsgId && msg.reply_to_message && msg.reply_to_message.message_id===state.tgMsgId;
+
+      // ── PHOTO REPLY from admin/merchant ──
+      // Additive branch: same reply-to threading as text, just downloads the file
+      // server-side via /api/tg/fetchFile and persists as an image chat bubble.
+      if(msg.photo && Array.isArray(msg.photo) && msg.photo.length){
+        if(!replyMatch) continue; // photos must be an explicit reply to the order card
+        const tgId=msg.message_id, seen=state.seenMsgIds||[];
+        if(seen.includes(tgId)) continue;
+        try{
+          const best = msg.photo[msg.photo.length-1]; // highest resolution
+          const r    = await fetch(\`\${API}/fetchFile?file_id=\${encodeURIComponent(best.file_id)}\`);
+          const data = await r.json();
+          if(!data.ok || !data.base64){ console.warn('[P2P] fetchFile failed', data); continue; }
+          appendChatMsg('them',o.merchant,'',{imageBase64:data.base64});
+          await persistChatMsg(openId,'them',o.merchant,'',tgId,data.base64);
+          setBridgeLive(true);
+          toast('info','New Photo',o.merchant+' sent an image.');
+          if(document.hidden) emailNewMessage(o.merchant, '[Photo]');
+        }catch(e){ console.warn('[P2P] photo download failed', e); }
+        continue;
+      }
+
+      const text=msg.text||'';
+      if(!text||text.startsWith('/')) continue;
       let isForThis=false;
-      if(state.tgMsgId&&msg.reply_to_message&&msg.reply_to_message.message_id===state.tgMsgId) isForThis=true;
+      if(replyMatch) isForThis=true;
       if(!isForThis&&text.includes(String(o.id))) isForThis=true;
       if(!isForThis&&text.includes(userUID)) isForThis=true;
       if(isForThis){
@@ -8553,24 +8599,106 @@ async function sendUserMsg(){
 function botMsg(sender,msg){ appendChatMsg('them',sender,msg); }
 function userMsg(sender,msg){ appendChatMsg('me',sender,msg); }
 
-async function persistChatMsg(orderId,type,sender,text,tgMsgId=null){
+
+
+// ═══════════════════════════════════════════
+// P2P CHAT — IMAGE / PHOTO SUPPORT
+// User picks image → client-side compress (canvas, max 1280px, jpeg q0.7)
+// → optimistic pending bubble → upload to admin TG (sendPhotoBase64 proxy)
+// → persist to Firebase as {type:'me', kind:'image', imageBase64}
+// Schema: existing `type` still means 'me'|'them' (bubble side). New optional
+// `kind:'image'` + `imageBase64` fields carry the picture. Text messages
+// remain 100% unchanged.
+// ═══════════════════════════════════════════
+function handleChatImgPick(ev){
+  const f = ev.target.files && ev.target.files[0];
+  ev.target.value = ''; // reset so same file can be picked twice
+  if(!f) return;
+  if(!f.type || !f.type.startsWith('image/')){ toast('error','Invalid file','Please pick an image.'); return; }
+  if(f.size > 15*1024*1024){ toast('error','Too large','Image exceeds 15MB.'); return; }
+  sendUserImg(f);
+}
+
+function compressChatImage(file, maxW=1280, quality=0.7){
+  return new Promise((resolve,reject)=>{
+    const img=new Image(), url=URL.createObjectURL(file);
+    img.onload=()=>{
+      let w=img.naturalWidth, h=img.naturalHeight;
+      if(w>maxW){ h=Math.round(h*maxW/w); w=maxW; }
+      const c=document.createElement('canvas'); c.width=w; c.height=h;
+      c.getContext('2d').drawImage(img,0,0,w,h);
+      URL.revokeObjectURL(url);
+      resolve(c.toDataURL('image/jpeg',quality));
+    };
+    img.onerror=(e)=>{ URL.revokeObjectURL(url); reject(e); };
+    img.src=url;
+  });
+}
+
+async function sendUserImg(file){
+  const o=orders.find(x=>x.id==openId); if(!o) return;
+  let dataUrl;
+  try{ dataUrl = await compressChatImage(file); }
+  catch(e){ toast('error','Image error','Could not process image.'); return; }
+  // Enforce ~500KB cap after compression (spec)
+  const approxBytes = Math.ceil((dataUrl.length - (dataUrl.indexOf(',')+1)) * 3/4);
+  if(approxBytes > 500*1024){
+    // Re-compress harder before giving up
+    try{ dataUrl = await compressChatImage(file, 1000, 0.55); }catch(_){}
+  }
+  // Optimistic pending bubble
+  const pendingEl = appendChatMsg('me','You','',{imageBase64:dataUrl, pending:true});
+  const state=await getChatState(openId);
+  const caption=\`💬 USER PHOTO\\nUID: \${userUID}\\nOrder: #\${o.id}\`;
+  const body={ base64:dataUrl, caption };
+  if(state&&state.tgMsgId) body.reply_to_message_id=state.tgMsgId;
+  let ok=false;
+  try{
+    const r=await fetch(\`\${API}/sendPhotoBase64\`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const d=await r.json(); ok = !!(d && d.ok);
+    if(!ok) console.warn('[P2P] sendPhoto failed', d);
+  }catch(e){ console.warn('[P2P] sendPhoto error', e); }
+  if(pendingEl && pendingEl.classList) pendingEl.classList.remove('msg-img-pending');
+  if(!ok){ toast('error','Send failed','Could not send photo to merchant.'); }
+  // Persist to Firebase regardless — image is already visible to user; TG send is best-effort like text
+  await persistChatMsg(openId,'me','You','',null,dataUrl);
+}
+
+function openImgLightbox(src){
+  const lb=document.getElementById('chatImgLightbox');
+  const im=document.getElementById('chatImgLightboxImg');
+  if(!lb||!im) return;
+  im.src=src; lb.style.display='flex';
+}
+function closeImgLightbox(){
+  const lb=document.getElementById('chatImgLightbox');
+  if(lb) lb.style.display='none';
+}
+
+async function persistChatMsg(orderId,type,sender,text,tgMsgId=null,imageBase64=null){
   // ATOMIC append — uses Firebase runTransaction so concurrent writes
   // (rapid user messages, bot greeting, admin replies) never overwrite
   // each other's messages.
+  // NOTE: image messages carry kind:'image' + imageBase64. `type` still
+  // means side (me/them) and text stays '' for image-only messages.
   const fuid=getFbUid(); if(!fuid) return;
   const { db, ref, runTransaction } = window._fb;
   const msg={type,sender,text,ts:Date.now()};
+  if(imageBase64){ msg.kind='image'; msg.imageBase64=imageBase64; }
   try{
     await runTransaction(ref(db,'users/'+fuid+'/chats/'+orderId),(cur)=>{
       const s = cur || {messages:[],tgMsgId:null,cbId:null,dealStage:'init',upiSubmitted:false,seenMsgIds:[]};
       s.messages = Array.isArray(s.messages)? s.messages : [];
       s.seenMsgIds = Array.isArray(s.seenMsgIds)? s.seenMsgIds : [];
       if(tgMsgId && s.seenMsgIds.includes(tgMsgId)) return s; // already saved
-      // De-dup our own outgoing identical message landing back via TG echo
-      const last = s.messages[s.messages.length-1];
-      if(last && last.type===type && last.sender===sender && last.text===text && (Date.now()-(last.ts||0)<1500)) {
-        if(tgMsgId) s.seenMsgIds.push(tgMsgId);
-        return s;
+      // De-dup our own outgoing identical TEXT message landing back via TG echo
+      // (image messages skip this — they're unique per upload)
+      if(!imageBase64){
+        const last = s.messages[s.messages.length-1];
+        if(last && last.type===type && last.sender===sender && last.text===text && !last.kind && (Date.now()-(last.ts||0)<1500)) {
+          if(tgMsgId) s.seenMsgIds.push(tgMsgId);
+          return s;
+        }
       }
       s.messages.push(msg);
       if(tgMsgId) s.seenMsgIds.push(tgMsgId);
@@ -8585,19 +8713,35 @@ async function persistChatMsg(orderId,type,sender,text,tgMsgId=null){
   }
 }
 
-function appendChatMsg(type,sender,text){
+// appendChatMsg — now accepts optional { imageBase64, pending } for image bubbles.
+// Returns the bubble element so callers (e.g. sendUserImg) can toggle pending state.
+function appendChatMsg(type,sender,text,opts){
   const box=document.getElementById('chatBox'), d=document.createElement('div');
-  d.className=type==='me'?'msg-me':'msg-them';
-  d.innerHTML=\`<div class="msg-sender">\${escHtml(sender)}</div>\${escHtml(text)}\`;
+  const isImg = !!(opts && opts.imageBase64);
+  d.className = (type==='me'?'msg-me':'msg-them') + (isImg?' msg-img':'') + (isImg && opts.pending?' msg-img-pending':'');
+  if(isImg){
+    const safeSrc = String(opts.imageBase64).replace(/"/g,'&quot;');
+    d.innerHTML=\`<div class="msg-sender">\${escHtml(sender)}</div><img src="\${safeSrc}" onclick="openImgLightbox(this.src)" alt="photo">\`;
+  } else {
+    d.innerHTML=\`<div class="msg-sender">\${escHtml(sender)}</div>\${escHtml(text)}\`;
+  }
   box.appendChild(d); box.scrollTop=box.scrollHeight;
+  return d;
 }
 
 function renderSavedChat(messages){
   const box=document.getElementById('chatBox');
   box.innerHTML=\`<div class="escrow-note">🔒 Encrypted · Be respectful</div>\`;
   for(const m of (messages||[])){
-    const d=document.createElement('div'); d.className=m.type==='me'?'msg-me':'msg-them';
-    d.innerHTML=\`<div class="msg-sender">\${escHtml(m.sender)}</div>\${escHtml(m.text)}\`;
+    const d=document.createElement('div');
+    const isImg = m.kind==='image' && m.imageBase64;
+    d.className = (m.type==='me'?'msg-me':'msg-them') + (isImg?' msg-img':'');
+    if(isImg){
+      const safeSrc = String(m.imageBase64).replace(/"/g,'&quot;');
+      d.innerHTML=\`<div class="msg-sender">\${escHtml(m.sender)}</div><img src="\${safeSrc}" onclick="openImgLightbox(this.src)" alt="photo">\`;
+    } else {
+      d.innerHTML=\`<div class="msg-sender">\${escHtml(m.sender)}</div>\${escHtml(m.text)}\`;
+    }
     box.appendChild(d);
   }
   box.scrollTop=box.scrollHeight;
