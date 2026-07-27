@@ -590,9 +590,12 @@ select.bysel{background:var(--bg3);border:none;color:var(--text2);font-size:12px
 /* P2P iframe screen */
 #sc-p2p{padding:0}
 #sc-p2p iframe{flex:1;width:100%;border:none;background:#07080B}
+body.light #sc-p2p iframe{background:#ffffff!important;}
+body.on-p2p{background:#000!important;}
+body.light.on-p2p,body.light.on-p2p #app,body.light.on-p2p main{background:#ffffff!important;}
 body.on-p2p .bnav{display:none!important;}
-body.on-p2p #sc-p2p{position:fixed;inset:0;z-index:200;max-width:100%;}
-body.on-p2p #sc-p2p iframe{height:100vh;height:100dvh;}
+body.on-p2p #sc-p2p{position:fixed;inset:0;z-index:200;max-width:100%;width:100%;left:0;right:0;background:inherit;}
+body.on-p2p #sc-p2p iframe{height:100vh;height:100dvh;width:100%;display:block;}
 </style>
 
 <!-- ─── FIREBASE SDK ─── -->
@@ -6119,6 +6122,45 @@ body.p2p-light .rep-sub,body.p2p-light .proof-sub{color:#5e6673!important;}
 body.p2p-light .rep-opt{background:#f7f8fa!important;border-color:#eaecef!important;color:#0b0e11!important;}
 body.p2p-light .rep-note{background:#f7f8fa!important;border-color:#eaecef!important;color:#0b0e11!important;}
 body.p2p-light .rep-cancel,body.p2p-light .proof-cancel{background:#f3f5f7!important;color:#0b0e11!important;border-color:#e5e7eb!important;}
+
+/* ─── Buy/Sell action overlay (byt-act) light theme ─── */
+body.p2p-light .byt-act-ov,
+body.p2p-light .byt-act,
+body.p2p-light .byt-act-foot{background:#ffffff!important;}
+body.p2p-light .byt-act-foot{border-top:1px solid #eaecef!important;}
+body.p2p-light .byt-act-head,
+body.p2p-light .byt-act-title,
+body.p2p-light .byt-act-back,
+body.p2p-light .byt-act-price .lbl,
+body.p2p-light .byt-amt-inp,
+body.p2p-light .byt-amt-unit,
+body.p2p-light .byt-pt.on,
+body.p2p-light .byt-pm-name,
+body.p2p-light .byt-recv-row .rv,
+body.p2p-light .byt-merch-name,
+body.p2p-light .byt-foot-amt{color:#0b0e11!important;}
+body.p2p-light .byt-amt-inp{background:transparent!important;border:none!important;}
+body.p2p-light .byt-amt-inp::placeholder{color:#c9ced6!important;}
+body.p2p-light .byt-pay-tabs,
+body.p2p-light .byt-amt-row,
+body.p2p-light .byt-limits-row,
+body.p2p-light .byt-recv-row,
+body.p2p-light .byt-pm-card{background:#f3f5f7!important;}
+body.p2p-light .byt-limits-row{border-bottom-color:#eaecef!important;color:#5e6673!important;}
+body.p2p-light .byt-recv-row,
+body.p2p-light .byt-recv-row .rvu,
+body.p2p-light .byt-foot-amt #actFootUnit,
+body.p2p-light .byt-foot-lbl,
+body.p2p-light .byt-merch-row2,
+body.p2p-light .byt-merch-right,
+body.p2p-light .byt-act-price .cd{color:#5e6673!important;}
+body.p2p-light .byt-merch-right{border-left-color:#eaecef!important;}
+body.p2p-light .byt-pm-count{background:#0b0e11!important;color:#ffffff!important;}
+body.p2p-light .byt-sec-chip{background:#eff2f5!important;color:#5e6673!important;}
+body.p2p-light .byt-sec-chip i{color:#5e6673!important;}
+body.p2p-light .byt-amt-sep{color:#c9ced6!important;}
+
+
 
 
 
