@@ -11641,5 +11641,95 @@ body.light [style*="background:#181a20"]{color:#0b0e11 !important}
 })();
 </script>
 
+
+<!-- ═══════════ AUTH KEEPALIVE / ANTI AUTO-LOGOUT GUARD (added) ═══════════ -->
+<script>
+(function(){
+  if (window.__authGuardInstalled) return;
+  window.__authGuardInstalled = true;
+
+  window.__userInitiatedLogout = false;
+
+  function auth(){ return window._fb && window._fb.auth; }
+
+  // 1) Wrap doLogout so we know a sign-out was intentional.
+  function wrapLogout(){
+    if (typeof window.doLogout !== 'function' || window.doLogout.__wrapped) return;
+    var orig = window.doLogout;
+    var w = async function(){
+      window.__userInitiatedLogout = true;
+      try { return await orig.apply(this, arguments); }
+      finally { setTimeout(function(){ window.__userInitiatedLogout = false; }, 8000); }
+    };
+    w.__wrapped = true;
+    window.doLogout = w;
+  }
+  wrapLogout();
+  var wrapIv = setInterval(wrapLogout, 500);
+  setTimeout(function(){ clearInterval(wrapIv); }, 15000);
+
+  // 2) Swallow transient "signed out" events.
+  //    Firebase fires onAuthStateChanged(null) on flaky networks / token refresh
+  //    hiccups. We only accept it if the user is STILL null a few seconds later
+  //    and the sign-out was not triggered by the user.
+  var origOut = window.onFirebaseLogout;
+  window.onFirebaseLogout = function(){
+    var self = this, args = arguments;
+    if (window.__userInitiatedLogout) {
+      return origOut && origOut.apply(self, args);
+    }
+    // transient? verify before tearing down the session
+    setTimeout(function(){
+      var a = auth();
+      if (a && a.currentUser) {
+        // false alarm — session is alive, do nothing
+        try { console.warn('[auth-guard] ignored transient sign-out'); } catch(e){}
+        return;
+      }
+      if (window.__userInitiatedLogout) return;
+      // try one silent restore from the persisted session before giving up
+      if (a && typeof a.authStateReady === 'function') {
+        a.authStateReady().then(function(){
+          if (a.currentUser) return;
+          origOut && origOut.apply(self, args);
+        }).catch(function(){ origOut && origOut.apply(self, args); });
+      } else {
+        origOut && origOut.apply(self, args);
+      }
+    }, 4000);
+  };
+
+  // 3) Keep the ID token fresh so it never silently expires.
+  async function refreshToken(force){
+    try {
+      var a = auth();
+      if (a && a.currentUser) await a.currentUser.getIdToken(!!force);
+    } catch(e){ try{ console.warn('[auth-guard] token refresh failed', e && e.code); }catch(_){} }
+  }
+  setInterval(function(){ refreshToken(true); }, 20 * 60 * 1000);   // every 20 min
+  document.addEventListener('visibilitychange', function(){
+    if (document.visibilityState === 'visible') refreshToken(false);
+  });
+  window.addEventListener('online', function(){ refreshToken(true); });
+  window.addEventListener('focus', function(){ refreshToken(false); });
+
+  // 4) Make sure the session is stored on-device (survives reload / app switch).
+  (function ensurePersistence(){
+    var tries = 0;
+    var iv = setInterval(async function(){
+      var a = auth();
+      if (!a) { if (++tries > 40) clearInterval(iv); return; }
+      clearInterval(iv);
+      try {
+        var m = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js");
+        try { await a.setPersistence(m.indexedDBLocalPersistence); }
+        catch(e){ try { await a.setPersistence(m.browserLocalPersistence); } catch(_){} }
+      } catch(e){}
+      refreshToken(false);
+    }, 250);
+  })();
+})();
+</script>
+
 </body>
 </html>
