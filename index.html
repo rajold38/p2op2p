@@ -598,12 +598,20 @@ body.on-p2p #sc-p2p{position:fixed;inset:0;z-index:200;max-width:none;width:100v
 body.on-p2p #sc-p2p iframe{height:100vh;height:100dvh;width:100%;display:block;}
 </style>
 
+<link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://newp2p-2c844-default-rtdb.firebaseio.com" crossorigin>
+<link rel="preconnect" href="https://identitytoolkit.googleapis.com" crossorigin>
+<link rel="preconnect" href="https://api.coingecko.com" crossorigin>
+<link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js">
+<link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js">
+<link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js">
 <!-- ─── FIREBASE SDK ─── -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword,
          signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile,
-         sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+         sendPasswordResetEmail, RecaptchaVerifier, signInWithPhoneNumber, PhoneAuthProvider, signInWithCustomToken,
+         setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getDatabase, ref, set, get, update, onValue, push, serverTimestamp }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 import { runTransaction, off } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
@@ -622,12 +630,15 @@ const firebaseConfig = {
 import { getApps } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 const app  = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
 const auth = getAuth(app);
+// Keep the session on-device so a returning user is restored without waiting on the network.
+try { await setPersistence(auth, browserLocalPersistence); } catch(e) {}
 const db   = getDatabase(app);
 
 window._fb = {
   auth, db, GoogleAuthProvider, signInWithPopup,
   createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut,
   onAuthStateChanged, updateProfile, sendPasswordResetEmail,
+  RecaptchaVerifier, signInWithPhoneNumber, PhoneAuthProvider, signInWithCustomToken,
   ref, set, get, update, onValue, push, serverTimestamp, runTransaction, off
 };
 
@@ -2981,9 +2992,10 @@ window.onFirebaseUser = async function(fbUser) {
       const shortUID = 'U' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).slice(2,5).toUpperCase();
       userData = {
         uid: shortUID, firebaseUid: uid,
-        name: fbUser.displayName || fbUser.email.split('@')[0],
-        email: fbUser.email,
-        avatar: (fbUser.displayName || fbUser.email)[0].toUpperCase(),
+        name: fbUser.displayName || (fbUser.email ? fbUser.email.split('@')[0] : (fbUser.phoneNumber || 'User')),
+        email: fbUser.email || '',
+        phone: fbUser.phoneNumber || '',
+        avatar: ((fbUser.displayName || fbUser.email || fbUser.phoneNumber || 'U')[0] || 'U').toUpperCase(),
         avatarUrl: fbUser.photoURL || null,
         provider: fbUser.providerData[0]?.providerId || 'unknown',
         createdAt: Date.now(), balance: 0
@@ -3051,7 +3063,8 @@ function updateUserUI() {
     if(ab) ab.innerHTML = av_img;
     if(an) {
       const e = u.email || '';
-      const masked = e ? e[0]+'***@'+(e.split('@')[1]||'') : (u.name||'User');
+      const masked = e ? e[0]+'***@'+(e.split('@')[1]||'')
+                       : (u.phone ? u.phone.replace(/^(\+?\d{2,3})\d+(\d{2})$/, '$1*****$2') : (u.name||'User'));
       an.textContent = masked + ' ▾';
     }
   } else {
@@ -11121,5 +11134,512 @@ body.light [style*="background:#181a20"]{color:#0b0e11 !important}
   scroller.addEventListener('touchcancel',end,{passive:true});
 })();
 </script>
+<!-- ══════════════════════════════════════════════════════════════════
+     BIEXC PATCH v5
+     1) Login/Signup UI rebuilt (solid dark, Binance style, Google only)
+     2) Email + Phone (OTP) authentication
+     3) Accurate coin logos (CoinGecko registry + smart fallback)
+     4) Instant session restore (no 2-3s login delay)
+     ══════════════════════════════════════════════════════════════════ -->
+<style id="bxa-v5-style">
+#authOverlay{background:#181A20!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;padding:0!important;}
+#authOverlay .bx-bg,#authOverlay .bx-grid,#authOverlay .bx-stars{display:none!important;}
+#authOverlay .auth-modal{background:#181A20!important;box-shadow:none!important;}
+.bxa{position:relative;z-index:3;width:100%;max-width:440px;margin:0 auto;padding:18px 24px 40px;color:#EAECEF;font-family:-apple-system,'SF Pro Display','Helvetica Neue',Arial,sans-serif;}
+.bxa-top{display:flex;align-items:center;justify-content:space-between;height:44px;margin-bottom:26px;}
+.bxa-x{background:none;border:none;color:#EAECEF;font-size:22px;line-height:1;cursor:pointer;padding:4px 6px;}
+.bxa-lang{background:none;border:none;color:#EAECEF;font-size:13px;cursor:pointer;opacity:.85;}
+.bxa-h1{font-size:30px;font-weight:600;letter-spacing:-.4px;color:#fff;margin:0 0 26px;}
+.bxa-label{font-size:14px;color:#EAECEF;margin-bottom:8px;font-weight:500;}
+.bxa-inp{width:100%;height:52px;background:#1E2329;border:1px solid #474D57;border-radius:16px;color:#fff;font-size:15px;padding:0 14px;outline:none;margin-bottom:14px;transition:border-color .18s;}
+.bxa-inp:focus{border-color:#FCD535;box-shadow:none!important;}
+.bxa-inp::placeholder{color:#5E6673;}
+.bxa-btn{width:100%;height:52px;border:none;border-radius:999px;background:#FCD535;color:#181A20;font-size:16px;font-weight:600;cursor:pointer;margin-top:6px;transition:opacity .18s;}
+.bxa-btn:active{opacity:.85;}
+.bxa-btn[disabled]{opacity:.5;cursor:default;}
+.bxa-or{display:flex;align-items:center;gap:12px;margin:26px 0 18px;}
+.bxa-or span{flex:1;height:1px;background:#2B3139;}
+.bxa-or b{font-size:13px;color:#848E9C;font-weight:400;}
+.bxa-social{width:100%;height:52px;border:1px solid #474D57;border-radius:999px;background:transparent;color:#EAECEF;font-size:15px;font-weight:500;display:flex;align-items:center;justify-content:center;gap:10px;cursor:pointer;}
+.bxa-social img{width:20px;height:20px;}
+.bxa-social:active{background:#2B3139;}
+.bxa-alt{margin-top:26px;font-size:14px;color:#848E9C;text-align:center;}
+.bxa-alt b{color:#FCD535;font-weight:600;cursor:pointer;}
+.bxa-link{font-size:13px;color:#FCD535;cursor:pointer;display:inline-block;margin-bottom:4px;}
+.bxa-check{display:flex;gap:10px;align-items:flex-start;margin:18px 0 4px;font-size:12px;color:#848E9C;line-height:1.5;}
+.bxa-check input{width:16px;height:16px;accent-color:#FCD535;margin-top:1px;flex:0 0 auto;}
+.bxa-check a{color:#FCD535;text-decoration:none;}
+.bxa-note{font-size:12px;color:#848E9C;margin:-4px 0 12px;}
+.bxa-err{font-size:12px;color:#F6465D;margin:0 0 12px;min-height:14px;}
+#bxaRecaptcha{margin:0 0 6px;}
+.bxa-inp,.bxa-btn,.bxa-social{border-radius:inherit;}
+.bxa-inp{border-radius:16px!important;}
+.bxa-btn,.bxa-social{border-radius:999px!important;}
+.bxa-phone{display:flex;gap:8px;align-items:center;margin-bottom:14px;}
+.bxa-cc{height:52px;background:#1E2329;border:1px solid #474D57;border-radius:16px;color:#fff;font-size:15px;padding:0 10px;outline:none;flex:0 0 96px;}
+.bxa-cc:focus{border-color:#FCD535;}
+</style>
+<script>
+/* ═══════════ 1 · AUTH UI v5 (email + phone + google) ═══════════ */
+(function(){
+  var MODE = 'signin';       // signin | signup
+  var STEP = 'form';         // form | otp | reset
+  var recaptcha = null;
+
+  function el(id){ return document.getElementById(id); }
+  function T(m){ try{ toast(m); }catch(e){ console.warn(m); } }
+  function err(m){ var e = el('bxaErr'); if(e) e.textContent = m || ''; }
+  function isPhone(v){ return /^\+?[0-9][0-9\s\-()]{7,}$/.test(String(v||'').trim()); }
+  function normPhone(v){
+    var s = String(v||'').replace(/[\s\-()]/g,'');
+    if(s[0] !== '+'){
+      var ccEl = document.getElementById('bxaCC');
+      var cc = (ccEl && ccEl.value) || '+91';
+      s = cc + s.replace(/^0+/,'');
+    }
+    return s;
+  }
+
+  function markup(){
+    return ''
+    + '<div class="auth-modal">'
+    + '<div class="bxa">'
+    + '  <div class="bxa-top">'
+    + '    <button class="bxa-x" onclick="closeAuth()">&times;</button>'
+    + '    <button class="bxa-lang" type="button">EN | USD</button>'
+    + '  </div>'
+    + '  <h1 class="bxa-h1" id="bxaTitle">Log in</h1>'
+    + '  <div id="bxaForm">'
+    + '    <div class="bxa-label">Email/Phone number</div>'
+    + '    <div class="bxa-phone">'
+    + '      <select class="bxa-cc" id="bxaCC" style="display:none">'
+    + '        <option value="+91">+91</option><option value="+1">+1</option><option value="+44">+44</option>'
+    + '        <option value="+971">+971</option><option value="+880">+880</option><option value="+92">+92</option>'
+    + '        <option value="+234">+234</option><option value="+62">+62</option><option value="+63">+63</option>'
+    + '        <option value="+7">+7</option><option value="+81">+81</option><option value="+86">+86</option>'
+    + '      </select>'
+    + '      <input class="bxa-inp" id="regEmail" type="text" autocomplete="username" placeholder="Email or phone number" style="margin-bottom:0">'
+    + '    </div>'
+    + '    <div id="bxaNameWrap" style="display:none"><div class="bxa-label">Name</div>'
+    + '      <input class="bxa-inp" id="regName" type="text" autocomplete="name" placeholder="Full name"></div>'
+    + '    <div id="bxaPassWrap"><div class="bxa-label">Password</div>'
+    + '      <input class="bxa-inp" id="regPass" type="password" autocomplete="current-password" placeholder="Password"></div>'
+    + '    <div id="bxaConfirmWrap" style="display:none">'
+    + '      <input class="bxa-inp" id="regPassConfirm" type="password" placeholder="Confirm password"></div>'
+    + '    <div id="bxaPhoneNote" class="bxa-note" style="display:none">We will send a 6-digit code to this number.</div>'
+    + '    <span class="bxa-link" id="forgotLink" onclick="showResetPanel()">Forgot password?</span>'
+    + '    <div class="bxa-check" id="bxaTerms" style="display:none">'
+    + '      <input type="checkbox" id="bxaAgree">'
+    + '      <label for="bxaAgree">By creating an account, I agree to Biexc\'s <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.</label>'
+    + '    </div>'
+    + '    <div class="bxa-err" id="bxaErr"></div>'
+    + '    <div id="bxaRecaptcha"></div>'
+    + '    <button class="bxa-btn" id="loginSubmitBtn">Log In</button>'
+    + '  </div>'
+    + '  <div id="bxaOtp" style="display:none">'
+    + '    <div class="bxa-label">Enter the 6-digit code we sent on WhatsApp to <b id="bxaOtpTo"></b></div>'
+    + '    <input class="bxa-inp" id="bxaOtpCode" type="tel" inputmode="numeric" maxlength="6" placeholder="000000">'
+    + '    <div class="bxa-err" id="bxaOtpErr"></div>'
+    + '    <button class="bxa-btn" id="bxaOtpBtn">Verify &amp; Continue</button>'
+    + '    <span class="bxa-link" id="bxaResend" onclick="window.__bxaResendOtp()">Resend code</span>'
+    + '    <div class="bxa-alt">Wrong number? <b onclick="window.__bxaBackToForm()">Go back</b></div>'
+    + '  </div>'
+    + '  <div id="resetPanel" style="display:none">'
+    + '    <div class="bxa-label">Email address</div>'
+    + '    <input class="bxa-inp" id="resetEmail" type="email" placeholder="Email address">'
+    + '    <button class="bxa-btn" onclick="doPasswordReset()">Send reset link</button>'
+    + '    <div class="bxa-alt"><b onclick="hideResetPanel()">Back to log in</b></div>'
+    + '  </div>'
+    + '  <div id="bxaSocial">'
+    + '    <div class="bxa-or"><span></span><b>or</b><span></span></div>'
+    + '    <button class="bxa-social" id="googleSignInBtn" onclick="triggerGoogleSignIn()">'
+    + '      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="">Continue with Google</button>'
+    + '  </div>'
+    + '  <div class="bxa-alt" id="bxaAltRow">Don\'t have an account? <b onclick="switchLoginTab(\'signup\')">Sign up</b></div>'
+    + '</div></div>';
+  }
+
+  function build(){
+    var ov = el('authOverlay');
+    if(!ov || ov.dataset.v5) return;
+    ov.dataset.v5 = '1';
+    ov.innerHTML = markup();
+    ov.onclick = function(e){ if(e.target === ov) closeAuth(); };
+    el('loginSubmitBtn').onclick = submit;
+    el('bxaOtpBtn').onclick = verifyOtp;
+    el('regEmail').addEventListener('input', paint);
+    ['regEmail','regPass','regPassConfirm'].forEach(function(id){
+      var i = el(id); if(i) i.addEventListener('keydown', function(e){ if(e.key === 'Enter') submit(); });
+    });
+    el('bxaOtpCode').addEventListener('keydown', function(e){ if(e.key === 'Enter') verifyOtp(); });
+    paint();
+  }
+
+
+  function paint(){
+    if(!el('bxaTitle')) return;
+    var phone = isPhone(el('regEmail').value);
+    el('bxaTitle').textContent = MODE === 'signup' ? 'Welcome to Biexc' : 'Log in';
+    el('bxaNameWrap').style.display    = MODE === 'signup' ? 'block' : 'none';
+    // Phone login = WhatsApp OTP → no password fields at all.
+    el('bxaPassWrap').style.display    = phone ? 'none' : 'block';
+    el('bxaConfirmWrap').style.display = (MODE === 'signup' && !phone) ? 'block' : 'none';
+    el('bxaPhoneNote').style.display   = phone ? 'block' : 'none';
+    el('bxaPhoneNote').textContent     = 'We will send a 6-digit code to this number on WhatsApp — free, no SMS charges.';
+    var cc = el('bxaCC'); if(cc) cc.style.display = phone ? 'block' : 'none';
+    el('forgotLink').style.display     = (MODE === 'signin' && !phone) ? 'inline-block' : 'none';
+    el('bxaTerms').style.display       = MODE === 'signup' ? 'flex' : 'none';
+    el('loginSubmitBtn').textContent   = phone ? 'Send code on WhatsApp' : (MODE === 'signup' ? 'Register' : 'Log In');
+    el('bxaAltRow').innerHTML = MODE === 'signup'
+      ? 'Already have an account? <b onclick="switchLoginTab(\'signin\')">Log in</b>'
+      : 'Don\'t have an account? <b onclick="switchLoginTab(\'signup\')">Sign up</b>';
+  }
+
+
+
+  function showStep(s){
+    STEP = s;
+    if(!el('bxaForm')) return;
+    el('bxaForm').style.display   = s === 'form' ? 'block' : 'none';
+    el('bxaOtp').style.display    = s === 'otp'   ? 'block' : 'none';
+    el('resetPanel').style.display= s === 'reset' ? 'block' : 'none';
+    el('bxaSocial').style.display = s === 'form' ? 'block' : 'none';
+    el('bxaAltRow').style.display = s === 'form' ? 'block' : 'none';
+    if(s === 'reset') el('bxaTitle').textContent = 'Reset password';
+    if(s === 'otp')   el('bxaTitle').textContent = 'Verify phone';
+    if(s === 'form')  paint();
+  }
+  window.__bxaBackToForm = function(){ try{ clearInterval(otpTimer); }catch(e){} showStep('form'); };
+
+  /* ── WhatsApp OTP (free, unlimited — served by our own server) ── */
+  var OTP_BASE = (function(){
+    try{
+      var b = (window.parent && window.parent !== window && window.parent.__BACKEND_URL__) || window.__BACKEND_URL__ || '';
+      if(b) return String(b).replace(/\/$/,'');
+      if(location.protocol === 'file:' || location.origin === 'null') return 'https://p2p-telegram-bot.onrender.com';
+      return location.origin;
+    }catch(e){ return ''; }
+  })();
+  var otpPhone = '', otpName = '', otpTimer = null;
+
+  function otpErrText(code, j){
+    if(code === 'whatsapp_not_linked') return 'WhatsApp login is temporarily offline. Use Google or email for now.';
+    if(code === 'not_on_whatsapp')     return 'This number has no WhatsApp account. Use a WhatsApp number or sign in with Google.';
+    if(code === 'too_soon')            return 'Please wait ' + ((j && j.waitSec) || 60) + 's before requesting a new code.';
+    if(code === 'rate_limited')        return 'Too many codes requested. Try again in an hour.';
+    if(code === 'bad_phone')           return 'Enter a valid phone number with country code.';
+    if(code === 'invalid_code')        return 'Wrong code.' + (j && j.left != null ? ' ' + j.left + ' attempt(s) left.' : '');
+    if(code === 'expired' || code === 'no_code') return 'Code expired — request a new one.';
+    if(code === 'too_many_tries')      return 'Too many wrong attempts — request a new code.';
+    return code || 'Something went wrong. Try again.';
+  }
+
+  async function api(path, body){
+    var r = await fetch(OTP_BASE + path, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body || {})
+    });
+    var j = {};
+    try{ j = await r.json(); }catch(e){}
+    return j;
+  }
+
+  function startResendTimer(sec){
+    var link = el('bxaResend');
+    if(!link) return;
+    clearInterval(otpTimer);
+    var left = sec || 60;
+    link.style.pointerEvents = 'none'; link.style.opacity = '.55';
+    link.textContent = 'Resend code in ' + left + 's';
+    otpTimer = setInterval(function(){
+      left--;
+      if(left <= 0){
+        clearInterval(otpTimer);
+        link.textContent = 'Resend code';
+        link.style.pointerEvents = ''; link.style.opacity = '';
+      } else link.textContent = 'Resend code in ' + left + 's';
+    }, 1000);
+  }
+
+  async function sendOtp(phone, btn, target){
+    if(btn) btn.disabled = true;
+    try{
+      var j = await api('/api/otp/send', { phone: phone });
+      if(!j.ok){ (target || err)(otpErrText(j.error, j)); return false; }
+      otpPhone = phone;
+      el('bxaOtpTo').textContent = j.phone || phone;
+      showStep('otp');
+      startResendTimer(60);
+      T('Code sent on WhatsApp');
+      return true;
+    }catch(e){
+      (target || err)('Cannot reach the server. Check your connection.');
+      return false;
+    }finally{ if(btn) btn.disabled = false; }
+  }
+
+  async function submit(){
+    var fb = window._fb;
+    err('');
+    if(!fb) return err('Login system loading — try again');
+    var idv  = (el('regEmail').value || '').trim();
+    var pass = (el('regPass') ? el('regPass').value : '') || '';
+    var btn  = el('loginSubmitBtn');
+    if(!idv) return err('Enter your email or phone number');
+    if(MODE === 'signup' && !el('bxaAgree').checked) return err('Please accept the Terms of Service');
+
+    // ── phone → WhatsApp OTP ──
+    if(isPhone(idv)){
+      otpName = MODE === 'signup' ? (el('regName').value || '').trim() : '';
+      if(MODE === 'signup' && !otpName) return err('Enter your name');
+      await sendOtp(normPhone(idv), btn);
+      return;
+    }
+
+    // ── email + password ──
+    btn.disabled = true;
+    try{
+      if(MODE === 'signup'){
+        var name = (el('regName').value || '').trim();
+        if(!name) throw new Error('Enter your name');
+        if(pass.length < 6) throw new Error('Password must be at least 6 characters');
+        if(pass !== (el('regPassConfirm').value || '')) throw new Error('Passwords do not match');
+        var cred = await fb.createUserWithEmailAndPassword(fb.auth, idv, pass);
+        try{ await fb.updateProfile(cred.user, { displayName: name }); }catch(e){}
+      } else {
+        if(!pass) throw new Error('Enter your password');
+        await fb.signInWithEmailAndPassword(fb.auth, idv, pass);
+      }
+    }catch(e){
+      var c = (e && e.code) || '';
+      if(c === 'auth/wrong-password' || c === 'auth/invalid-credential') err('Wrong password.');
+      else if(c === 'auth/user-not-found') err('No account for this email — tap Sign up first.');
+      else if(c === 'auth/email-already-in-use') err('This email is already registered — log in instead.');
+      else err((e && e.message ? e.message : String(e)).replace('Firebase: ',''));
+    }finally{ btn.disabled = false; }
+  }
+
+  async function verifyOtp(){
+    var fb = window._fb;
+    var code = (el('bxaOtpCode').value || '').replace(/\D/g,'');
+    var e2 = el('bxaOtpErr'); e2.textContent = '';
+    if(code.length < 6){ e2.textContent = 'Enter the 6-digit code'; return; }
+    if(!otpPhone){ e2.textContent = 'Session expired — request a new code'; return; }
+    var btn = el('bxaOtpBtn'); btn.disabled = true;
+    try{
+      var j = await api('/api/otp/verify', { phone: otpPhone, code: code, name: otpName });
+      if(!j.ok || !j.token){ e2.textContent = otpErrText(j.error, j); return; }
+      if(!fb || !fb.signInWithCustomToken){ e2.textContent = 'Login system loading — try again'; return; }
+      await fb.signInWithCustomToken(fb.auth, j.token);
+      try{ localStorage.setItem('bxPhone_' + j.uid, j.phone); }catch(e){}
+      clearInterval(otpTimer);
+      el('bxaOtpCode').value = '';
+      window.closeAuth();
+      T('Logged in');
+    }catch(e){
+      e2.textContent = (e && e.message ? e.message : String(e)).replace('Firebase: ','');
+    }finally{ btn.disabled = false; }
+  }
+
+  window.__bxaResendOtp = function(){
+    if(!otpPhone) return;
+    var e2 = el('bxaOtpErr');
+    sendOtp(otpPhone, el('bxaOtpBtn'), function(m){ if(e2) e2.textContent = m; });
+  };
+
+
+  /* ── public API (overrides the older definitions) ── */
+  window.switchLoginTab = function(m){
+    MODE = (m === 'signup') ? 'signup' : 'signin';
+    try{ loginMode = MODE; }catch(e){}
+    build(); showStep('form'); err('');
+  };
+  window.openAuth = function(tab){
+    if(window.parent && window.parent !== window){
+      try{ window.parent.postMessage({ source:'p2p-iframe', type:'open-login' }, '*'); return; }catch(e){}
+    }
+    build();
+    window.switchLoginTab(tab || 'signin');
+    el('authOverlay').classList.add('show');
+    document.body.style.overflow = 'hidden';
+  };
+  window.closeAuth = function(){
+    var ov = el('authOverlay');
+    if(ov) ov.classList.remove('show');
+    document.body.style.overflow = '';
+  };
+  window.showResetPanel = function(){
+    build();
+    var e = el('regEmail'), r = el('resetEmail');
+    if(e && r && e.value && e.value.indexOf('@') > 0) r.value = e.value.trim();
+    showStep('reset');
+  };
+  window.hideResetPanel = function(){ if(el('bxaForm')) showStep('form'); };
+  window.triggerGoogleSignIn = async function(){
+    var fb = window._fb;
+    if(!fb) return err('Login system loading — try again');
+    try{ await fb.signInWithPopup(fb.auth, new fb.GoogleAuthProvider()); }
+    catch(e){ err((e && e.message ? e.message : String(e)).replace('Firebase: ','')); }
+  };
+  window.doPasswordReset = async function(){
+    var fb = window._fb, email = (el('resetEmail').value || '').trim();
+    if(!email) return T('Enter your email address');
+    try{ await fb.sendPasswordResetEmail(fb.auth, email); T('Reset link sent to ' + email); showStep('form'); }
+    catch(e){ T((e && e.message ? e.message : String(e)).replace('Firebase: ','')); }
+  };
+
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', build);
+  else build();
+})();
+
+/* ═══════════ 2 · INSTANT SESSION RESTORE (kills the 2-3s delay) ═══════════ */
+(function(){
+  var KEY = 'biexc_user_cache_v1';
+  try{
+    var raw = localStorage.getItem(KEY);
+    if(raw){
+      var u = JSON.parse(raw);
+      if(u && u.firebaseUid){
+        window.currentFbUser = u;                       // paint logged-in UI immediately
+        window.__optimisticUser = true;
+        var apply = function(){
+          try{ typeof updateUserUI === 'function' && updateUserUI(); }catch(e){}
+          try{ typeof updateNavState === 'function' && updateNavState(); }catch(e){}
+          var ov = document.getElementById('authOverlay');
+          if(ov) ov.classList.remove('show');
+        };
+        if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', apply);
+        else apply();
+      }
+    }
+  }catch(e){}
+
+  // Persist the resolved profile + drop the optimistic copy if auth says signed out.
+  var prevUser = window.onFirebaseUser;
+  window.onFirebaseUser = async function(fbUser){
+    var r = prevUser ? await prevUser.call(this, fbUser) : undefined;
+    try{ localStorage.setItem(KEY, JSON.stringify(window.currentFbUser || {})); }catch(e){}
+    window.__optimisticUser = false;
+    return r;
+  };
+  var prevOut = window.onFirebaseLogout;
+  window.onFirebaseLogout = function(){
+    try{ localStorage.removeItem(KEY); }catch(e){}
+    window.__optimisticUser = false;
+    if(prevOut) return prevOut.call(this);
+  };
+})();
+
+/* ═══════════ 3 · ACCURATE COIN LOGOS ═══════════ */
+(function(){
+  var CKEY = 'biexc_logo_registry_v1';
+  var TTL  = 24 * 60 * 60 * 1000;
+  var REG  = {};                              // SYMBOL -> absolute image url
+  window.__logoRegistry = REG;
+
+  try{
+    var c = JSON.parse(localStorage.getItem(CKEY) || 'null');
+    if(c && c.t && (Date.now() - c.t) < TTL && c.m) REG = window.__logoRegistry = c.m;
+  }catch(e){}
+
+  function cmc(sym){
+    var s = String(sym||'').toLowerCase();
+    var ids = window.COIN_CMC_ID || {};
+    return ids[s] ? 'https://s2.coinmarketcap.com/static/img/coins/64x64/' + ids[s] + '.png' : '';
+  }
+  // Ordered, real-image-only sources. (Binance's static bucket is dropped —
+  // it answers 200 with a generic placeholder, which is why wrong/blank
+  // logos were showing up before.)
+  var CHAIN = [
+    function(s){ return REG[String(s).toUpperCase()] || ''; },
+    cmc,
+    function(s){ return 'https://raw.githubusercontent.com/coinwink/cryptocurrency-logos/master/coins/128x128/' + String(s).toLowerCase() + '.png'; },
+    function(s){ return 'https://cdn.jsdelivr.net/gh/spothq/cryptocurrency-icons@master/128/color/' + String(s).toLowerCase() + '.png'; },
+    function(s){ return 'https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@1a63530be6e374711a8554f31b17e4cb92c25fa5/128/color/' + String(s).toLowerCase() + '.png'; },
+    function(s){ return 'https://cryptologos.cc/logos/thumbs/' + String(s).toLowerCase() + '.png'; }
+  ];
+  window.LOGO_SOURCES = CHAIN;
+
+  window.logoSrc = function(sym, step){
+    step = step || 0;
+    for(var i = step; i < CHAIN.length; i++){
+      var u = CHAIN[i](sym);
+      if(u) return u;
+    }
+    return 'https://ui-avatars.com/api/?name=' + encodeURIComponent(sym) +
+           '&background=1a1a1a&color=f7a600&bold=true&size=64&rounded=true';
+  };
+  window.logoFallback = function(img, step){
+    var sym = img.dataset.sym || img.alt || '?';
+    var next = step || 0;
+    while(next < CHAIN.length){
+      var u = CHAIN[next](sym);
+      if(u && u !== img.src){
+        var n = next;
+        img.onerror = function(){ window.logoFallback(img, n + 1); };
+        img.src = u;
+        return;
+      }
+      next++;
+    }
+    img.onerror = null;
+    img.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(sym) +
+              '&background=1a1a1a&color=f7a600&bold=true&size=64&rounded=true';
+  };
+  window.bestLogo = function(sym){ return { src: window.logoSrc(sym, 0), step: 0 }; };
+
+  // Upgrade any <img data-sym> to the accurate registry/CMC url.
+  function upgrade(img){
+    var sym = img.dataset.sym || img.alt;
+    if(!sym) return;
+    var want = REG[String(sym).toUpperCase()] || cmc(sym);
+    if(!want) return;
+    if(img.dataset.logoOk === want) return;
+    img.dataset.logoOk = want;
+    img.onerror = function(){ window.logoFallback(img, 2); };
+    if(img.src !== want) img.src = want;
+  }
+  function sweep(root){
+    (root || document).querySelectorAll('img[data-sym]').forEach(upgrade);
+  }
+  window.__refreshCoinLogos = sweep;
+
+  new MutationObserver(function(muts){
+    muts.forEach(function(m){
+      m.addedNodes && m.addedNodes.forEach(function(n){
+        if(n.nodeType !== 1) return;
+        if(n.tagName === 'IMG' && n.dataset && n.dataset.sym) upgrade(n);
+        else if(n.querySelectorAll) sweep(n);
+      });
+    });
+  }).observe(document.documentElement, { childList: true, subtree: true });
+
+  // Build/refresh the registry from CoinGecko (accurate, per-coin artwork).
+  async function load(){
+    try{
+      var pages = await Promise.all([1,2,3].map(function(p){
+        return fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd' +
+                     '&order=market_cap_desc&per_page=250&page=' + p + '&sparkline=false')
+               .then(function(r){ return r.ok ? r.json() : []; }).catch(function(){ return []; });
+      }));
+      var map = Object.assign({}, REG);
+      pages.flat().forEach(function(c){
+        if(c && c.symbol && c.image) map[String(c.symbol).toUpperCase()] = String(c.image).replace('/thumb/','/large/');
+      });
+      if(Object.keys(map).length){
+        REG = window.__logoRegistry = map;
+        CHAIN[0] = function(s){ return REG[String(s).toUpperCase()] || ''; };
+        try{ localStorage.setItem(CKEY, JSON.stringify({ t: Date.now(), m: map })); }catch(e){}
+        sweep();
+      }
+    }catch(e){ console.warn('logo registry failed', e); }
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function(){ sweep(); load(); });
+  else { sweep(); load(); }
+  setInterval(sweep, 4000);
+})();
+</script>
+
 </body>
 </html>
