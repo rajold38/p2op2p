@@ -112,6 +112,14 @@
 #sd .pf-sv i{font-size:22px;color:#fff}
 #sd .pf-sv .pn{font-size:11px;color:#fff;text-align:center;line-height:1.25}
 #sd .pf-all{display:flex;justify-content:center;margin:18px 0 10px}
+#sd .pf-histcard{width:100%;background:#15171c;border:none;border-radius:14px;padding:14px;text-align:left;color:#fff;cursor:pointer;margin-bottom:14px}
+#sd .pf-histcard .hh{display:flex;align-items:center;justify-content:space-between;font-size:13px;color:#8b8f99;margin-bottom:8px}
+#sd .pfh-row{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:8px 0}
+#sd .pfh-row .l1{font-size:13.5px;font-weight:600;color:#fff}
+#sd .pfh-row .l2{font-size:11px;color:#8b8f99;margin-top:3px}
+#sd .pfh-row .r1{font-size:13px;font-weight:700;text-align:right}
+#sd .pfh-row .r2{font-size:11px;color:#8b8f99;margin-top:3px;text-align:right}
+#sd .pfh-empty{font-size:12px;color:#8b8f99;padding:6px 0}
 #sd .pf-all button{background:transparent;border:1px solid #2a2d33;color:#fff;padding:9px 24px;border-radius:22px;font-size:12px;cursor:pointer}
 #sd .pf-ft{margin-top:auto;display:flex;align-items:center;justify-content:center;gap:20px;padding:18px 16px calc(20px + env(safe-area-inset-bottom));border-top:1px solid #15171c;font-size:13px;color:#cfd1d6}
 #sd .pf-ft .ftdiv{width:1px;height:14px;background:#2a2d33}
@@ -228,6 +236,17 @@
 .bb-htab{display:flex;gap:20px;padding:14px 0;border-bottom:1px solid #1a1a1a;overflow-x:auto;font-size:14px}
 .bb-htab span{color:#8c8c8c;font-weight:600;padding-bottom:6px;cursor:pointer;white-space:nowrap}
 .bb-htab span.active{color:#fff;border-bottom:2px solid #fff}
+.txh-filters{padding:12px 0 4px;display:flex;flex-direction:column;gap:8px;border-bottom:1px solid #1a1a1a}
+.txh-frow{display:flex;gap:8px}
+.txh-frow label{flex:1;display:flex;flex-direction:column;gap:4px;font-size:10.5px;color:#8c8c8c}
+.txh-frow input,.txh-frow select{background:#15171c;border:1px solid #2a2d33;color:#fff;border-radius:8px;padding:8px 10px;font-size:12.5px;width:100%;font-family:inherit}
+.txh-clear{align-self:flex-end;background:transparent;border:1px solid #2a2d33;color:#fff;border-radius:8px;padding:8px 14px;font-size:12px;cursor:pointer;height:34px}
+.txh-quick{display:flex;gap:8px}
+.txh-quick span{font-size:11.5px;color:#8c8c8c;border:1px solid #2a2d33;border-radius:20px;padding:5px 12px;cursor:pointer}
+.txh-quick span.active{color:#000;background:var(--orange);border-color:var(--orange);font-weight:700}
+body.light .txh-frow input,body.light .txh-frow select{background:#f3f5f7!important;border-color:#eaecef!important;color:#0b0e11!important}
+body.light .txh-clear,body.light .txh-quick span{color:#0b0e11!important;border-color:#eaecef!important}
+body.light .txh-quick span.active{color:#000!important}
 .bb-hitem{display:flex;justify-content:space-between;padding:16px 0;border-bottom:1px solid #111;cursor:pointer}
 .bb-hitem .hl{font-size:15px;color:#fff;font-weight:600}
 .bb-hitem .hs{font-size:12px;color:#666;margin-top:4px}
@@ -864,9 +883,9 @@ html,body{overscroll-behavior-y:contain;}
       <div class="hbtns">
         <button class="hbm" onclick="openDeposit()">Deposit crypto</button>
         <button class="hbs" onclick="openP2P()" style="flex:1;"><i class="fas fa-exchange-alt"></i>P2P trading</button>
-        <button class="hbs-icon" onclick="toast('More')"><i class="fas fa-chevron-down"></i></button>
+        <button class="hbs-icon" onclick="toggleHomeActs()"><i id="homeActsChevron" class="fas fa-chevron-down"></i></button>
       </div>
-      <div class="hacts">
+      <div class="hacts" id="homeActs">
         <div class="hact" onclick="toast('Buy Crypto')"><div class="hactc"><i class="far fa-credit-card"></i></div><span>Buy Crypto</span></div>
         <div class="hact" onclick="toggleTheme()"><div class="hactc"><i id="themeToggleIcon" class="far fa-clone theme-toggle-icon"></i></div><span id="themeToggleLabel">Demo Trading</span></div>
         <div class="hact" onclick="toast('Launchpool')"><div class="hactc"><i class="far fa-circle-dot"></i></div><span>Launchpool</span></div>
@@ -1373,10 +1392,10 @@ body.light #sc-earn .ern-sh-btns .can{border-color:#d8dde3;color:#0b0e11;}
         <div class="qab" onclick="go('trade');setTradeMode('convert')"><div class="qac oth"><i class="fas fa-sync-alt"></i></div><span class="qalbl">Convert</span></div>
       </div>
       <div class="atabs">
-        <span class="aTab active">Asset</span>
-        <span class="aTab dim" onclick="toast('Account')">Account</span>
+        <span class="aTab active" id="aTabAsset" onclick="setAssetTab('asset')">Asset</span>
+        <span class="aTab dim" id="aTabAccount" onclick="setAssetTab('account')">Account</span>
         <div style="margin-left:auto;display:flex;gap:16px;align-items:center;">
-          <i class="fas fa-history" title="History" style="color:var(--text2);cursor:pointer;font-size:15px;" onclick="openHistorySheet()"></i>
+          <button type="button" aria-label="Transaction History" title="Transaction History" onclick="openHistorySheet()" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:transparent;border:0;color:var(--text2);cursor:pointer;font-size:16px;padding:0;"><i class="fas fa-history" style="pointer-events:none;"></i></button>
           <svg id="allocToggleIcon" class="atab-ic" title="Asset allocation" viewBox="0 0 24 24" onclick="toggleAssetAlloc()"><path d="M12 3a9 9 0 1 0 9 9h-9V3z"/><path d="M14.5 2.5A8 8 0 0 1 21.5 9.5h-7v-7z"/></svg>
           <svg class="atab-ic" title="Asset settings" viewBox="0 0 24 24" onclick="openAssetSettings()"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.2"/></svg>
         </div>
@@ -1389,9 +1408,18 @@ body.light #sc-earn .ern-sh-btns .can{border-color:#d8dde3;color:#0b0e11;}
         </div>
         <div class="alloc-dots"><span class="ad on"></span><span class="ad"></span></div>
       </div>
+      <!-- ACCOUNT VIEW (Funding / Unified Trading / Earn / Copy Trading) -->
+      <div id="assetAccountPanel" class="acct-panel">
+        <div class="acct-chart">
+          <div class="acct-donut" id="acctDonut"></div>
+          <div class="acct-legend" id="acctLegend"></div>
+        </div>
+        <div id="acctRows"></div>
+      </div>
       <!-- LIVE ASSET PRICES -->
       <div id="asset-coin-list">
       </div>
+
     </div>
   </div>
 </div>
@@ -1451,7 +1479,25 @@ body.light #sc-earn .ern-sh-btns .can{border-color:#d8dde3;color:#0b0e11;}
     <button class="pf-sv" onclick="closeSideDrawer();go('earn')"><i class="far fa-dot-circle"></i><div class="pn">Launchpool</div></button>
     <button class="pf-sv" onclick="openRewards()"><i class="fas fa-gift"></i><div class="pn">Rewards Hub</div></button>
   </div>
-  <div class="pf-all"><button onclick="toast('All services coming soon')">All Services</button></div>
+  <div class="pf-grid" id="pfMoreGrid" style="display:none;margin-top:2px;">
+    <button class="pf-sv" onclick="closeSideDrawer();go('assets')"><i class="fas fa-wallet"></i><div class="pn">Deposit</div></button>
+    <button class="pf-sv" onclick="closeSideDrawer();go('assets')"><i class="fas fa-arrow-up-from-bracket"></i><div class="pn">Withdraw</div></button>
+    <button class="pf-sv" onclick="closeSideDrawer();go('assets');setTimeout(()=>window.openConvert&&window.openConvert(),200)"><i class="fas fa-right-left"></i><div class="pn">Convert</div></button>
+    <button class="pf-sv" onclick="closeSideDrawer();go('market')"><i class="fas fa-chart-line"></i><div class="pn">Markets</div></button>
+    <button class="pf-sv" onclick="closeSideDrawer();go('trade')"><i class="fas fa-bolt"></i><div class="pn">Futures</div></button>
+    <button class="pf-sv" onclick="closeSideDrawer();go('earn')"><i class="fas fa-percent"></i><div class="pn">Earn</div></button>
+    <button class="pf-sv" onclick="closeSideDrawer();openHistorySheet()"><i class="fas fa-clock-rotate-left"></i><div class="pn">History</div></button>
+    <button class="pf-sv" onclick="toast('Support: help@biexc.com')"><i class="fas fa-headset"></i><div class="pn">Support</div></button>
+  </div>
+  <div class="pf-all"><button id="pfAllBtn" onclick="pfToggleAllServices()">All Services</button></div>
+  <div class="pf-sec" style="padding-top:6px;">History</div>
+  <div style="padding:0 14px;">
+    <button class="pf-histcard" onclick="closeSideDrawer();openHistorySheet()">
+      <div class="hh"><span>History</span><i class="fas fa-chevron-right"></i></div>
+      <div id="pfHistMini"><div class="pfh-empty">No transactions yet</div></div>
+    </button>
+  </div>
+
   <div class="pf-ft">
     <a href="#" onclick="event.preventDefault();toast('BIEXC Lite')">BIEXC Lite <i class="fas fa-exchange-alt" style="font-size:11px;"></i></a>
     <div class="ftdiv"></div>
@@ -1598,6 +1644,38 @@ body.light #sc-earn .ern-sh-btns .can{border-color:#d8dde3;color:#0b0e11;}
     <div id="bbHistList" style="padding-top:6px;"></div>
   </div>
 </div>
+
+<!-- Transaction History screen (Deposit / Withdrawal sections) -->
+<div class="bb-screen" id="bbTxH">
+  <div class="bb-hdr"><button class="bb-back" onclick="bbClose('bbTxH')"><i class="fas fa-arrow-left"></i></button><div class="bb-ttl">Transaction History</div><span style="width:24px"></span></div>
+  <div class="bb-body">
+    <div class="bb-htab" id="bbTxHTabs">
+      <span class="active" data-x="ALL">All</span>
+      <span data-x="DEPOSIT">Deposit</span>
+      <span data-x="WITHDRAW">Withdrawal</span>
+    </div>
+    <div class="txh-filters">
+      <div class="txh-frow">
+        <label>From<input type="date" id="txhFrom" oninput="renderTxHistory()"></label>
+        <label>To<input type="date" id="txhTo" oninput="renderTxHistory()"></label>
+      </div>
+      <div class="txh-frow">
+        <label>Status<select id="txhStatus" onchange="renderTxHistory()">
+          <option value="ALL">All statuses</option>
+          <option value="COMPLETED">Completed</option>
+          <option value="PENDING">Pending</option>
+          <option value="REJECTED">Rejected</option>
+        </select></label>
+        <button type="button" class="txh-clear" onclick="txhClearFilters()">Reset</button>
+      </div>
+      <div class="txh-quick" id="txhQuick">
+        <span data-d="7">7D</span><span data-d="30">30D</span><span data-d="90">90D</span><span data-d="0">All time</span>
+      </div>
+    </div>
+    <div id="bbTxHList" style="padding-top:6px;"></div>
+  </div>
+</div>
+
 
 <!-- Popup: Payment Pending -->
 <div class="bb-popup" id="bbPopup">
@@ -2194,6 +2272,7 @@ function openSideDrawer(){
   const pct = Math.min(100, (bal/50000)*100);
   const prog = document.getElementById('sdVipProg'); if(prog) prog.style.width = Math.max(2,pct)+'%';
   document.getElementById('sd').classList.add('open');
+  try{ window.renderPfHistMini && window.renderPfHistMini(); }catch(e){}
 }
 function closeSideDrawer(){ document.getElementById('sd').classList.remove('open'); }
 function copyMyUID(){
@@ -4642,11 +4721,15 @@ async function renderAssetList(){
     rows.push([c, v, px, t? parseFloat(t.price24hPcnt)*100 : null]);
   });
   let total = 0;
+  const hideSmall = localStorage.getItem('hideSmallAssets')==='1';
   const html = rows.map(([c,v,px,chg])=>{
+
     const usd = v*(px||0);
     total += usd;
+    if(hideSmall && usd < 1) return '';
     const chgTxt = chg!=null ? ((chg>=0?'+':'')+chg.toFixed(2)+'%') : '';
     const chgColor = chg>=0 ? 'var(--green)' : 'var(--red)';
+
     return `<div class="crow" onclick="openCoinDetail('${c}')">
       <div style="display:flex;align-items:center;gap:11px;">
         <img class="clogo" style="width:34px;height:34px;" src="https://assets.coincap.io/assets/icons/${c.toLowerCase()}@2x.png" data-sym="${c}" onerror="logoFallback(this,1)" alt="${c}">
@@ -4907,36 +4990,131 @@ function flipConvert(){
   $('cv-from-amt').value=''; $('cv-to-amt').value='';
   updateConvertLogos();
 }
-// ─── HISTORY SHEET (all transactions) ───
-function openHistorySheet(){
-  if(!needLogin()) return;
-  let bg=document.getElementById('hist-bg'), sh=document.getElementById('hist-sheet');
-  if(!sh){
-    bg=document.createElement('div'); bg.id='hist-bg'; bg.className='sheet-bg';
-    bg.onclick=closeHistorySheet;
-    sh=document.createElement('div'); sh.id='hist-sheet'; sh.className='sheet';
-    sh.style.maxHeight='85vh';
-    document.body.appendChild(bg); document.body.appendChild(sh);
+// ─── TRANSACTION HISTORY PAGE (Deposit / Withdrawal) ───
+let _txhTab = 'ALL';
+async function openHistorySheet(){
+  _txhTab = 'ALL';
+  document.querySelectorAll('#bbTxHTabs span').forEach(s=>s.classList.toggle('active', s.dataset.x===_txhTab));
+  const screen = document.getElementById('bbTxH');
+  const list = document.getElementById('bbTxHList');
+  if(!screen || !list) return;
+  screen.classList.add('show');
+  screen.style.zIndex = '10050';
+  list.innerHTML = '<div style="text-align:center;color:#666;padding:60px 0;">Loading…</div>';
+  try{ await bbLoadHistFromFb(); }catch(e){}
+  const _f=document.getElementById('txhFrom'), _t=document.getElementById('txhTo'), _s=document.getElementById('txhStatus');
+  if(_f) _f.value=''; if(_t) _t.value=''; if(_s) _s.value='ALL';
+  document.querySelectorAll('#txhQuick span').forEach(x=>x.classList.remove('active'));
+  renderTxHistory();
+  try{ renderPfHistMini(); }catch(e){}
+}
+function closeHistorySheet(){ bbClose('bbTxH'); }
+function pfToggleAllServices(){
+  const g = document.getElementById('pfMoreGrid');
+  const b = document.getElementById('pfAllBtn');
+  if(!g) return;
+  const open = g.style.display !== 'none';
+  g.style.display = open ? 'none' : 'grid';
+  if(b) b.textContent = open ? 'All Services' : 'Show Less';
+}
+window.pfToggleAllServices = pfToggleAllServices;
+function _txhItems(){
+  let items = (_bbHistCache||[]).slice();
+  if(!items.length){
+    try{ const fr=document.getElementById('p2pFrame'); const w=fr&&fr.contentWindow; if(w && w.hist) items=w.hist.slice(); }catch(e){}
   }
-  const orders = (STATE.orders||[]);
-  const rows = orders.length ? orders.slice(0,200).map(o=>{
-    const side = o.side||''; const col = (side==='Buy'||side==='Long'||side==='Deposit')?'var(--green)':(side==='Convert'?'var(--orange)':'var(--red)');
-    return `<div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
-      <div><div style="font-weight:600;font-size:13px;">${o.sym||o.coin||'-'} <span style="font-size:10px;color:var(--text2);font-weight:500;">${o.type||''}</span></div>
-      <div style="font-size:11px;color:var(--text2);margin-top:2px;">${new Date(o.ts).toLocaleString()}</div></div>
-      <div style="text-align:right;"><div style="color:${col};font-weight:700;font-size:13px;">${side} ${(+o.qty||0).toFixed(6)}</div>
-      <div style="font-size:11px;color:var(--text2);">@ ${(+o.price||0)} · ${o.status||''}</div></div></div>`;
-  }).join('') : '<div style="padding:40px 20px;text-align:center;color:var(--text2);">No history yet</div>';
-  sh.innerHTML = `<div class="sheet-grip"></div>
-    <div class="sheet-hdr"><div class="sheet-title">All History</div>
-      <div class="sheet-x" onclick="closeHistorySheet()"><i class="fas fa-times"></i></div></div>
-    <div style="max-height:70vh;overflow-y:auto;">${rows}</div>`;
-  bg.classList.add('show'); sh.classList.add('show');
+  return items;
 }
-function closeHistorySheet(){
-  const bg=document.getElementById('hist-bg'), sh=document.getElementById('hist-sheet');
-  if(bg) bg.classList.remove('show'); if(sh) sh.classList.remove('show');
+// mini history preview inside profile drawer (shortcut to full history)
+async function renderPfHistMini(){
+  const box = document.getElementById('pfHistMini'); if(!box) return;
+  let items = _txhItems();
+  if(!items.length){ try{ await bbLoadHistFromFb(); items = _txhItems(); }catch(e){} }
+  items = items.slice(0,3);
+  if(!items.length){ box.innerHTML = '<div class="pfh-empty">No transactions yet</div>'; return; }
+  box.innerHTML = items.map(h=>{
+    const isWit = h.type==='WITHDRAW';
+    const ok = (h.status==='SUCCESS'||h.status==='APPROVED'||h.status==='COMPLETED'||h.status==='Succeeded');
+    const rej = (h.status==='REJECTED'||h.status==='FAILED'||h.status==='CANCELLED');
+    const time = h.date || (h.ts? new Date(h.ts).toLocaleString('en-IN',{hour12:false}).replace(',',''): '');
+    return `<div class="pfh-row">
+      <div><div class="l1">${isWit?'Withdraw':'Deposit'}</div><div class="l2">${time}</div></div>
+      <div><div class="r1" style="color:${isWit?'#f6465d':'var(--green)'}">${isWit?'-':'+'}${h.amt} ${h.coin||'USDT'}</div>
+      <div class="r2">${ok?'Completed':rej?'Rejected':'Pending'}</div></div></div>`;
+  }).join('');
 }
+window.renderPfHistMini = renderPfHistMini;
+document.addEventListener('click',(e)=>{
+  const s = e.target.closest('#bbTxHTabs span'); if(!s) return;
+  _txhTab = s.dataset.x;
+  document.querySelectorAll('#bbTxHTabs span').forEach(x=>x.classList.toggle('active', x===s));
+  renderTxHistory();
+});
+function _txhTs(h){
+  if(h.ts) return +h.ts;
+  if(h.date){ const t = Date.parse(String(h.date).replace(' ','T')); if(!isNaN(t)) return t; }
+  return 0;
+}
+function _txhStatusKey(h){
+  const s = String(h.status||'').toUpperCase();
+  if(['SUCCESS','APPROVED','COMPLETED','SUCCEEDED'].includes(s)) return 'COMPLETED';
+  if(['REJECTED','FAILED','CANCELLED'].includes(s)) return 'REJECTED';
+  return 'PENDING';
+}
+function txhClearFilters(){
+  const f=document.getElementById('txhFrom'), t=document.getElementById('txhTo'), s=document.getElementById('txhStatus');
+  if(f) f.value=''; if(t) t.value=''; if(s) s.value='ALL';
+  document.querySelectorAll('#txhQuick span').forEach(x=>x.classList.remove('active'));
+  renderTxHistory();
+}
+window.txhClearFilters = txhClearFilters;
+document.addEventListener('click',(e)=>{
+  const q = e.target.closest('#txhQuick span'); if(!q) return;
+  document.querySelectorAll('#txhQuick span').forEach(x=>x.classList.toggle('active', x===q));
+  const d = +q.dataset.d;
+  const f=document.getElementById('txhFrom'), t=document.getElementById('txhTo');
+  if(!d){ if(f) f.value=''; if(t) t.value=''; }
+  else{
+    const to = new Date(), from = new Date(Date.now() - d*86400000);
+    const iso = x => x.toISOString().slice(0,10);
+    if(f) f.value = iso(from); if(t) t.value = iso(to);
+  }
+  renderTxHistory();
+});
+function renderTxHistory(){
+  const list = document.getElementById('bbTxHList'); if(!list) return;
+  let items = _txhItems();
+  if(_txhTab !== 'ALL') items = items.filter(h=> h.type===_txhTab);
+  const fromV = (document.getElementById('txhFrom')||{}).value || '';
+  const toV = (document.getElementById('txhTo')||{}).value || '';
+  const stV = (document.getElementById('txhStatus')||{}).value || 'ALL';
+  if(fromV){ const f = new Date(fromV+'T00:00:00').getTime(); items = items.filter(h=>{const t=_txhTs(h); return !t || t>=f;}); }
+  if(toV){ const t2 = new Date(toV+'T23:59:59').getTime(); items = items.filter(h=>{const t=_txhTs(h); return !t || t<=t2;}); }
+  if(stV!=='ALL') items = items.filter(h=> _txhStatusKey(h)===stV);
+  if(!items.length){
+    list.innerHTML = `<div style="text-align:center;color:var(--text2);padding:60px 20px;">
+      <i class="fas fa-file-invoice" style="font-size:26px;opacity:.4;display:block;margin-bottom:10px;"></i>
+      No ${_txhTab==='DEPOSIT'?'deposit':_txhTab==='WITHDRAW'?'withdrawal':''} transactions found</div>`;
+
+    return;
+  }
+  window._txhView = items;
+  list.innerHTML = items.map((h,idx)=>{
+    const isWit = h.type==='WITHDRAW';
+    const ok = (h.status==='SUCCESS'||h.status==='APPROVED'||h.status==='COMPLETED'||h.status==='Succeeded');
+    const rej = (h.status==='REJECTED'||h.status==='FAILED'||h.status==='CANCELLED');
+    const stLbl = ok ? ('• '+(isWit?'Withdrawal Completed':'Deposit Completed')) : rej ? '• Rejected' : '• Pending';
+    const stCol = ok ? 'var(--green)' : rej ? '#f6465d' : 'var(--orange)';
+    const time = h.date || (h.ts? new Date(h.ts).toLocaleString('en-IN',{hour12:false}).replace(',',''): '');
+    const coin = h.coin || 'USDT';
+    const ttl = _txhTab==='ALL' ? `${isWit?'Withdraw':'Deposit'} · ${coin}` : coin;
+    return `<div class="bb-hitem" onclick="bbShowHistDetail(window._txhView[${idx}])">
+      <div><div class="hl">${ttl}</div><div class="hs">${time}</div></div>
+      <div class="hr"><div class="ha" style="color:${isWit?'#f6465d':'var(--green)'}">${isWit?'-':'+'}${h.amt} ${coin}</div><div class="hst" style="color:${stCol}">${stLbl}</div></div></div>`;
+  }).join('');
+}
+
+
 function doConvert(){
   if(!needLogin()) return;
   const f = $('cv-from').value, t = $('cv-to').value;
@@ -5581,22 +5759,24 @@ function pnlShareAction(kind){
       if (d.user && !window.currentUser) {
         try { document.getElementById('authOverlay').classList.remove('show'); } catch(_){}
         try { document.getElementById('fbLoadingScreen').style.display = 'none'; } catch(_){}
-        // Wait briefly for shared Firebase Auth (same-origin IndexedDB) to populate our own currentUser.
-        // If it still hasn't, manually seed a minimal user object so UI unblocks.
-        setTimeout(() => {
-          if (!window.currentUser && d.user.uid) {
-            try {
-              window.onFirebaseUser({
-                uid: d.user.uid,
-                email: d.user.email || '',
-                displayName: d.user.displayName || '',
-                // mark as bridged so downstream code can skip signOut etc. if it checks
-                _bridgedFromParent: true,
-                getIdToken: async () => ''
-              });
-            } catch(_){}
-          }
-        }, 600);
+        // Seed immediately so a fast Buy tap cannot land in the gap where the
+        // login overlay is hidden but requireLogin() still sees no user.
+        if (d.user.uid) {
+          try {
+            currentUser = {
+              uid: d.user.uid,
+              firebaseUid: d.user.uid,
+              email: d.user.email || '',
+              name: d.user.displayName || (d.user.email || 'User').split('@')[0],
+              displayName: d.user.displayName || '',
+              _bridgedFromParent: true
+            };
+            userUID = d.user.uid;
+            window.currentUser = currentUser;
+            window.userUID = userUID;
+            updateNavState();
+          } catch(_){}
+        }
       }
     });
   }
@@ -7825,9 +8005,16 @@ function switchLoginTab(m) {
   document.getElementById('loginSubmitBtn').innerText  = m==='signup'?'CREATE ACCOUNT':'SIGN IN';
   document.getElementById('loginSubmitBtn').onclick    = m==='signup'?emailSignUp:emailSignIn;
 }
+function _isP2PChildFrame(){
+  try{
+    if(!window.parent || window.parent === window) return false;
+    var host = window.parent.document.getElementById('p2pFrame');
+    return !!(host && host.contentWindow === window);
+  }catch(e){ return false; }
+}
 function openAuth(tab) {
-  // [FIXED] If running inside parent app iframe, never show our own login — ask parent instead.
-  if (window.parent && window.parent !== window) {
+  // Only delegate to the host app when we really are the P2P child frame.
+  if (_isP2PChildFrame()) {
     try { window.parent.postMessage({ source:'p2p-iframe', type:'open-login' }, '*'); } catch(e){}
     return;
   }
@@ -8630,7 +8817,10 @@ if(!window.__adCardDelegated){
     const rate = parseFloat(card.getAttribute('data-rate'));
     const min  = parseFloat(card.getAttribute('data-min'));
     const max  = parseFloat(card.getAttribute('data-max'));
-    if(!name || isNaN(rate)) return;
+    if(!name || !Number.isFinite(rate) || !Number.isFinite(min) || !Number.isFinite(max)){
+      toast('error','Offer Unavailable','This offer could not be loaded. Please refresh and try again.');
+      return;
+    }
     try { prepTrade(name, rate, min, max); } catch(e){ console.error('prepTrade error', e); }
   });
 }
@@ -8712,6 +8902,7 @@ function calcTrade(){
 }
 
 async function initTrade(){
+  if(!requireLogin()) return;
   const v=parseFloat(document.getElementById('actInp').value),rcv=parseFloat(document.getElementById('actRcv').innerText);
   if(!v) return toast('error','Error','Enter an amount.');
   if(mode==='BUY'){
@@ -8733,12 +8924,25 @@ async function initTrade(){
     mode, status:'PENDING', time:Date.now(), uid:userUID, timerEnd,
     timerTotal: TRADE_TIMEOUT_MS, payMethod
   };
-  await fbSaveOrder(ord);
-  closeOverlay('actionOverlay');
-  await saveChatState(ord.id,{messages:[],tgMsgId:null,cbId:null,dealStage:'init',upiSubmitted:false,seenMsgIds:[]});
-  const t=new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'});
-  tgSendBoth(\`🆕 *NEW ORDER*\\n\\nUID: \\\`\${userUID}\\\`\\nUser: *\${currentUser?currentUser.name:'Guest'}*\\nEmail: \\\`\${currentUser?.email||'—'}\\\`\\nOrder: \\\`#\${ord.id}\\\`\\nMode: *\${ord.mode}*\\nMerchant: *\${ord.merchant}*\\nINR: ₹\${ord.inr.toLocaleString()}\\nUSDT: *\${ord.usdt.toFixed(2)} USDT*\\nRate: ₹\${ord.rate}\\n⏰ \${t} IST\\n⏱ Auto-cancel in 30 min\`);
-  openDeal(ord.id,true);
+  const actionBtn=document.getElementById('actBtn');
+  const originalLabel=actionBtn ? actionBtn.innerText : (mode==='BUY'?'Buy':'Sell');
+  if(actionBtn){ actionBtn.disabled=true; actionBtn.innerText='PROCESSING...'; }
+  try{
+    await fbSaveOrder(ord);
+    // Open immediately instead of waiting for the realtime order listener.
+    const existingIndex=orders.findIndex(x=>x.id==ord.id);
+    if(existingIndex===-1) orders.unshift(ord); else orders[existingIndex]=ord;
+    closeOverlay('actionOverlay');
+    await saveChatState(ord.id,{messages:[],tgMsgId:null,cbId:null,dealStage:'init',upiSubmitted:false,seenMsgIds:[]});
+    const t=new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'});
+    tgSendBoth(\`🆕 *NEW ORDER*\\n\\nUID: \\\`\${userUID}\\\`\\nUser: *\${currentUser?currentUser.name:'Guest'}*\\nEmail: \\\`\${currentUser?.email||'—'}\\\`\\nOrder: \\\`#\${ord.id}\\\`\\nMode: *\${ord.mode}*\\nMerchant: *\${ord.merchant}*\\nINR: ₹\${ord.inr.toLocaleString()}\\nUSDT: *\${ord.usdt.toFixed(2)} USDT*\\nRate: ₹\${ord.rate}\\n⏰ \${t} IST\\n⏱ Auto-cancel in 30 min\`);
+    await openDeal(ord.id,true);
+  }catch(e){
+    console.error('P2P order creation failed',e);
+    toast('error','Order Failed','Could not create the order. Please check your connection and try again.');
+  }finally{
+    if(actionBtn){ actionBtn.disabled=false; actionBtn.innerText=originalLabel; }
+  }
 }
 
 // ═══════════════════════════════════════════
@@ -10773,6 +10977,58 @@ function cdRender(){
   else { applyTheme(saved); }
 })();
 </script>
+<!-- ═══════════════ HOME QUICK-ACTIONS TOGGLE (arrow next to P2P trading) ═══════════════ -->
+<style>
+#homeActs{overflow:hidden;transition:max-height .28s ease,opacity .2s ease,margin .28s ease;}
+#homeActs.hidden-acts{max-height:0 !important;opacity:0;margin-top:0;margin-bottom:0;pointer-events:none;}
+#homeActsChevron{transition:transform .25s ease;}
+#homeActsChevron.chev-up{transform:rotate(180deg);}
+/* keep the arrow button's look identical in every state (no theme/colour flip on tap or collapse) */
+#sc-home .hbs-icon,
+#sc-home .hbs-icon:hover,
+#sc-home .hbs-icon:focus,
+#sc-home .hbs-icon:focus-visible,
+#sc-home .hbs-icon:active{
+  background:var(--bg3);
+  color:var(--text);
+  outline:none;
+  box-shadow:none;
+  filter:none;
+  opacity:1;
+  -webkit-tap-highlight-color:transparent;
+}
+body.light #sc-home .hbs-icon,
+body.light #sc-home .hbs-icon:hover,
+body.light #sc-home .hbs-icon:focus,
+body.light #sc-home .hbs-icon:focus-visible,
+body.light #sc-home .hbs-icon:active{
+  background:#eff2f5;
+  color:#0b0e11;
+}
+</style>
+<script>
+(function(){
+  window.toggleHomeActs=function(){
+    var acts=document.getElementById('homeActs');
+    var chev=document.getElementById('homeActsChevron');
+    if(!acts) return;
+    var willHide=!acts.classList.contains('hidden-acts');
+    acts.classList.toggle('hidden-acts',willHide);
+    if(chev) chev.classList.toggle('chev-up',willHide);
+    try{ localStorage.setItem('home_acts_hidden',willHide?'1':'0'); }catch(e){}
+  };
+  function init(){
+    var hidden='0'; try{ hidden=localStorage.getItem('home_acts_hidden')||'0'; }catch(e){}
+    if(hidden==='1'){
+      var acts=document.getElementById('homeActs');
+      var chev=document.getElementById('homeActsChevron');
+      if(acts) acts.classList.add('hidden-acts');
+      if(chev) chev.classList.add('chev-up');
+    }
+  }
+  if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded',init); } else { init(); }
+})();
+</script>
 <!-- ═══════════════ KYC BLOCK NOTICE (un-closeable) ═══════════════ -->
 <style>
 #kycOverlay{position:fixed;inset:0;z-index:2147483600;background:rgba(8,10,18,.96);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);display:none;align-items:flex-start;justify-content:center;overflow-y:auto;padding:24px 16px;font-family:inherit;color:#fff;}
@@ -11481,9 +11737,10 @@ body.light [style*="background:#181a20"]{color:#0b0e11 !important}
     build(); showStep('form'); err('');
   };
   window.openAuth = function(tab){
-    if(window.parent && window.parent !== window){
+    if(typeof _isP2PChildFrame === 'function' && _isP2PChildFrame()){
       try{ window.parent.postMessage({ source:'p2p-iframe', type:'open-login' }, '*'); return; }catch(e){}
     }
+
     build();
     window.switchLoginTab(tab || 'signin');
     el('authOverlay').classList.add('show');
@@ -11787,7 +12044,21 @@ body.light [style*="background:#181a20"]{color:#0b0e11 !important}
 #authOverlay .auth-form input:focus{background:#000!important;}
 #authOverlay .auth-tab-row{background:#000!important;}
 #authOverlay .bx-close{background:#000!important;}
+/* ── Asset settings bottom sheet ── */
+.asetsheet-wrap{position:fixed;inset:0;z-index:9999;visibility:hidden;pointer-events:none;}
+.asetsheet-wrap.show{visibility:visible;pointer-events:auto;}
+.asetsheet-bd{position:absolute;inset:0;background:rgba(0,0,0,.6);opacity:0;transition:opacity .22s;}
+.asetsheet-wrap.show .asetsheet-bd{opacity:1;}
+.asetsheet{position:absolute;left:0;right:0;bottom:0;background:#16181d;border-radius:18px 18px 0 0;padding:10px 18px 34px;transform:translateY(100%);transition:transform .26s cubic-bezier(.2,.8,.2,1);}
+.asetsheet-wrap.show .asetsheet{transform:translateY(0);}
+.asetsheet-grab{width:38px;height:4px;border-radius:3px;background:#4a4f57;margin:2px auto 14px;}
+.asetsheet-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 0;color:#fff;font-size:16px;font-weight:500;}
+.asetsheet-sw{width:52px;height:30px;border-radius:16px;background:#3a3f47;border:0;padding:3px;display:flex;align-items:center;transition:background .2s;cursor:pointer;}
+.asetsheet-sw span{width:24px;height:24px;border-radius:50%;background:#fff;transition:transform .2s;}
+.asetsheet-sw.on{background:var(--green,#2ebd85);}
+.asetsheet-sw.on span{transform:translateX(22px);}
 </style>
+
 <script>
 (function(){
   var COLORS=['#2ebd85','#f0932b','#f7c948','#e84393','#7f8cff','#00b8d9','#ff6b6b','#a0e7a0','#c084fc','#4ade80'];
@@ -11806,7 +12077,7 @@ body.light [style*="background:#181a20"]{color:#0b0e11 !important}
     list.sort(function(a,b){return b.usd-a.usd;});
     var total=list.reduce(function(a,r){return a+r.usd;},0);
     var donut=document.getElementById('allocDonut'), leg=document.getElementById('allocLegend');
-    if(!total){ donut.innerHTML=''; leg.innerHTML='<div class="alloc-empty">No assets yet</div>'; return; }
+    if(!total){ donut.innerHTML='<svg viewBox="0 0 120 120" width="100%" height="100%"><circle cx="60" cy="60" r="42" fill="none" stroke="#2b2f36" stroke-width="15"></circle></svg>'; leg.innerHTML='<div class="alloc-empty">No assets yet</div>'; return; }
     var R=42, C=2*Math.PI*R, off=0, segs='';
     list.forEach(function(r,i){
       var frac=r.usd/total, len=frac*C, col=COLORS[i%COLORS.length];
@@ -11814,18 +12085,63 @@ body.light [style*="background:#181a20"]{color:#0b0e11 !important}
       off+=len;
     });
     donut.innerHTML='<svg viewBox="0 0 120 120" width="100%" height="100%">'+segs+'</svg>';
-    leg.innerHTML=list.slice(0,6).map(function(r,i){
-      var pct=r.usd/total*100;
-      var txt=pct<0.01?'< 0.01%':pct.toFixed(2)+'%';
-      return '<div class="alloc-row"><span class="adot" style="background:'+COLORS[i%COLORS.length]+'"></span><span class="asym">'+r.sym+'</span><span class="apct">'+txt+'</span></div>';
+    var fmtU=function(n){ try{ return fmtMoney(n,2); }catch(e){ return (+n).toFixed(2); } };
+    var PER=5, pages=[];
+    for(var s=0;s<list.length;s+=PER) pages.push(list.slice(s,s+PER));
+    var html=pages.map(function(pg,pi){
+      return '<div class="alloc-page">'+pg.map(function(r){
+        var i=list.indexOf(r);
+        var pct=r.usd/total*100;
+        var txt=pct<0.01?'< 0.01%':pct.toFixed(2)+'%';
+        return '<div class="alloc-row acct-lrow"><span class="adot" style="background:'+COLORS[i%COLORS.length]+'"></span><span class="asym">'+r.sym+'</span><span class="apct">'+txt+'</span></div>';
+      }).join('')+'</div>';
     }).join('');
+    var dots=pages.length>1?'<div class="alloc-dots">'+pages.map(function(_,i){return '<span class="alloc-dot'+(i===0?' on':'')+'"></span>';}).join('')+'</div>':'';
+    leg.innerHTML='<div class="alloc-track" id="allocTrack">'+html+'</div>'+dots;
+    var track=document.getElementById('allocTrack');
+    if(track&&pages.length>1){
+      track.addEventListener('scroll',function(){
+        var idx=Math.round(track.scrollLeft/Math.max(1,track.clientWidth));
+        var ds=leg.querySelectorAll('.alloc-dot');
+        for(var k=0;k<ds.length;k++) ds[k].classList.toggle('on',k===idx);
+      },{passive:true});
+    }
+
+
   };
+  function ensureAssetSettingsSheet(){
+    var el=document.getElementById('assetSetSheet');
+    if(el) return el;
+    el=document.createElement('div');
+    el.id='assetSetSheet';
+    el.className='asetsheet-wrap';
+    el.innerHTML='<div class="asetsheet-bd" onclick="closeAssetSettings()"></div>'+
+      '<div class="asetsheet"><div class="asetsheet-grab"></div>'+
+      '<div class="asetsheet-row"><span>Hide assets &lt; $1</span>'+
+      '<button type="button" id="assetSetToggle" class="asetsheet-sw" onclick="toggleHideSmallAssets()"><span></span></button></div></div>';
+    document.body.appendChild(el);
+    return el;
+  }
+  function syncToggle(){
+    var t=document.getElementById('assetSetToggle');
+    if(t) t.classList.toggle('on', localStorage.getItem('hideSmallAssets')==='1');
+  }
   window.openAssetSettings=function(){
+    var el=ensureAssetSettingsSheet();
+    syncToggle();
+    requestAnimationFrame(function(){ el.classList.add('show'); });
+  };
+  window.closeAssetSettings=function(){
+    var el=document.getElementById('assetSetSheet');
+    if(el) el.classList.remove('show');
+  };
+  window.toggleHideSmallAssets=function(){
     var hide=localStorage.getItem('hideSmallAssets')==='1';
     localStorage.setItem('hideSmallAssets', hide?'0':'1');
-    try{ toast(hide?'Showing all assets':'Hiding small assets'); }catch(e){}
+    syncToggle();
     try{ renderAssetList(); }catch(e){}
   };
+
 })();
 </script>
 
@@ -12092,23 +12408,23 @@ img.clogo,img.clogo-sm,img[data-sym]{content-visibility:auto;}
     try{ if(window.balances) Object.keys(window.balances).forEach(function(c){ if(parseFloat(window.balances[c])>0) window.rememberCoin(c); }); }catch(e){}
     try{ if(window.STATE&&STATE.coins) Object.keys(STATE.coins).forEach(function(c){ if(parseFloat(STATE.coins[c])>0) window.rememberCoin(c); }); }catch(e){}
   }
-  // rows shown on the Assets screen — persistent list, balance or not
+  // rows shown on the Assets screen — ONLY coins actually held/deposited in the wallet
   window.visibleCoinRows=function(){
     harvest();
     var coins=window.STATE&&STATE.coins?STATE.coins:{};
     var out=[],seen={};
-    Object.keys(coins).forEach(function(c){
-      var u=c.toUpperCase();
-      if(u==='USDT'||seen[u]) return;
-      if(parseFloat(coins[c])>0){ seen[u]=1; out.push([u,parseFloat(coins[c])]); }
-    });
-    window.persistentCoins.forEach(function(c){
-      if(c==='USDT'||seen[c]) return; seen[c]=1;
-      var v=parseFloat((coins[c]!=null?coins[c]:(window.balances&&window.balances[c])||0))||0;
-      out.push([c,v]);
-    });
+    function push(c,v){
+      var u=String(c||'').toUpperCase();
+      if(!u||u==='USDT'||seen[u])return;
+      v=parseFloat(v)||0;
+      if(v<=0)return;
+      seen[u]=1; out.push([u,v]);
+    }
+    Object.keys(coins).forEach(function(c){ push(c,coins[c]); });
+    try{ if(window.balances) Object.keys(window.balances).forEach(function(c){ push(c,window.balances[c]); }); }catch(e){}
     return out;
   };
+
   // keep the list alive across logout — it is device-level, not account-level
   var prevOut=window.onFirebaseLogout;
   window.onFirebaseLogout=function(){
@@ -12121,5 +12437,140 @@ img.clogo,img.clogo-sm,img[data-sym]{content-visibility:auto;}
   setInterval(harvest,5000);
 })();
 </script>
+<style>
+.acct-panel{display:none;padding:6px 0 4px;}
+.acct-panel.show{display:block;animation:allocIn .25s ease;}
+.acct-chart{display:flex;align-items:center;gap:22px;padding:14px 0 6px;}
+.acct-donut{width:126px;height:126px;flex:0 0 126px;}
+.acct-legend{flex:1;min-width:0;display:flex;flex-direction:column;gap:11px;}
+.acct-lrow{display:flex;align-items:center;gap:9px;font-size:14px;}
+.acct-lrow .adot{width:9px;height:9px;border-radius:50%;flex:0 0 9px;}
+.acct-lrow .anm{color:#fff;font-weight:500;}
+.acct-lrow .apct{margin-left:auto;color:#fff;font-weight:600;text-align:right;}
+.acct-lrow .aval{margin-left:auto;color:var(--text2);font-size:12.5px;font-weight:600;}
+.alloc-track{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+.alloc-track::-webkit-scrollbar{display:none;}
+.alloc-page{flex:0 0 100%;min-width:100%;scroll-snap-align:start;display:flex;flex-direction:column;gap:11px;}
+.alloc-dots{display:flex;justify-content:center;gap:5px;margin-top:10px;}
+.alloc-dot{width:16px;height:3px;border-radius:2px;background:#3a3f47;transition:background .2s;}
+.alloc-dot.on{background:#fff;}
+.acct-ltot{color:var(--text2);font-size:12.5px;font-weight:600;margin-bottom:2px;}
+.acct-sec{color:var(--text2);font-size:14px;font-weight:500;margin:22px 0 4px;}
+.acct-item{display:flex;align-items:center;gap:10px;padding:16px 0;cursor:pointer;}
+
+.acct-item .ai-l{min-width:0;flex:1;}
+.acct-item .ai-t{color:#fff;font-size:15px;font-weight:500;}
+.acct-item .ai-v{color:#fff;font-size:15px;margin-top:6px;}
+.acct-item .ai-a{color:var(--text2);flex:0 0 auto;font-size:14px;}
+</style>
+<script>
+(function(){
+  var BUCKET_COLORS={Earn:'#2ebd85',Funding:'#f0932b',"Unified Trading":'#f7c948',"Copy Trading":'#7f8cff'};
+  function num(v){ v=parseFloat(v); return isFinite(v)&&v>0?v:0; }
+  function earnTotal(){
+    try{
+      return (earnState.activePositions||[]).reduce(function(s,p){ return s+num(p.amount)+num(p.earned); },0);
+    }catch(e){ return 0; }
+  }
+  function buckets(){
+    var funding=0, unified=0;
+    try{ funding = num(typeof getAvailableBalance==='function'?getAvailableBalance():window.userBalance); }catch(e){}
+    try{ unified = num(typeof getLockedMargin==='function'?getLockedMargin():0) + Math.max(0, num(typeof getUnrealizedPnl==='function'?getUnrealizedPnl():0)); }catch(e){}
+    return [
+      {name:'Funding', usd:funding, sec:null},
+      {name:'Unified Trading', usd:unified, sec:null},
+      {name:'Earn', usd:earnTotal(), sec:'Invested Products'},
+      {name:'Copy Trading', usd:0, sec:'skip'}
+    ];
+  }
+  window.renderAccountPanel=function(){
+    var p=document.getElementById('assetAccountPanel');
+    if(!p||!p.classList.contains('show'))return;
+    var list=buckets();
+    var total=list.reduce(function(a,r){return a+r.usd;},0);
+    var donut=document.getElementById('acctDonut'), leg=document.getElementById('acctLegend');
+    // always show Earn / Funding / Unified Trading rows (0.00% when balance is 0)
+    var LEG_ORDER=['Earn','Funding','Unified Trading'];
+    var byName={}; list.forEach(function(r){ byName[r.name]=r; });
+    var shown=LEG_ORDER.map(function(n){ return byName[n]||{name:n,usd:0}; });
+    var R=42, C=2*Math.PI*R, off=0, segs='';
+    if(!total){
+      segs='<circle cx="60" cy="60" r="'+R+'" fill="none" stroke="#2b2f36" stroke-width="15"></circle>';
+    } else {
+      shown.slice().sort(function(a,b){return b.usd-a.usd;}).forEach(function(r){
+        if(r.usd<=0) return;
+        var len=r.usd/total*C, col=BUCKET_COLORS[r.name]||'#8a9099';
+        segs+='<circle cx="60" cy="60" r="'+R+'" fill="none" stroke="'+col+'" stroke-width="15" stroke-dasharray="'+len+' '+(C-len)+'" stroke-dashoffset="'+(-off)+'" transform="rotate(-90 60 60)"></circle>';
+        off+=len;
+      });
+    }
+    donut.innerHTML='<svg viewBox="0 0 120 120" width="100%" height="100%">'+segs+'</svg>';
+    leg.innerHTML=shown.map(function(r){
+      var pct=total?(r.usd/total*100):0;
+      var txt=(total&&pct>0&&pct<0.01)?'< 0.01%':pct.toFixed(2)+'%';
+      return '<div class="acct-lrow"><span class="adot" style="background:'+(BUCKET_COLORS[r.name]||'#8a9099')+'"></span><span class="anm">'+r.name+'</span><span class="apct">'+txt+'</span></div>';
+    }).join('');
+
+    var fmt=function(n){ try{ return fmtMoney(n,2); }catch(e){ return n.toFixed(2); } };
+    var html='';
+    list.forEach(function(r){
+      if(r.sec && r.sec!=='skip') html+='<div class="acct-sec">'+r.sec+'</div>';
+      html+='<div class="acct-item" onclick="onAccountRow(\''+r.name+'\')">'+
+            '<div class="ai-l"><div class="ai-t">'+r.name+'</div><div class="ai-v">'+fmt(r.usd)+' USD</div></div>'+
+            '<span class="ai-a">→</span></div>';
+    });
+    // held coins (only coins with wallet/deposit balance)
+    try{
+      var cRows=[];
+      var bal=parseFloat(window.userBalance||0)||0;
+      if(bal>0) cRows.push(['USDT',bal,bal]);
+      var alloc=window._assetAlloc||[];
+      var pxOf={}; alloc.forEach(function(a){ if(a&&a.amt>0) pxOf[a.sym]= a.amt? a.usd/a.amt : 0; });
+      var held=(typeof window.visibleCoinRows==='function')?window.visibleCoinRows():[];
+      held.forEach(function(r){ var px=pxOf[r[0]]||0; cRows.push([r[0], r[1], r[1]*px]); });
+      if(cRows.length){
+        html+='<div class="acct-sec">Coins in Wallet</div>';
+        html+=cRows.map(function(r){
+          return '<div class="acct-item" onclick="openCoinDetail(\''+r[0]+'\')">'+
+            '<div class="ai-l"><div class="ai-t">'+r[0]+'</div><div class="ai-v">'+(+r[1]).toFixed(6)+' &nbsp;·&nbsp; '+fmt(r[2])+' USD</div></div>'+
+            '<span class="ai-a">→</span></div>';
+        }).join('');
+      }
+    }catch(e){}
+    document.getElementById('acctRows').innerHTML=html;
+
+  };
+  window.onAccountRow=function(name){
+    if(name==='Earn'){ try{ go('earn'); }catch(e){} return; }
+    if(name==='Unified Trading'){ try{ go('trade'); }catch(e){} return; }
+    if(name==='Funding'){ try{ setAssetTab('asset'); }catch(e){} return; }
+    try{ toast(name+' coming soon'); }catch(e){}
+  };
+  window.setAssetTab=function(tab){
+    var isAcct = tab==='account';
+    var ta=document.getElementById('aTabAsset'), tc=document.getElementById('aTabAccount');
+    if(ta){ ta.classList.toggle('active',!isAcct); ta.classList.toggle('dim',isAcct); }
+    if(tc){ tc.classList.toggle('active',isAcct); tc.classList.toggle('dim',!isAcct); }
+    var acct=document.getElementById('assetAccountPanel');
+    var coins=document.getElementById('asset-coin-list');
+    var alloc=document.getElementById('assetAllocPanel');
+    if(acct) acct.classList.toggle('show',isAcct);
+    if(coins) coins.style.display = isAcct?'none':'';
+    // Asset tab: donut always visible (like Account tab), coins listed below it
+    if(alloc) alloc.classList.toggle('show',!isAcct);
+    var ic=document.getElementById('allocToggleIcon'); if(ic) ic.classList.toggle('on',!isAcct);
+    if(isAcct) renderAccountPanel();
+    else { try{ renderAssetAlloc(); renderAssetList(); }catch(e){} }
+  };
+  setInterval(function(){ try{ renderAccountPanel(); }catch(e){} }, 3000);
+  // default: Asset tab with donut shown
+  try{
+    if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',function(){ setAssetTab('asset'); });
+    else setAssetTab('asset');
+  }catch(e){}
+
+})();
+</script>
 </body>
+
 </html>
