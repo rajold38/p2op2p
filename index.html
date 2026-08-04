@@ -11885,38 +11885,61 @@ window.applyDisplayCurrency = function(){
 </script>
 
 <style id="biexc-fixes">
-/* === COIN LOGOS: always perfect circle, black outside === */
+/* === COIN LOGOS: always perfect circle, backdrop follows the theme === */
 .clogo,.clogo-sm,img[data-sym],#trade-pair-logo,#cv-from-logo,#cv-to-logo{
-  border-radius:50%!important;background:#000!important;object-fit:cover!important;
+  border-radius:50%!important;object-fit:cover!important;
   overflow:hidden;display:inline-block;vertical-align:middle;
-  box-shadow:0 0 0 1px rgba(255,255,255,.06);
 }
-/* === EARN: solid black, matching the rest of the app === */
-#sc-earn{background:#000!important;}
-#sc-earn .ern-scroll{background:#000!important;}
-#sc-earn .ern-feat .fc,#sc-earn .ern-evt,#sc-earn .ern-sumcard,#sc-earn .ern-info-card,
-#sc-earn .ecard,#sc-earn .ecsm,#sc-earn .ern-card,#sc-earn .ern-box{
+body:not(.light) .clogo,body:not(.light) .clogo-sm,body:not(.light) img[data-sym],
+body:not(.light) #trade-pair-logo,body:not(.light) #cv-from-logo,body:not(.light) #cv-to-logo{
+  background:#000!important;box-shadow:0 0 0 1px rgba(255,255,255,.06);
+}
+body.light .clogo,body.light .clogo-sm,body.light img[data-sym],
+body.light #trade-pair-logo,body.light #cv-from-logo,body.light #cv-to-logo{
+  background:#fff!important;box-shadow:0 0 0 1px rgba(0,0,0,.06);
+}
+/* === EARN: solid black — DARK THEME ONLY (light theme keeps its own palette) === */
+body:not(.light) #sc-earn,body:not(.light) #sc-earn .ern-scroll{background:#000!important;}
+body:not(.light) #sc-earn .ern-feat .fc,body:not(.light) #sc-earn .ern-evt,
+body:not(.light) #sc-earn .ern-sumcard,body:not(.light) #sc-earn .ern-info-card,
+body:not(.light) #sc-earn .ecard,body:not(.light) #sc-earn .ecsm,
+body:not(.light) #sc-earn .ern-card,body:not(.light) #sc-earn .ern-box{
   background:#000!important;border:1px solid #1f1f1f!important;
 }
-#sc-earn .ern-srch,#sc-earn .ern-pill,#sc-earn .ern-netbadge{background:#0d0d0d!important;border:1px solid #1f1f1f!important;}
-#sc-earn .ern-banner{background:#000!important;border:1px solid rgba(247,166,0,.22)!important;}
-#sc-earn .ern-tabs,#sc-earn .ern-stabs,#sc-earn .ern-prod{border-color:#1f1f1f!important;}
-#sc-earn .ecirc,#sc-earn .ecsmi,#sc-earn .ern-evt .ic{background:#0d0d0d!important;}
+body:not(.light) #sc-earn .ern-srch,body:not(.light) #sc-earn .ern-pill,
+body:not(.light) #sc-earn .ern-netbadge{background:#0d0d0d!important;border:1px solid #1f1f1f!important;}
+body:not(.light) #sc-earn .ern-banner{background:#000!important;border:1px solid rgba(247,166,0,.22)!important;}
+body:not(.light) #sc-earn .ern-tabs,body:not(.light) #sc-earn .ern-stabs,
+body:not(.light) #sc-earn .ern-prod{border-color:#1f1f1f!important;}
+body:not(.light) #sc-earn .ecirc,body:not(.light) #sc-earn .ecsmi,
+body:not(.light) #sc-earn .ern-evt .ic{background:#0d0d0d!important;}
+/* light theme earn surfaces stay light */
+body.light #sc-earn,body.light #sc-earn .ern-scroll{background:#fff!important;color:#0b0e11;}
+body.light #sc-earn .ern-feat .fc,body.light #sc-earn .ern-evt,body.light #sc-earn .ern-sumcard,
+body.light #sc-earn .ern-info-card,body.light #sc-earn .ecard,body.light #sc-earn .ecsm,
+body.light #sc-earn .ern-card,body.light #sc-earn .ern-box{background:#f7f8fa!important;border:1px solid #eaecef!important;}
+body.light #sc-earn .ern-srch,body.light #sc-earn .ern-pill,body.light #sc-earn .ern-netbadge{background:#f3f5f7!important;border:1px solid #eaecef!important;}
+body.light #sc-earn .ern-banner{background:#fff7e6!important;border:1px solid rgba(247,166,0,.28)!important;}
+body.light #sc-earn .ecirc,body.light #sc-earn .ecsmi,body.light #sc-earn .ern-evt .ic{background:#eff2f5!important;}
+body.light #sc-earn .ern-sheet,body.light #sc-earn .ern-sh-inp{background:#fff!important;}
 /* === SMOOTHNESS / SPEED === */
 *{-webkit-tap-highlight-color:transparent;}
+html,body{overscroll-behavior-x:none;}
 .screen,.scroll,.ern-scroll,.search-results,#bbCoinList{
   -webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;
 }
-.screen.active,.sheet,.search-sheet{will-change:transform;backface-visibility:hidden;}
+.screen.active,.sheet,.search-sheet{backface-visibility:hidden;}
 img.clogo,img.clogo-sm,img[data-sym]{content-visibility:auto;}
-@media (prefers-reduced-motion:no-preference){
-  .screen{transition:opacity .18s ease;}
+/* === SWIPE-BACK: live drag animation === */
+.biexc-swiping{will-change:transform;transition:none!important;}
+.biexc-swipe-settle{transition:transform .26s cubic-bezier(.22,.61,.36,1)!important;}
+#biexcSwipeShade{
+  position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;
+  z-index:2147483000;display:none;
 }
-/* edge swipe hint layer must never block taps */
-#biexcEdgeBack{position:fixed;inset:0 auto 0 0;width:0;pointer-events:none;}
 </style>
 <script>
-/* ─── BIEXC: swipe-from-edge → back / close (native app behaviour) ─── */
+/* ─── BIEXC: swipe-from-edge → back / close, with live drag animation ─── */
 (function(){
   function visible(el){ if(!el) return false; var r=el.getBoundingClientRect(); return r.width>0&&r.height>0&&getComputedStyle(el).visibility!=='hidden'&&getComputedStyle(el).opacity!=='0'; }
   function topLayer(){
@@ -11926,6 +11949,13 @@ img.clogo,img.clogo-sm,img[data-sym]{content-visibility:auto;}
       return visible(el);
     });
     return list.length?list[list.length-1]:null;
+  }
+  function activeScreen(){ return document.querySelector('.screen.active'); }
+  // element that should visually slide during the gesture
+  function dragTarget(){
+    var el=topLayer(); if(el) return el;
+    var s=activeScreen();
+    return (s && s.id!=='sc-home') ? s : null;
   }
   window.biexcBack=function(){
     var el=topLayer();
@@ -11939,34 +11969,112 @@ img.clogo,img.clogo-sm,img[data-sym]{content-visibility:auto;}
       return true;
     }
     var home=document.getElementById('ni-home');
-    var active=document.querySelector('.screen.active');
+    var active=activeScreen();
     if(active && active.id!=='sc-home'){ if(typeof go==='function'){ go('home'); return true; } if(home){ home.click(); return true; } }
-    return false; // nothing left → let the browser/app close the page
+    return false;
   };
-  // history integration so hardware/browser back works too
-  try{ history.pushState({biexc:1},''); }catch(e){}
+
+  /* history: always keep spare entries so a hard/forced swipe can never
+     navigate the page away (which showed a blank white screen). */
+  function guard(){ try{ history.pushState({biexc:1},''); }catch(e){} }
+  try{ history.replaceState({biexc:1},''); }catch(e){}
+  guard(); guard();
   window.addEventListener('popstate',function(){
-    var handled=window.biexcBack();
-    if(handled){ try{ history.pushState({biexc:1},''); }catch(e){} }
+    window.biexcBack();
+    guard(); // re-arm immediately, never let the stack run dry
   });
-  // edge swipe
-  var sx=0,sy=0,t0=0,tracking=false,fromRight=false;
-  var EDGE=28,DIST=60,MAXOFF=80,MAXMS=600;
+
+  // ---- gesture ----
+  var shade=document.createElement('div'); shade.id='biexcSwipeShade';
+  document.addEventListener('DOMContentLoaded',function(){ document.body.appendChild(shade); });
+  if(document.body) document.body.appendChild(shade);
+
+  var EDGE=32, MAXMS=900;
+  var sx=0,sy=0,t0=0,tracking=false,armed=false,fromRight=false,el=null,W=1,dx=0,lastX=0,lastT=0,vel=0;
+
+  function reset(){
+    if(el){ el.classList.remove('biexc-swiping'); el.style.transform=''; }
+    shade.style.display='none'; shade.style.opacity='0';
+    el=null; tracking=false; armed=false; dx=0; vel=0;
+  }
+  function settle(back){
+    if(!el){ if(back) window.biexcBack(); reset(); return; }
+    var target=el;
+    target.classList.remove('biexc-swiping');
+    target.classList.add('biexc-swipe-settle');
+    shade.style.transition='opacity .26s linear';
+    if(back){
+      target.style.transform='translate3d('+(fromRight?-W:W)+'px,0,0)';
+      shade.style.opacity='0';
+      setTimeout(function(){
+        target.classList.remove('biexc-swipe-settle');
+        target.style.transform='';
+        shade.style.transition=''; shade.style.display='none';
+        window.biexcBack();
+        el=null;
+      },240);
+    }else{
+      target.style.transform='translate3d(0,0,0)';
+      shade.style.opacity='0';
+      setTimeout(function(){
+        target.classList.remove('biexc-swipe-settle');
+        target.style.transform='';
+        shade.style.transition=''; shade.style.display='none';
+        el=null;
+      },240);
+    }
+    tracking=false; armed=false;
+  }
+
   document.addEventListener('touchstart',function(e){
-    if(e.touches.length!==1) return;
-    var t=e.touches[0];
-    var w=window.innerWidth;
-    fromRight = t.clientX > w-EDGE;
+    if(e.touches.length!==1){ reset(); return; }
+    var t=e.touches[0]; W=window.innerWidth||1;
+    fromRight = t.clientX > W-EDGE;
     tracking = (t.clientX < EDGE) || fromRight;
-    sx=t.clientX; sy=t.clientY; t0=Date.now();
+    sx=lastX=t.clientX; sy=t.clientY; t0=lastT=Date.now(); dx=0; vel=0; armed=false; el=null;
   },{passive:true});
-  document.addEventListener('touchend',function(e){
-    if(!tracking) return; tracking=false;
-    var t=e.changedTouches[0];
-    var dx=t.clientX-sx, dy=Math.abs(t.clientY-sy);
-    if(Date.now()-t0>MAXMS || dy>MAXOFF) return;
-    if((!fromRight && dx>DIST) || (fromRight && dx<-DIST)) window.biexcBack();
-  },{passive:true});
+
+  document.addEventListener('touchmove',function(e){
+    if(!tracking || e.touches.length!==1) return;
+    var t=e.touches[0];
+    var mx=t.clientX-sx, my=t.clientY-sy;
+    if(!armed){
+      if(Math.abs(my)>Math.abs(mx)&&Math.abs(my)>10){ tracking=false; return; } // vertical scroll wins
+      if(Math.abs(mx)<8) return;
+      if((!fromRight && mx<=0)||(fromRight && mx>=0)){ tracking=false; return; }
+      armed=true;
+      el=dragTarget();
+      if(el){
+        el.classList.add('biexc-swiping');
+        shade.style.display='block';
+      }
+    }
+    // always block the browser's own edge-swipe navigation once armed
+    if(e.cancelable) e.preventDefault();
+    var now=Date.now();
+    if(now>lastT){ vel=(t.clientX-lastX)/(now-lastT); lastX=t.clientX; lastT=now; }
+    dx = fromRight ? Math.min(0,mx) : Math.max(0,mx);
+    var prog=Math.min(1,Math.abs(dx)/W);
+    // rubber-banded, eased translation
+    var move=(fromRight?-1:1)*Math.abs(dx)*(1-prog*0.25);
+    if(el){
+      el.style.transform='translate3d('+move+'px,0,0)';
+      shade.style.opacity=String(0.35*(1-prog));
+    }
+  },{passive:false});
+
+  function end(){
+    if(!tracking && !armed){ tracking=false; return; }
+    var dt=Date.now()-t0;
+    var fast=Math.abs(vel)>0.45;
+    var far=Math.abs(dx)>W*0.28;
+    var go=(dt<MAXMS||far) && (fast||far) && ((!fromRight&&dx>0)||(fromRight&&dx<0));
+    if(armed) settle(!!go);
+    else { if(go) window.biexcBack(); reset(); }
+    tracking=false;
+  }
+  document.addEventListener('touchend',end,{passive:true});
+  document.addEventListener('touchcancel',function(){ if(armed) settle(false); else reset(); },{passive:true});
 })();
 
 /* ─── BIEXC: coins never disappear on login / logout ─── */
