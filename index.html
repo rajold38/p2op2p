@@ -838,7 +838,7 @@ html,body{overscroll-behavior-y:contain;}
 
 <!-- ─── HOME ─── -->
 <div class="screen active" id="sc-home">
-  <div id="ptrIndicator"><div class="ptr-mark" data-text="BYBIT">B<span class="ptr-letter">Y<span class="ptr-fill">Y</span></span>BIT</div></div>
+  <div id="ptrIndicator"><div class="ptr-mark" data-text="BIEXC">B<span class="ptr-letter">I<span class="ptr-fill">I</span></span>EXC</div></div>
   <div class="sb">
     <span id="htime">2:47</span>
     <div class="sb-r"><i class="fas fa-signal"></i><span>5G</span><i class="fas fa-battery-three-quarters"></i></div>
@@ -1375,9 +1375,19 @@ body.light #sc-earn .ern-sh-btns .can{border-color:#d8dde3;color:#0b0e11;}
       <div class="atabs">
         <span class="aTab active">Asset</span>
         <span class="aTab dim" onclick="toast('Account')">Account</span>
-        <div style="margin-left:auto;display:flex;gap:14px;align-items:center;">
+        <div style="margin-left:auto;display:flex;gap:16px;align-items:center;">
           <i class="fas fa-history" title="History" style="color:var(--text2);cursor:pointer;font-size:15px;" onclick="openHistorySheet()"></i>
+          <svg id="allocToggleIcon" class="atab-ic" title="Asset allocation" viewBox="0 0 24 24" onclick="toggleAssetAlloc()"><path d="M12 3a9 9 0 1 0 9 9h-9V3z"/><path d="M14.5 2.5A8 8 0 0 1 21.5 9.5h-7v-7z"/></svg>
+          <svg class="atab-ic" title="Asset settings" viewBox="0 0 24 24" onclick="openAssetSettings()"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.2"/></svg>
         </div>
+      </div>
+      <!-- ALLOCATION DONUT -->
+      <div id="assetAllocPanel" class="alloc-panel">
+        <div class="alloc-inner">
+          <div class="alloc-donut" id="allocDonut"></div>
+          <div class="alloc-legend" id="allocLegend"></div>
+        </div>
+        <div class="alloc-dots"><span class="ad on"></span><span class="ad"></span></div>
       </div>
       <!-- LIVE ASSET PRICES -->
       <div id="asset-coin-list">
@@ -3048,9 +3058,9 @@ function updateUserUI() {
   const equity = (typeof getEquityBalance==='function') ? getEquityBalance() : (parseFloat(window.userBalance||0));
   const locked = (typeof getLockedMargin==='function') ? getLockedMargin() : 0;
   const available = (typeof getAvailableBalance==='function') ? getAvailableBalance() : Math.max(0, parseFloat(window.userBalance||0) - locked);
-  const av = $id('assetsAvail'); if(av) av.textContent = available.toFixed(2);
-  const iu = $id('assetsInUse'); if(iu) iu.textContent = locked.toFixed(2);
-  const wb = $id('witBal'); if(wb) wb.textContent = available.toFixed(2);
+  const av = $id('assetsAvail'); if(av) av.textContent = fmtMoney(available);
+  const iu = $id('assetsInUse'); if(iu) iu.textContent = fmtMoney(locked);
+  const wb = $id('witBal'); if(wb) wb.textContent = fmtMoney(available);
   try{ renderAssetList && renderAssetList(); }catch(e){}
   // User badges
   const hb = $id('homeUserBadge');
@@ -3880,9 +3890,9 @@ function syncLockedBalanceUI(){
   const available = getAvailableBalance();
   const equity = getEquityBalance();
   const setTxt = (id, val) => { const el=document.getElementById(id); if(el) el.textContent = val; };
-  setTxt('assetsAvail', available.toFixed(2));
-  setTxt('assetsInUse', locked.toFixed(2));
-  setTxt('witBal', available.toFixed(2));
+  setTxt('assetsAvail', fmtMoney(available));
+  setTxt('assetsInUse', fmtMoney(locked));
+  setTxt('witBal', fmtMoney(available));
   setTxt('navBal', wallet.toFixed(2));
   document.querySelectorAll('[data-bal-usdt]').forEach(el=>{ el.textContent = wallet.toFixed(2); });
   return {wallet, locked, available, equity};
@@ -4618,14 +4628,14 @@ async function renderAssetList(){
   const locked = (typeof getLockedMargin==='function') ? getLockedMargin() : 0;
   const availUsdt = (typeof getAvailableBalance==='function') ? getAvailableBalance() : Math.max(0, rawBal - locked);
   const rows = [['USDT', rawBal, 1, 0]];
-  const coins = Object.entries(STATE.coins||{}).filter(([,v])=>v>0);
+  const coins = (typeof window.visibleCoinRows==='function') ? window.visibleCoinRows() : Object.entries(STATE.coins||{}).filter(([,v])=>v>0);
   let priceMap = {};
-  if(coins.length){
-    try {
-      const r = await bybitGET('/v5/market/tickers',{category:'spot'});
-      (r?.list||[]).forEach(t=>{ priceMap[t.symbol] = t; });
-    } catch(e){}
-  }
+  try {
+    const r = await bybitGET('/v5/market/tickers',{category:'spot'});
+    (r?.list||[]).forEach(t=>{ priceMap[t.symbol] = t; });
+    const bt = priceMap['BTCUSDT'];
+    if(bt) window._btcPxCache = parseFloat(bt.lastPrice)||window._btcPxCache||0;
+  } catch(e){}
   coins.forEach(([c,v])=>{
     const t = priceMap[c+'USDT'];
     const px = t? parseFloat(t.lastPrice) : 0;
@@ -4646,11 +4656,15 @@ async function renderAssetList(){
     </div>`;
   }).join('');
   wrap.innerHTML = html;
+  try{
+    window._assetAlloc = rows.map(([c,v,px])=>({sym:c, amt:+v, usd:(+v)*(px||0)}));
+    renderAssetAlloc();
+  }catch(e){}
   // [BUG 4 FIX] add unrealized PnL to total displayed (subtract raw USDT, add equity USDT)
   const unrealizedPnl = equityUsdt - rawBal;
   total = total + unrealizedPnl;
   // === Currency conversion + display ===
-  const btcPx = priceMap['BTCUSDT'] ? parseFloat(priceMap['BTCUSDT'].lastPrice) : 0;
+  const btcPx = priceMap['BTCUSDT'] ? parseFloat(priceMap['BTCUSDT'].lastPrice) : (window._btcPxCache||0);
   const INR_RATE = 87; // approximate USDT→INR rate
   const cur = (localStorage.getItem('displayCurrency') || 'USDT').toUpperCase();
   let shown = total, suffix = 'USDT', decimals = 2;
@@ -4660,9 +4674,9 @@ async function renderAssetList(){
   const fmtTotal = shown.toLocaleString(undefined,{minimumFractionDigits:decimals, maximumFractionDigits:decimals});
   const at = document.getElementById('assetsTotalUSD'); if(at) at.textContent = fmtTotal;
   // [BUG 4 FIX] Available shows wallet minus locked margin, not raw balance
-  const av = document.getElementById('assetsAvail');    if(av) av.textContent = availUsdt.toFixed(2);
-  const iu = document.getElementById('assetsInUse');   if(iu) iu.textContent = locked.toFixed(2);
-  const wb = document.getElementById('witBal');        if(wb) wb.textContent = availUsdt.toFixed(2);
+  const av = document.getElementById('assetsAvail');    if(av) av.textContent = fmtMoney(availUsdt);
+  const iu = document.getElementById('assetsInUse');   if(iu) iu.textContent = fmtMoney(locked);
+  const wb = document.getElementById('witBal');        if(wb) wb.textContent = fmtMoney(availUsdt);
   const tu = document.getElementById('totalAssetUSD');  if(tu) tu.textContent = fmtTotal;
   const lblA = document.getElementById('assetsCurLabel'); if(lblA) lblA.textContent = suffix+' ▾';
   const lblH = document.getElementById('homeCurLabel');   if(lblH) lblH.textContent = suffix+' ▾';
@@ -4672,7 +4686,12 @@ async function renderAssetList(){
     const btcEqTxt = '≈ '+(total/btcPx).toFixed(8)+' BTC';
     if(be) be.textContent = btcEqTxt;
     if(beH) beH.textContent = btcEqTxt;
+    window._lastBtcEq = btcEqTxt;
+  } else if(window._lastBtcEq){
+    if(be) be.textContent = window._lastBtcEq;
+    if(beH) beH.textContent = window._lastBtcEq;
   }
+  window._lastTotalUsdt = total;
   // === Today's P&L (FUTURES trades only) ===
   try{
     const today = new Date().toISOString().slice(0,10);
@@ -4725,9 +4744,15 @@ function openCurrencyPicker(context){
   if(!document.getElementById('bbSheetKf')){const s=document.createElement('style');s.id='bbSheetKf';s.textContent='@keyframes bbSheetUp{from{transform:translateY(100%);}to{transform:translateY(0);}}';document.head.appendChild(s);}
 }
 function pickCurrency(c){
+  c = String(c||'USDT').toUpperCase();
   localStorage.setItem('displayCurrency', c);
+  window._displayCurrency = c;
   const ov = document.getElementById('curPickerOv'); if(ov) ov.remove();
+  const lblA = document.getElementById('assetsCurLabel'); if(lblA) lblA.textContent = c+' \u25be';
+  const lblH = document.getElementById('homeCurLabel');   if(lblH) lblH.textContent = c+' \u25be';
+  try{ applyDisplayCurrency(); }catch(e){}
   try{ renderAssetList(); }catch(e){}
+  try{ toast('Display currency: '+c); }catch(e){}
 }
 // Auto-refresh when balance changes
 function _bbIsTradeVisible(){
@@ -4752,11 +4777,11 @@ setInterval(()=>{
     try {
       const equity = getEquityBalance();
       const available = getAvailableBalance();
-      const tu = document.getElementById('totalAssetUSD'); if(tu) tu.textContent = equity.toFixed(2);
-      const at = document.getElementById('assetsTotalUSD'); if(at) at.textContent = equity.toFixed(2);
-      const av = document.getElementById('assetsAvail'); if(av) av.textContent = available.toFixed(2);
-      const iu = document.getElementById('assetsInUse'); if(iu) iu.textContent = getLockedMargin().toFixed(2);
-      const wb = document.getElementById('witBal'); if(wb) wb.textContent = available.toFixed(2);
+      const tu = document.getElementById('totalAssetUSD'); if(tu) tu.textContent = dispTotal(equity);
+      const at = document.getElementById('assetsTotalUSD'); if(at) at.textContent = dispTotal(equity);
+      const av = document.getElementById('assetsAvail'); if(av) av.textContent = fmtMoney(available);
+      const iu = document.getElementById('assetsInUse'); if(iu) iu.textContent = fmtMoney(getLockedMargin());
+      const wb = document.getElementById('witBal'); if(wb) wb.textContent = fmtMoney(available);
       if(orderTab==='positions') renderOrderTabs();
     } catch(e){}
   }
@@ -11641,5 +11666,352 @@ body.light [style*="background:#181a20"]{color:#0b0e11 !important}
 })();
 </script>
 
+
+<!-- ═══════════ AUTH KEEPALIVE / ANTI AUTO-LOGOUT GUARD (added) ═══════════ -->
+<script>
+(function(){
+  if (window.__authGuardInstalled) return;
+  window.__authGuardInstalled = true;
+
+  window.__userInitiatedLogout = false;
+
+  function auth(){ return window._fb && window._fb.auth; }
+
+  // 1) Wrap doLogout so we know a sign-out was intentional.
+  function wrapLogout(){
+    if (typeof window.doLogout !== 'function' || window.doLogout.__wrapped) return;
+    var orig = window.doLogout;
+    var w = async function(){
+      window.__userInitiatedLogout = true;
+      try { return await orig.apply(this, arguments); }
+      finally { setTimeout(function(){ window.__userInitiatedLogout = false; }, 8000); }
+    };
+    w.__wrapped = true;
+    window.doLogout = w;
+  }
+  wrapLogout();
+  var wrapIv = setInterval(wrapLogout, 500);
+  setTimeout(function(){ clearInterval(wrapIv); }, 15000);
+
+  // 2) Swallow transient "signed out" events.
+  //    Firebase fires onAuthStateChanged(null) on flaky networks / token refresh
+  //    hiccups. We only accept it if the user is STILL null a few seconds later
+  //    and the sign-out was not triggered by the user.
+  var origOut = window.onFirebaseLogout;
+  window.onFirebaseLogout = function(){
+    var self = this, args = arguments;
+    if (window.__userInitiatedLogout) {
+      return origOut && origOut.apply(self, args);
+    }
+    // transient? verify before tearing down the session
+    setTimeout(function(){
+      var a = auth();
+      if (a && a.currentUser) {
+        // false alarm — session is alive, do nothing
+        try { console.warn('[auth-guard] ignored transient sign-out'); } catch(e){}
+        return;
+      }
+      if (window.__userInitiatedLogout) return;
+      // try one silent restore from the persisted session before giving up
+      if (a && typeof a.authStateReady === 'function') {
+        a.authStateReady().then(function(){
+          if (a.currentUser) return;
+          origOut && origOut.apply(self, args);
+        }).catch(function(){ origOut && origOut.apply(self, args); });
+      } else {
+        origOut && origOut.apply(self, args);
+      }
+    }, 4000);
+  };
+
+  // 3) Keep the ID token fresh so it never silently expires.
+  async function refreshToken(force){
+    try {
+      var a = auth();
+      if (a && a.currentUser) await a.currentUser.getIdToken(!!force);
+    } catch(e){ try{ console.warn('[auth-guard] token refresh failed', e && e.code); }catch(_){} }
+  }
+  setInterval(function(){ refreshToken(true); }, 20 * 60 * 1000);   // every 20 min
+  document.addEventListener('visibilitychange', function(){
+    if (document.visibilityState === 'visible') refreshToken(false);
+  });
+  window.addEventListener('online', function(){ refreshToken(true); });
+  window.addEventListener('focus', function(){ refreshToken(false); });
+
+  // 4) Make sure the session is stored on-device (survives reload / app switch).
+  (function ensurePersistence(){
+    var tries = 0;
+    var iv = setInterval(async function(){
+      var a = auth();
+      if (!a) { if (++tries > 40) clearInterval(iv); return; }
+      clearInterval(iv);
+      try {
+        var m = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js");
+        try { await a.setPersistence(m.indexedDBLocalPersistence); }
+        catch(e){ try { await a.setPersistence(m.browserLocalPersistence); } catch(_){} }
+      } catch(e){}
+      refreshToken(false);
+    }, 250);
+  })();
+})();
+</script>
+
+
+<style>
+/* ── Assets: allocation donut ── */
+.atab-ic{width:19px;height:19px;fill:none;stroke:var(--text2);stroke-width:1.6;cursor:pointer;transition:.2s;}
+.atab-ic:hover,.atab-ic.on{stroke:#fff;}
+.alloc-panel{display:none;padding:14px 0 6px;}
+.alloc-panel.show{display:block;animation:allocIn .25s ease;}
+@keyframes allocIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+.alloc-inner{display:flex;align-items:center;gap:18px;}
+.alloc-donut{width:118px;height:118px;flex:0 0 118px;}
+.alloc-legend{flex:1;min-width:0;display:flex;flex-direction:column;gap:9px;}
+.alloc-row{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;}
+.alloc-row .adot{width:8px;height:8px;border-radius:50%;flex:0 0 8px;}
+.alloc-row .asym{color:#fff;}
+.alloc-row .apct{margin-left:auto;color:#fff;font-weight:600;}
+.alloc-empty{color:var(--text2);font-size:12px;padding:8px 0;}
+.alloc-dots{display:flex;justify-content:center;gap:6px;margin-top:12px;}
+.alloc-dots .ad{width:22px;height:3px;border-radius:2px;background:#2b2f36;}
+.alloc-dots .ad.on{background:#8a9099;}
+
+/* ── Login page: solid black ── */
+#authOverlay{background:#000!important;}
+#authOverlay .auth-modal{background:#000!important;}
+#authOverlay .bx-bg::before,#authOverlay .bx-bg::after{display:none!important;}
+#authOverlay .bx-grid,#authOverlay .bx-stars{opacity:.35;}
+#authOverlay .bx-card{background:#000!important;border:1px solid rgba(255,255,255,.08)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;box-shadow:none!important;}
+#authOverlay .bx-pill{background:#000!important;border-color:rgba(255,255,255,.1)!important;}
+#authOverlay .auth-form input{background:#000!important;border:1px solid rgba(255,255,255,.12)!important;}
+#authOverlay .auth-form input:focus{background:#000!important;}
+#authOverlay .auth-tab-row{background:#000!important;}
+#authOverlay .bx-close{background:#000!important;}
+</style>
+<script>
+(function(){
+  var COLORS=['#2ebd85','#f0932b','#f7c948','#e84393','#7f8cff','#00b8d9','#ff6b6b','#a0e7a0','#c084fc','#4ade80'];
+  window.toggleAssetAlloc=function(){
+    var p=document.getElementById('assetAllocPanel');
+    var ic=document.getElementById('allocToggleIcon');
+    if(!p)return;
+    var on=p.classList.toggle('show');
+    if(ic)ic.classList.toggle('on',on);
+    if(on){ try{ renderAssetAlloc(); }catch(e){} }
+  };
+  window.renderAssetAlloc=function(){
+    var p=document.getElementById('assetAllocPanel');
+    if(!p||!p.classList.contains('show'))return;
+    var list=(window._assetAlloc||[]).filter(function(r){return r.usd>0;});
+    list.sort(function(a,b){return b.usd-a.usd;});
+    var total=list.reduce(function(a,r){return a+r.usd;},0);
+    var donut=document.getElementById('allocDonut'), leg=document.getElementById('allocLegend');
+    if(!total){ donut.innerHTML=''; leg.innerHTML='<div class="alloc-empty">No assets yet</div>'; return; }
+    var R=42, C=2*Math.PI*R, off=0, segs='';
+    list.forEach(function(r,i){
+      var frac=r.usd/total, len=frac*C, col=COLORS[i%COLORS.length];
+      segs+='<circle cx="60" cy="60" r="'+R+'" fill="none" stroke="'+col+'" stroke-width="15" stroke-dasharray="'+len+' '+(C-len)+'" stroke-dashoffset="'+(-off)+'" transform="rotate(-90 60 60)"></circle>';
+      off+=len;
+    });
+    donut.innerHTML='<svg viewBox="0 0 120 120" width="100%" height="100%">'+segs+'</svg>';
+    leg.innerHTML=list.slice(0,6).map(function(r,i){
+      var pct=r.usd/total*100;
+      var txt=pct<0.01?'< 0.01%':pct.toFixed(2)+'%';
+      return '<div class="alloc-row"><span class="adot" style="background:'+COLORS[i%COLORS.length]+'"></span><span class="asym">'+r.sym+'</span><span class="apct">'+txt+'</span></div>';
+    }).join('');
+  };
+  window.openAssetSettings=function(){
+    var hide=localStorage.getItem('hideSmallAssets')==='1';
+    localStorage.setItem('hideSmallAssets', hide?'0':'1');
+    try{ toast(hide?'Showing all assets':'Hiding small assets'); }catch(e){}
+    try{ renderAssetList(); }catch(e){}
+  };
+})();
+</script>
+
+<script>
+/* ── Money formatting + display currency helpers ── */
+window.fmtMoney = function(n, d){
+  n = parseFloat(n); if(!isFinite(n)) n = 0;
+  if(d==null) d = 2;
+  return n.toLocaleString('en-US',{minimumFractionDigits:d, maximumFractionDigits:d});
+};
+window.getDisplayCurrency = function(){
+  return (localStorage.getItem('displayCurrency')||'USDT').toUpperCase();
+};
+window.INR_RATE = 87;
+window.convertFromUsdt = function(usdt){
+  var cur = getDisplayCurrency();
+  var btc = parseFloat(window._btcPxCache||0);
+  if(cur==='BTC' && btc>0) return {val: usdt/btc, cur:'BTC', dec:8};
+  if(cur==='INR') return {val: usdt*window.INR_RATE, cur:'INR', dec:2};
+  if(cur==='USD') return {val: usdt, cur:'USD', dec:2};
+  return {val: usdt, cur:'USDT', dec:2};
+};
+window.dispTotal = function(usdtAmount){
+  var c = convertFromUsdt(parseFloat(usdtAmount)||0);
+  return fmtMoney(c.val, c.dec);
+};
+window.applyDisplayCurrency = function(){
+  var c = getDisplayCurrency();
+  var lblA = document.getElementById('assetsCurLabel'); if(lblA) lblA.textContent = c+' \u25be';
+  var lblH = document.getElementById('homeCurLabel');   if(lblH) lblH.textContent = c+' \u25be';
+  var base = parseFloat(window._lastTotalUsdt);
+  if(isFinite(base)){
+    var t = dispTotal(base);
+    var at = document.getElementById('assetsTotalUSD'); if(at) at.textContent = t;
+    var tu = document.getElementById('totalAssetUSD');  if(tu) tu.textContent = t;
+    var btc = parseFloat(window._btcPxCache||0);
+    if(btc>0){
+      var eq = '\u2248 '+(base/btc).toFixed(8)+' BTC';
+      var be = document.getElementById('assetsBtcEq'); if(be) be.textContent = eq;
+      var bh = document.getElementById('homeBtcEq');   if(bh) bh.textContent = eq;
+    }
+  }
+};
+/* keep BTC price fresh even with zero coin holdings */
+(function(){
+  async function pullBtc(){
+    try{
+      const r = await fetch('https://api.bybit.com/v5/market/tickers?category=spot&symbol=BTCUSDT');
+      const j = await r.json();
+      const p = parseFloat(j?.result?.list?.[0]?.lastPrice||0);
+      if(p>0){ window._btcPxCache = p; applyDisplayCurrency(); }
+    }catch(e){}
+  }
+  pullBtc(); setInterval(pullBtc, 30000);
+  document.addEventListener('DOMContentLoaded', function(){ setTimeout(applyDisplayCurrency, 800); });
+})();
+</script>
+
+<style id="biexc-fixes">
+/* === COIN LOGOS: always perfect circle, black outside === */
+.clogo,.clogo-sm,img[data-sym],#trade-pair-logo,#cv-from-logo,#cv-to-logo{
+  border-radius:50%!important;background:#000!important;object-fit:cover!important;
+  overflow:hidden;display:inline-block;vertical-align:middle;
+  box-shadow:0 0 0 1px rgba(255,255,255,.06);
+}
+/* === EARN: solid black, matching the rest of the app === */
+#sc-earn{background:#000!important;}
+#sc-earn .ern-scroll{background:#000!important;}
+#sc-earn .ern-feat .fc,#sc-earn .ern-evt,#sc-earn .ern-sumcard,#sc-earn .ern-info-card,
+#sc-earn .ecard,#sc-earn .ecsm,#sc-earn .ern-card,#sc-earn .ern-box{
+  background:#000!important;border:1px solid #1f1f1f!important;
+}
+#sc-earn .ern-srch,#sc-earn .ern-pill,#sc-earn .ern-netbadge{background:#0d0d0d!important;border:1px solid #1f1f1f!important;}
+#sc-earn .ern-banner{background:#000!important;border:1px solid rgba(247,166,0,.22)!important;}
+#sc-earn .ern-tabs,#sc-earn .ern-stabs,#sc-earn .ern-prod{border-color:#1f1f1f!important;}
+#sc-earn .ecirc,#sc-earn .ecsmi,#sc-earn .ern-evt .ic{background:#0d0d0d!important;}
+/* === SMOOTHNESS / SPEED === */
+*{-webkit-tap-highlight-color:transparent;}
+.screen,.scroll,.ern-scroll,.search-results,#bbCoinList{
+  -webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;
+}
+.screen.active,.sheet,.search-sheet{will-change:transform;backface-visibility:hidden;}
+img.clogo,img.clogo-sm,img[data-sym]{content-visibility:auto;}
+@media (prefers-reduced-motion:no-preference){
+  .screen{transition:opacity .18s ease;}
+}
+/* edge swipe hint layer must never block taps */
+#biexcEdgeBack{position:fixed;inset:0 auto 0 0;width:0;pointer-events:none;}
+</style>
+<script>
+/* ─── BIEXC: swipe-from-edge → back / close (native app behaviour) ─── */
+(function(){
+  function visible(el){ if(!el) return false; var r=el.getBoundingClientRect(); return r.width>0&&r.height>0&&getComputedStyle(el).visibility!=='hidden'&&getComputedStyle(el).opacity!=='0'; }
+  function topLayer(){
+    var sel='#coinSearchOv,#authOverlay.show,.search-sheet.show,.sheet.show,.bb-screen.show,.bb-screen.active,.modal.show,.ov.show';
+    var list=[].slice.call(document.querySelectorAll(sel)).filter(function(el){
+      if(el.id==='coinSearchOv') return el.style.display && el.style.display!=='none';
+      return visible(el);
+    });
+    return list.length?list[list.length-1]:null;
+  }
+  window.biexcBack=function(){
+    var el=topLayer();
+    if(el){
+      var btn=el.querySelector('[onclick*="close"],[onclick*="Close"],[onclick*="Back"],[onclick*="back"]');
+      if(btn){ btn.click(); return true; }
+      el.classList.remove('show','active');
+      if(el.id==='coinSearchOv') el.style.display='none';
+      var bg=document.getElementById((el.id||'')+'-bg'); if(bg) bg.classList.remove('show');
+      document.body.style.overflow='';
+      return true;
+    }
+    var home=document.getElementById('ni-home');
+    var active=document.querySelector('.screen.active');
+    if(active && active.id!=='sc-home'){ if(typeof go==='function'){ go('home'); return true; } if(home){ home.click(); return true; } }
+    return false; // nothing left → let the browser/app close the page
+  };
+  // history integration so hardware/browser back works too
+  try{ history.pushState({biexc:1},''); }catch(e){}
+  window.addEventListener('popstate',function(){
+    var handled=window.biexcBack();
+    if(handled){ try{ history.pushState({biexc:1},''); }catch(e){} }
+  });
+  // edge swipe
+  var sx=0,sy=0,t0=0,tracking=false,fromRight=false;
+  var EDGE=28,DIST=60,MAXOFF=80,MAXMS=600;
+  document.addEventListener('touchstart',function(e){
+    if(e.touches.length!==1) return;
+    var t=e.touches[0];
+    var w=window.innerWidth;
+    fromRight = t.clientX > w-EDGE;
+    tracking = (t.clientX < EDGE) || fromRight;
+    sx=t.clientX; sy=t.clientY; t0=Date.now();
+  },{passive:true});
+  document.addEventListener('touchend',function(e){
+    if(!tracking) return; tracking=false;
+    var t=e.changedTouches[0];
+    var dx=t.clientX-sx, dy=Math.abs(t.clientY-sy);
+    if(Date.now()-t0>MAXMS || dy>MAXOFF) return;
+    if((!fromRight && dx>DIST) || (fromRight && dx<-DIST)) window.biexcBack();
+  },{passive:true});
+})();
+
+/* ─── BIEXC: coins never disappear on login / logout ─── */
+(function(){
+  var KEY='biexc_coin_list_v1';
+  var DEFAULTS=['USDT','BTC','ETH','BNB','SOL','XRP','TON','TRX','DOGE','USDC'];
+  function load(){ try{ var a=JSON.parse(localStorage.getItem(KEY)); return Array.isArray(a)&&a.length?a:DEFAULTS.slice(); }catch(e){ return DEFAULTS.slice(); } }
+  function save(){ try{ localStorage.setItem(KEY,JSON.stringify(window.persistentCoins)); }catch(e){} }
+  window.persistentCoins=load();
+  window.rememberCoin=function(c){
+    c=String(c||'').toUpperCase(); if(!c) return;
+    if(window.persistentCoins.indexOf(c)<0){ window.persistentCoins.push(c); save(); }
+  };
+  function harvest(){
+    try{ if(window.balances) Object.keys(window.balances).forEach(function(c){ if(parseFloat(window.balances[c])>0) window.rememberCoin(c); }); }catch(e){}
+    try{ if(window.STATE&&STATE.coins) Object.keys(STATE.coins).forEach(function(c){ if(parseFloat(STATE.coins[c])>0) window.rememberCoin(c); }); }catch(e){}
+  }
+  // rows shown on the Assets screen — persistent list, balance or not
+  window.visibleCoinRows=function(){
+    harvest();
+    var coins=window.STATE&&STATE.coins?STATE.coins:{};
+    var out=[],seen={};
+    Object.keys(coins).forEach(function(c){
+      var u=c.toUpperCase();
+      if(u==='USDT'||seen[u]) return;
+      if(parseFloat(coins[c])>0){ seen[u]=1; out.push([u,parseFloat(coins[c])]); }
+    });
+    window.persistentCoins.forEach(function(c){
+      if(c==='USDT'||seen[c]) return; seen[c]=1;
+      var v=parseFloat((coins[c]!=null?coins[c]:(window.balances&&window.balances[c])||0))||0;
+      out.push([c,v]);
+    });
+    return out;
+  };
+  // keep the list alive across logout — it is device-level, not account-level
+  var prevOut=window.onFirebaseLogout;
+  window.onFirebaseLogout=function(){
+    harvest();
+    var r=prevOut?prevOut.apply(this,arguments):undefined;
+    try{ if(window.STATE){ STATE.coins=STATE.coins||{}; window.persistentCoins.forEach(function(c){ if(c!=='USDT') STATE.coins[c]=0; }); } }catch(e){}
+    try{ typeof renderAssetList==='function' && renderAssetList(); }catch(e){}
+    return r;
+  };
+  setInterval(harvest,5000);
+})();
+</script>
 </body>
 </html>
