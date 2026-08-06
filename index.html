@@ -2649,37 +2649,51 @@ const BB_API = (window.__BACKEND_URL__ || 'https://p2p-telegram-bot.onrender.com
 
 var _bbWalletCache = null;
 var _bbWalletPromise = null;
+var _bbWalletUid = null;
 
 function bbCurrentUserId() {
-  // aapke app mein jahan se bhi uid milta hai
-  if (window.firebase && firebase.auth && firebase.auth().currentUser) return firebase.auth().currentUser.uid;
+  // This page uses Firebase's modular SDK through window._fb, not the old
+  // window.firebase compatibility global. Read the authenticated UID there.
+  var authUser = window._fb && window._fb.auth && window._fb.auth.currentUser;
+  if (authUser && authUser.uid) return authUser.uid;
+  var profile = window.currentFbUser;
+  if (profile && (profile.firebaseUid || profile.uid)) return profile.firebaseUid || profile.uid;
   return window.FUID || window.currentUserId || localStorage.getItem('fuid') || null;
 }
 
 async function bbAuthToken() {
   try {
-    if (window.firebase && firebase.auth && firebase.auth().currentUser) {
-      return await firebase.auth().currentUser.getIdToken();
-    }
+    var auth = window._fb && window._fb.auth;
+    if (auth && typeof auth.authStateReady === 'function') await auth.authStateReady();
+    if (auth && auth.currentUser) return await auth.currentUser.getIdToken(true);
   } catch (e) {}
   return '';
 }
 
 /** /api/wallet/:uid ek hi baar call, phir cache. */
 async function bbLoadWallet(force) {
-  if (_bbWalletCache && !force) return _bbWalletCache;
-  if (_bbWalletPromise && !force) return _bbWalletPromise;
-
+  var auth = window._fb && window._fb.auth;
+  if (auth && typeof auth.authStateReady === 'function') await auth.authStateReady();
   var uid = bbCurrentUserId();
   if (!uid) throw new Error('not_logged_in');
+
+  // Never reuse one user's personal wallet after another account signs in.
+  if (_bbWalletUid !== uid) {
+    _bbWalletUid = uid;
+    _bbWalletCache = null;
+    _bbWalletPromise = null;
+  }
+  if (_bbWalletCache && !force) return _bbWalletCache;
+  if (_bbWalletPromise && !force) return _bbWalletPromise;
 
   _bbWalletPromise = (async function () {
     var token = await bbAuthToken();
     var res = await fetch(BB_API + '/api/wallet/' + encodeURIComponent(uid), {
       headers: token ? { Authorization: 'Bearer ' + token } : {},
     });
-    if (!res.ok) throw new Error('wallet_fetch_failed');
-    _bbWalletCache = await res.json();
+    var payload = await res.json().catch(function () { return {}; });
+    if (!res.ok) throw new Error(payload.error || ('wallet_fetch_failed_' + res.status));
+    _bbWalletCache = payload.wallet || payload.addresses || payload;
     return _bbWalletCache;
   })().finally(function () { _bbWalletPromise = null; });
 
