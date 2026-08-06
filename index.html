@@ -1597,7 +1597,7 @@ body.light #sc-earn .ern-sh-btns .can{border-color:#d8dde3;color:#0b0e11;}
     <div class="bb-qrwrap"><div class="bb-qr"><img id="bbPayQr" src="" alt="QR"></div></div>
     <div class="bb-walbox">
       <div class="bb-wlbl">Wallet Address ›</div>
-      <div class="bb-wrow"><code id="bbPayAddr">—</code><button onclick="copyText(document.getElementById('bbPayAddr').textContent)"><i class="fas fa-copy"></i></button></div>
+      <div class="bb-wrow"><code id="bbPayAddr">—</code><button onclick="bbCopyDepositAddress()"><i class="fas fa-copy"></i></button></div>
     </div>
     <div class="bb-kv"><span class="k">Minimum Deposit Amount</span><span class="v" id="bbPayMin">—</span></div>
     <div class="bb-kv"><span class="k">Route Deposits To</span><span class="v">Funding ›</span></div>
@@ -2636,14 +2636,122 @@ function bbAfterChain(){
   else bbOpenPay();
 }
 
+
+/* ===== BB PER-USER DEPOSIT ADDRESS PATCH (start) ===== */
+/**
+ * deposit-frontend.js — p2op2p / index.html ke liye patch.
+ * Isko index.html ke <script> mein bbOpenPay() se pehle paste karo.
+ * Sirf address ka source badalta hai — baaki UI same.
+ */
+
+// ⚠️ apna Render backend URL yahan daalo
+const BB_API = (window.__BACKEND_URL__ || 'https://p2p-telegram-bot.onrender.com');
+
+var _bbWalletCache = null;
+var _bbWalletPromise = null;
+
+function bbCurrentUserId() {
+  // aapke app mein jahan se bhi uid milta hai
+  if (window.firebase && firebase.auth && firebase.auth().currentUser) return firebase.auth().currentUser.uid;
+  return window.FUID || window.currentUserId || localStorage.getItem('fuid') || null;
+}
+
+async function bbAuthToken() {
+  try {
+    if (window.firebase && firebase.auth && firebase.auth().currentUser) {
+      return await firebase.auth().currentUser.getIdToken();
+    }
+  } catch (e) {}
+  return '';
+}
+
+/** /api/wallet/:uid ek hi baar call, phir cache. */
+async function bbLoadWallet(force) {
+  if (_bbWalletCache && !force) return _bbWalletCache;
+  if (_bbWalletPromise && !force) return _bbWalletPromise;
+
+  var uid = bbCurrentUserId();
+  if (!uid) throw new Error('not_logged_in');
+
+  _bbWalletPromise = (async function () {
+    var token = await bbAuthToken();
+    var res = await fetch(BB_API + '/api/wallet/' + encodeURIComponent(uid), {
+      headers: token ? { Authorization: 'Bearer ' + token } : {},
+    });
+    if (!res.ok) throw new Error('wallet_fetch_failed');
+    _bbWalletCache = await res.json();
+    return _bbWalletCache;
+  })().finally(function () { _bbWalletPromise = null; });
+
+  return _bbWalletPromise;
+}
+
+// app load hote hi warm-up (fail ho to chup-chaap ignore)
+document.addEventListener('DOMContentLoaded', function () {
+  setTimeout(function () { bbLoadWallet().catch(function () {}); }, 2000);
+});
+
+/** coin/chain -> konsa address dikhana hai */
+function bbAddrBucket(coinSymbol, chainName) {
+  var c = String(coinSymbol || '').toUpperCase();
+  var ch = String(chainName || '').toUpperCase();
+  if (c === 'BTC' && ch.indexOf('BEP') === -1) return 'btc';
+  if (c === 'SOL' || ch.indexOf('SOLANA') !== -1) return 'sol';
+  if (c === 'TRX' || ch.indexOf('TRC') !== -1) return 'tron';
+  return 'evm'; // ETH, BNB, USDT/USDC, POL, AVAX, LINK, SHIB, UNI, DOGE, XRP, TON, ADA, LTC
+}
+
+/**
+ * bbOpenPay() ke andar:
+ *   pehle : document.getElementById('bbPayAddr').textContent = _bbChain.addr;
+ *   ab    : bbApplyDepositAddress(_bbCoin.sym, _bbChain.name);
+ */
+async function bbApplyDepositAddress(coinSymbol, chainName) {
+  var el = document.getElementById('bbPayAddr');
+  if (!el) return;
+
+  el.textContent = 'Generating your deposit address...';
+  el.dataset.address = '';
+
+  var qr = document.getElementById('bbPayQr');
+  if (qr) qr.removeAttribute('src');
+
+  try {
+    var wallet = await bbLoadWallet();
+    var addr = wallet[bbAddrBucket(coinSymbol, chainName)];
+    if (!addr) throw new Error('no_address');
+
+    el.textContent = addr;
+    el.dataset.address = addr;
+
+    if (typeof bbSetQR === 'function') bbSetQR(addr);
+    else if (qr) qr.src = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(addr);
+  } catch (e) {
+    // kabhi bhi purana static address fallback mat dikhao
+    el.textContent = 'Address unavailable — please retry';
+    el.dataset.address = '';
+  }
+}
+
+/** Copy button ab dataset.address use kare. */
+function bbCopyDepositAddress() {
+  var el = document.getElementById('bbPayAddr');
+  var addr = el && el.dataset.address;
+  if (!addr) return;
+  navigator.clipboard.writeText(addr);
+  if (typeof toast === 'function') toast('Address copied');
+}
+
+/* ===== BB PER-USER DEPOSIT ADDRESS PATCH (end) ===== */
+
 function bbOpenPay(){
   document.getElementById('bbPayTitle').textContent = _bbCoin.sym+'-Deposit';
   document.getElementById('bbPayNet').textContent = _bbChain.name;
-  document.getElementById('bbPayAddr').textContent = _bbChain.addr;
+  bbApplyDepositAddress(_bbCoin.sym, _bbChain.name);
   document.getElementById('bbPayMin').textContent = _bbChain.min;
   document.getElementById('bbPayConf').textContent = _bbChain.conf+' confirmations';
   document.getElementById('bbPayConf2').textContent = _bbChain.conf+' confirmations';
-  document.getElementById('bbPayQr').src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(_bbChain.addr)}`;
+  // QR bbApplyDepositAddress() ke andar set hota hai
   document.getElementById('bbPayHash').value=''; document.getElementById('bbPayAmt').value='';
   bbOpen('bbPay');
 }
