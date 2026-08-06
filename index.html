@@ -1604,15 +1604,10 @@ body.light #sc-earn .ern-sh-btns .can{border-color:#d8dde3;color:#0b0e11;}
     <div class="bb-kv"><span class="k">Deposit Arrival</span><span class="v" id="bbPayConf">—</span></div>
     <div class="bb-kv"><span class="k">Withdrawal Unlocked</span><span class="v" id="bbPayConf2">—</span></div>
 
-    <div style="margin-top:22px;">
-      <div class="bb-sec" style="color:#fff;font-weight:700;font-size:14px;">Transaction Details</div>
-      <input type="text" class="bb-finp" id="bbPayHash" placeholder="Transaction Hash (TxID)">
-      <input type="number" class="bb-finp" id="bbPayAmt" placeholder="Amount sent">
-    </div>
+    <div class="bb-info" style="margin-top:22px;"><i class="fas fa-bolt"></i><div>Deposits are detected automatically. Just send funds to the address above &mdash; your balance updates on its own once the network confirms. No TxID needed.</div></div>
   </div>
   <div class="bb-pact">
-    <button class="bb-cancel" onclick="bbCancelPaid()">Cancel Paid</button>
-    <button class="bb-paid" onclick="bbPaid()">Paid</button>
+    <button class="bb-paid" style="width:100%;" onclick="bbBackFromPay()">Done</button>
   </div>
 </div>
 
@@ -1620,7 +1615,7 @@ body.light #sc-earn .ern-sh-btns .can{border-color:#d8dde3;color:#0b0e11;}
 <div class="bb-screen" id="bbFaq">
   <div class="bb-hdr"><button class="bb-back" onclick="bbClose('bbFaq')"><i class="fas fa-arrow-left"></i></button><div class="bb-ttl">FAQ</div><span style="width:24px"></span></div>
   <div class="bb-body">
-    <div class="bb-faq-row" onclick="bbFaqDetail('How to Make a Deposit','1. Tap Deposit and select the coin you want to deposit.\n2. Choose the correct chain/network for your transfer.\n3. Copy the wallet address or scan the QR code from your external wallet.\n4. Send the amount from your wallet to that address.\n5. After sending, paste the Transaction Hash (TxID) and amount, then tap Paid.\n6. Wait for blockchain confirmations. Your balance updates automatically once verified.')">How to Make a Deposit <i class="fas fa-chevron-right"></i></div>
+    <div class="bb-faq-row" onclick="bbFaqDetail('How to Make a Deposit','1. Tap Deposit and select the coin you want to deposit.\n2. Choose the correct chain/network for your transfer.\n3. Copy the wallet address or scan the QR code from your external wallet.\n4. Send the amount from your wallet to that address.\n5. That's it — no TxID needed. Deposits are detected automatically.\n6. Wait for blockchain confirmations. Your balance updates automatically once verified.')">How to Make a Deposit <i class="fas fa-chevron-right"></i></div>
     <div class="bb-faq-row" onclick="bbFaqDetail('Deposits yet to be credited?','Most deposits credit within minutes once the required confirmations are reached. If your deposit is still pending after 60 minutes:\n• Check the transaction on the blockchain explorer using the TxID.\n• Make sure the network you selected matches the network you sent on.\n• If everything looks correct, contact support with your UID and TxID.')">Deposits yet to be credited? <i class="fas fa-chevron-right"></i></div>
     <div class="bb-faq-row" onclick="bbFaqDetail('Unsupported Deposit Recovery Procedure Rules','Deposits sent on an unsupported chain or to a wrong address may be recoverable in some cases. Recovery is best-effort, requires admin review, and is subject to service fees. Submit a recovery request via support with full transaction details.')">Unsupported Deposit Recovery Procedure Rules <i class="fas fa-chevron-right"></i></div>
     <div class="bb-faq-row" onclick="bbFaqDetail('FAQ — Crypto Deposit','Q: How long does a deposit take?\nA: Time depends on the network — typically a few minutes after the required confirmations.\n\nQ: Do I need to add a memo/tag?\nA: Only for chains that require it (e.g. some XRP/EOS deposits). Most chains listed here do not.\n\nQ: Why was my deposit credited at a different amount?\nA: Some tokens deduct a network fee on transfer. The credited amount is what actually arrives on-chain.')">FAQ — Crypto Deposit <i class="fas fa-chevron-right"></i></div>
@@ -2766,32 +2761,13 @@ function bbOpenPay(){
   document.getElementById('bbPayConf').textContent = _bbChain.conf+' confirmations';
   document.getElementById('bbPayConf2').textContent = _bbChain.conf+' confirmations';
   // QR bbApplyDepositAddress() ke andar set hota hai
-  document.getElementById('bbPayHash').value=''; document.getElementById('bbPayAmt').value='';
   bbOpen('bbPay');
 }
 
 function bbBackFromPay(){ bbClose('bbPay'); if(_bbCoin && _bbCoin.chains.length>1) bbOpenChains(); }
 function bbCancelPaid(){ bbBackFromPay(); }
 
-async function bbPaid(){
-  const hash = document.getElementById('bbPayHash').value.trim();
-  const amt  = parseFloat(document.getElementById('bbPayAmt').value)||0;
-  if(!hash || hash.length<6) return toast('Enter Transaction Hash');
-  if(amt<=0) return toast('Enter amount');
-  if(!window.currentFbUser){ toast('Sign in first'); return; }
-  const coin=_bbCoin, chain=_bbChain;
-  const _pa=document.getElementById('bbPayAddr');
-  const payAddr=(_pa && _pa.dataset.address)||'';
-  if(!payAddr) return toast('Deposit address not ready');
-  _withP2P((w)=>{
-    if(typeof w.confirmDepositCustom !== 'function'){ toast('Backend not ready'); return; }
-    w.confirmDepositCustom({coin:coin.sym, chain:chain.name, addr:payAddr, hash, amt})
-      .then(ok=>{ if(!ok) toast('Failed to submit'); })
-      .catch(e=>toast('Failed: '+(e?.message||e)));
-    bbClose('bbPay');
-    document.getElementById('bbPopup').classList.add('show');
-  });
-}
+// Manual "Paid" flow removed — backend poller auto-detects deposits and credits balance.
 
 // ── Withdraw form ─────────────────────────
 function bbOpenWit(){
