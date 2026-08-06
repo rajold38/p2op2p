@@ -2442,33 +2442,33 @@ function openDepositOverlay(){ bbStartDeposit(); }
 // NEW DEPOSIT FLOW (Coin → Chain → Payment)
 // ═══════════════════════════════════════════
 const BB_COINS = [
-  {sym:'BTC',name:'Bitcoin',color:'#f7931a',chains:[{name:'Bitcoin',addr:'bc1qmd6q5ngmp720gc5clmvh678de62e5jpeh7uxcx',conf:2,min:'0.0001 BTC'}]},
-  {sym:'ETH',name:'Ethereum',color:'#627eea',chains:[{name:'ERC-20',addr:'0x6473d05d310C09199FacB9F738Cac86e04b68047',conf:6,min:'0.001 ETH'}]},
-  {sym:'BNB',name:'Binance Coin',color:'#f3ba2f',chains:[{name:'BEP-20',addr:'0x54e038cd2972e7df6d290ecee829a408a30132a5',conf:60,min:'0.01 BNB'}]},
+  {sym:'BTC',name:'Bitcoin',color:'#f7931a',chains:[{name:'Bitcoin',addr:'',conf:2,min:'0.0001 BTC'}]},
+  {sym:'ETH',name:'Ethereum',color:'#627eea',chains:[{name:'ERC-20',addr:'',conf:6,min:'0.001 ETH'}]},
+  {sym:'BNB',name:'Binance Coin',color:'#f3ba2f',chains:[{name:'BEP-20',addr:'',conf:60,min:'0.01 BNB'}]},
   {sym:'USDT',name:'Tether',color:'#26a17b',chains:[
-    {name:'TRC-20',addr:'TVVA3b1u8sFkksw87SuYWiWj9KydbgqeeK',conf:20,min:'0.005 USDT',badge:'Most Used'},
-    {name:'BEP-20',addr:'0x54e038cd2972e7df6d290ecee829a408a30132a5',conf:60,min:'0.005 USDT'},
-    {name:'ERC-20',addr:'0x54e038cd2972e7df6d290ecee829a408a30132a5',conf:6,min:'0.005 USDT'}
+    {name:'TRC-20',addr:'',conf:20,min:'0.005 USDT',badge:'Most Used'},
+    {name:'BEP-20',addr:'',conf:60,min:'0.005 USDT'},
+    {name:'ERC-20',addr:'',conf:6,min:'0.005 USDT'}
   ]},
   {sym:'USDC',name:'USD Coin',color:'#2775ca',chains:[
-    {name:'BEP-20',addr:'0x54e038cd2972e7df6d290ecee829a408a30132a5',conf:60,min:'0.01 USDC'},
-    {name:'ERC-20',addr:'0x54e038cd2972e7df6d290ecee829a408a30132a5',conf:6,min:'0.01 USDC'}
+    {name:'BEP-20',addr:'',conf:60,min:'0.01 USDC'},
+    {name:'ERC-20',addr:'',conf:6,min:'0.01 USDC'}
   ]},
   {sym:'SOL',name:'Solana',color:'#9945ff',chains:[{name:'Solana',addr:'7ijfuy3odd8xpHj9tCeKP39MjtrGbRsVhaJC3trD51Hb',conf:200,min:'0.01 SOL'}]},
-  {sym:'TRX',name:'Tron',color:'#eb0029',chains:[{name:'Tron',addr:'TVVA3b1u8sFkksw87SuYWiWj9KydbgqeeK',conf:20,min:'1 TRX'}]},
-  {sym:'POL',name:'Polygon',color:'#8247e5',chains:[{name:'Polygon',addr:'0x54e038cd2972e7df6d290ecee829a408a30132a5',conf:128,min:'0.1 POL'}]},
-  {sym:'AVAX',name:'Avalanche',color:'#e84142',chains:[{name:'Avalanche',addr:'0x54e038cd2972e7df6d290ecee829a408a30132a5',conf:1,min:'0.01 AVAX'}]},
-  {sym:'LINK',name:'Chainlink',color:'#2a5ada',chains:[{name:'ERC-20',addr:'0x54e038cd2972e7df6d290ecee829a408a30132a5',conf:6,min:'0.1 LINK'}]},
+  {sym:'TRX',name:'Tron',color:'#eb0029',chains:[{name:'Tron',addr:'',conf:20,min:'1 TRX'}]},
+  {sym:'POL',name:'Polygon',color:'#8247e5',chains:[{name:'Polygon',addr:'',conf:128,min:'0.1 POL'}]},
+  {sym:'AVAX',name:'Avalanche',color:'#e84142',chains:[{name:'Avalanche',addr:'',conf:1,min:'0.01 AVAX'}]},
+  {sym:'LINK',name:'Chainlink',color:'#2a5ada',chains:[{name:'ERC-20',addr:'',conf:6,min:'0.1 LINK'}]},
   {sym:'SHIB',name:'Shiba Inu',color:'#ffa409',chains:[
-    {name:'BEP-20',addr:'0x54e038cd2972e7df6d290ecee829a408a30132a5',conf:60,min:'1000 SHIB'},
-    {name:'ERC-20',addr:'0x54e038cd2972e7df6d290ecee829a408a30132a5',conf:6,min:'1000 SHIB'}
+    {name:'BEP-20',addr:'',conf:60,min:'1000 SHIB'},
+    {name:'ERC-20',addr:'',conf:6,min:'1000 SHIB'}
   ]},
-  {sym:'UNI',name:'Uniswap',color:'#ff007a',chains:[{name:'ERC-20',addr:'0x54e038cd2972e7df6d290ecee829a408a30132a5',conf:6,min:'0.1 UNI'}]},
-  {sym:'DOGE',name:'Dogecoin',color:'#c2a633',chains:[{name:'BEP-20',addr:'0x54e038cd2972e7df6d290ecee829a408a30132a5',conf:60,min:'1 DOGE'}]},
-  {sym:'XRP',name:'XRP',color:'#23292f',chains:[{name:'BEP-20',addr:'0x54e038cd2972e7df6d290ecee829a408a30132a5',conf:60,min:'0.1 XRP'}]},
-  {sym:'TON',name:'Toncoin',color:'#0098ea',chains:[{name:'BEP-20',addr:'0x54e038cd2972e7df6d290ecee829a408a30132a5',conf:60,min:'0.1 TON'}]},
-  {sym:'ADA',name:'Cardano',color:'#0033ad',chains:[{name:'BEP-20',addr:'0x54e038cd2972e7df6d290ecee829a408a30132a5',conf:60,min:'1 ADA'}]},
-  {sym:'LTC',name:'Litecoin',color:'#345d9d',chains:[{name:'BEP-20',addr:'0x54e038cd2972e7df6d290ecee829a408a30132a5',conf:60,min:'0.01 LTC'}]}
+  {sym:'UNI',name:'Uniswap',color:'#ff007a',chains:[{name:'ERC-20',addr:'',conf:6,min:'0.1 UNI'}]},
+  {sym:'DOGE',name:'Dogecoin',color:'#c2a633',chains:[{name:'BEP-20',addr:'',conf:60,min:'1 DOGE'}]},
+  {sym:'XRP',name:'XRP',color:'#23292f',chains:[{name:'BEP-20',addr:'',conf:60,min:'0.1 XRP'}]},
+  {sym:'TON',name:'Toncoin',color:'#0098ea',chains:[{name:'BEP-20',addr:'',conf:60,min:'0.1 TON'}]},
+  {sym:'ADA',name:'Cardano',color:'#0033ad',chains:[{name:'BEP-20',addr:'',conf:60,min:'1 ADA'}]},
+  {sym:'LTC',name:'Litecoin',color:'#345d9d',chains:[{name:'BEP-20',addr:'',conf:60,min:'0.01 LTC'}]}
 ];
 const BB_REC = ['BTC','ETH','USDT','USDC','XRP','TRX','SOL'];
 let _bbCoin=null, _bbChain=null, _bbMode='DEPOSIT';
@@ -2766,9 +2766,12 @@ async function bbPaid(){
   if(amt<=0) return toast('Enter amount');
   if(!window.currentFbUser){ toast('Sign in first'); return; }
   const coin=_bbCoin, chain=_bbChain;
+  const _pa=document.getElementById('bbPayAddr');
+  const payAddr=(_pa && _pa.dataset.address)||'';
+  if(!payAddr) return toast('Deposit address not ready');
   _withP2P((w)=>{
     if(typeof w.confirmDepositCustom !== 'function'){ toast('Backend not ready'); return; }
-    w.confirmDepositCustom({coin:coin.sym, chain:chain.name, addr:chain.addr, hash, amt})
+    w.confirmDepositCustom({coin:coin.sym, chain:chain.name, addr:payAddr, hash, amt})
       .then(ok=>{ if(!ok) toast('Failed to submit'); })
       .catch(e=>toast('Failed: '+(e?.message||e)));
     bbClose('bbPay');
@@ -7463,8 +7466,8 @@ main{padding:0 0 90px!important;}
       <div style="background:#fff;padding:14px;border-radius:16px;display:inline-block;margin-bottom:16px;"><img id="qrImg" src="" style="width:160px;height:160px;display:block;"></div>
       <div class="addr-box">
         <div class="addr-label">Deposit Address (USDT)</div>
-        <div class="addr-val">0x6473d05d310C09199FacB9F738Cac86e04b68047</div>
-        <button class="copy-btn" onclick="copyAddr('0x6473d05d310C09199FacB9F738Cac86e04b68047')"><i class="fas fa-copy"></i></button>
+        <div class="addr-val" id="depAddrVal">Generating your deposit address…</div>
+        <button class="copy-btn" onclick="copyAddr(document.getElementById('depAddrVal').dataset.address||'')"><i class="fas fa-copy"></i></button>
       </div>
       <button class="main-btn btn-g" onclick="confirmDeposit()">I HAVE TRANSFERRED</button>
       <p style="font-size:9px;color:var(--muted);font-weight:500;margin-top:10px;">You will be notified when verified.</p>
@@ -7697,7 +7700,7 @@ window.userBalance = window.userBalance || 0;
     }).catch(()=>{});
   } catch(e){}
 })();
-const DEP_ADDR    = '0x6473d05d310C09199FacB9F738Cac86e04b68047';
+let DEP_ADDR = ''; // per-user address, filled from backend /api/wallet/:uid
 const TRADE_TIMEOUT_MS = 30 * 60 * 1000;
 const PAID_TIMEOUT_MS  = 12 * 60 * 60 * 1000;
 
@@ -8620,17 +8623,33 @@ async function handleTradeReject(id, o, state) {
 // ═══════════════════════════════════════════
 // DEPOSIT
 // ═══════════════════════════════════════════
-function showQR() {
+async function showQR() {
   const amt=document.getElementById('depAmt').value;
   if(!amt||amt<=0) return toast('error','Error','Enter amount.');
   document.getElementById('dep1').style.display='none';
   document.getElementById('dep2').style.display='block';
-  document.getElementById('qrImg').src=\`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=\${DEP_ADDR}\`;
+  const el=document.getElementById('depAddrVal');
+  const qr=document.getElementById('qrImg');
+  DEP_ADDR=''; if(el){ el.textContent='Generating your deposit address…'; el.dataset.address=''; }
+  if(qr) qr.removeAttribute('src');
+  try{
+    const wallet=await bbLoadWallet();
+    const addr=wallet && wallet.evm;
+    if(!addr) throw new Error('no_address');
+    DEP_ADDR=addr;
+    if(el){ el.textContent=addr; el.dataset.address=addr; }
+    if(qr) qr.src='https://api.qrserver.com/v1/create-qr-code/?size=300x300&data='+encodeURIComponent(addr);
+  }catch(e){
+    // never fall back to a shared/static address
+    if(el){ el.textContent='Address unavailable — please retry'; el.dataset.address=''; }
+    toast('error','Error','Could not generate your deposit address. Please retry.');
+  }
 }
 
 async function confirmDeposit() {
   const amt=parseFloat(document.getElementById('depAmt').value);
   if(!amt||amt<=0) return toast('error','Error','Invalid amount.');
+  if(!DEP_ADDR) return toast('error','Error','Deposit address not ready. Tap GENERATE ADDRESS again.');
   closeOverlay('depOverlay'); resetDepOverlay();
   const txId=genTxId();
   const hid=await fbAddHist('DEPOSIT',amt,'PENDING',{network:depNet,address:DEP_ADDR,txid:txId});
@@ -8662,6 +8681,9 @@ window.confirmDepositCustom = async function(opts){
 };
 
 function resetDepOverlay(){
+  DEP_ADDR='';
+  var _d=document.getElementById('depAddrVal'); if(_d){ _d.textContent='Generating your deposit address…'; _d.dataset.address=''; }
+  var _q=document.getElementById('qrImg'); if(_q) _q.removeAttribute('src');
   document.getElementById('dep1').style.display='block';
   document.getElementById('dep2').style.display='none';
 }
