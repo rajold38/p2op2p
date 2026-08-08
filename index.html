@@ -1952,7 +1952,7 @@ body.light #sc-earn .ern-sh-btns .can{border-color:#d8dde3;color:#0b0e11;}
 
 <!-- ─── P2P (iframe shell) ─── -->
 <div class="screen" id="sc-p2p" style="padding:0;">
-  <iframe id="p2pFrame" title="P2P Trading" src="about:blank" data-src="/p2p.html" style="flex:1;width:100%;border:none;background:#07080B;min-height:100dvh;"></iframe>
+  <iframe id="p2pFrame" title="P2P Trading" src="about:blank" data-src="/p2p.html" style="flex:1;width:100%;border:none;background:transparent;min-height:100dvh;"></iframe>
 </div>
 <!-- COIN SEARCH MODAL -->
 <div id="coinSearchOv" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:flex-end;justify-content:center;" onclick="if(event.target===this)closeCoinSearch()">
@@ -12905,6 +12905,120 @@ body.light .bb-coin:active,body.light .bb-chain:active,body.light .bb-faq-row:ac
 }
 </style>
 
+
+<!-- ═══ FIX LAYER (logos / p2p light / deposit auto-submit) ═══ -->
+<style>
+/* 1 — Coin logos: always a perfect circle */
+.bb-logo,.clogo,.clogo-sm,.bb-coin .bb-ico,.bb-chain .bb-cico{
+  aspect-ratio:1/1!important;border-radius:9999px!important;overflow:hidden!important;
+  flex:0 0 auto!important;flex-shrink:0!important;padding:0!important;box-sizing:border-box!important;}
+.bb-logo{min-width:unset;}
+.bb-logo img,.clogo,.clogo-sm{
+  width:100%!important;height:100%!important;aspect-ratio:1/1!important;
+  object-fit:cover!important;object-position:center!important;border-radius:9999px!important;display:block!important;}
+.clogo,.clogo-sm{width:32px!important;height:32px!important;}
+.clogo-sm{width:26px!important;height:26px!important;}
+#bbPayTitle .bb-logo,#bbWitTitle .bb-logo{align-self:center;}
+
+/* 2 — P2P white theme: no black bleed behind the iframe */
+#sc-p2p{background:var(--bg)!important;}
+#sc-p2p iframe{background:transparent!important;}
+body.light #sc-p2p,body.light #sc-p2p iframe,
+body.light.on-p2p #sc-p2p,body.light.on-p2p #sc-p2p iframe{background:#fff!important;}
+body.light.on-p2p,body.light.on-p2p #app,body.light.on-p2p main,
+body.light.on-p2p html,html:has(body.light.on-p2p){background:#fff!important;}
+
+/* 3 — Deposit: no Cancel Paid / Paid buttons (auto submit on hash paste) */
+#bbPay .bb-pact{display:none!important;}
+#bbPay .bb-body{padding-bottom:28px!important;}
+.bb-hash-status{margin-top:10px;font-size:12.5px;color:#f0b90b;display:none;}
+.bb-hash-status.show{display:block;}
+</style>
+<script>
+(function(){
+  function ready(fn){ if(document.readyState!=='loading') fn(); else document.addEventListener('DOMContentLoaded',fn); }
+  ready(function(){
+    var inp=document.getElementById('bbPayHash');
+    if(!inp) return;
+    var st=document.createElement('div');
+    st.className='bb-hash-status'; st.id='bbHashStatus';
+    inp.parentNode.appendChild(st);
+
+    var timer=null, sent='';
+    function submit(){
+      var hash=(inp.value||'').trim();
+      if(hash.length<12 || hash===sent) return;
+      sent=hash;
+      st.textContent='Submitting…'; st.classList.add('show');
+      try{ if(typeof bbPaid==='function') bbPaid(); }catch(e){}
+      var t=document.querySelector('#bbPopup .bb-pop-ttl');
+      var u=document.querySelector('#bbPopup .bb-pop-sub');
+      if(t) t.textContent='Request Submitted';
+      if(u) u.textContent='You will get a response asap.';
+      var p=document.getElementById('bbPopup'); if(p) p.classList.add('show');
+      st.classList.remove('show');
+    }
+    function schedule(){ clearTimeout(timer); timer=setTimeout(submit,500); }
+    inp.addEventListener('input',function(){ if(!inp.value.trim()) sent=''; schedule(); });
+    inp.addEventListener('paste',function(){ setTimeout(submit,80); });
+    inp.addEventListener('change',submit);
+    inp.addEventListener('blur',submit);
+  });
+})();
+</script>
+
+<!-- ═══ FIX LAYER 2: P2P width + black bleed + hash paste ═══ -->
+<style>
+/* P2P sheet: same compact width in BOTH themes, no black bleed */
+body.on-p2p{max-width:480px!important;width:100%!important;margin:0 auto!important;background:var(--bg)!important;}
+html:has(body.on-p2p){background:var(--bg)!important;}
+body.on-p2p #sc-p2p{
+  position:fixed!important;top:0!important;bottom:0!important;
+  left:50%!important;right:auto!important;transform:translateX(-50%)!important;
+  width:100%!important;max-width:480px!important;
+  background:var(--bg)!important;overflow:hidden;z-index:200;}
+body.on-p2p #sc-p2p iframe{width:100%!important;height:100dvh!important;background:var(--bg)!important;border:none!important;display:block!important;}
+/* light theme: everything white, nothing black anywhere */
+body.light.on-p2p,html:has(body.light.on-p2p),
+body.light.on-p2p #sc-p2p,body.light.on-p2p #sc-p2p iframe,
+body.light #sc-p2p,body.light #sc-p2p iframe{background:#fff!important;}
+body.light.on-p2p::before,body.light.on-p2p::after{display:none!important;content:none!important;}
+</style>
+<script>
+(function(){
+  // keep the html/body canvas matching the theme (kills black side bars)
+  function paint(){
+    var light=document.body.classList.contains('light');
+    var c=light?'#ffffff':'';
+    document.documentElement.style.background=c;
+    document.body.style.background=c;
+  }
+  new MutationObserver(paint).observe(document.documentElement,{attributes:true,subtree:true,attributeFilter:['class']});
+  document.addEventListener('DOMContentLoaded',paint); paint();
+
+  // Transaction hash: auto-submit on paste/typing (delegated, works even if re-rendered)
+  var sent='',timer=null;
+  function go(inp){
+    var h=(inp.value||'').trim();
+    if(h.length<12||h===sent) return;
+    sent=h;
+    try{ if(typeof bbPaid==='function') bbPaid(); }catch(e){}
+    var t=document.querySelector('#bbPopup .bb-pop-ttl'),u=document.querySelector('#bbPopup .bb-pop-sub'),p=document.getElementById('bbPopup');
+    if(t) t.textContent='Request Submitted';
+    if(u) u.textContent='You will get a response asap.';
+    if(p) p.classList.add('show');
+  }
+  document.addEventListener('input',function(e){
+    if(!e.target||e.target.id!=='bbPayHash') return;
+    if(!e.target.value.trim()) sent='';
+    clearTimeout(timer); var el=e.target; timer=setTimeout(function(){go(el);},450);
+  },true);
+  document.addEventListener('paste',function(e){
+    if(!e.target||e.target.id!=='bbPayHash') return;
+    var el=e.target; setTimeout(function(){go(el);},60);
+  },true);
+})();
+</script>
 </body>
 
 
