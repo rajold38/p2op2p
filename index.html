@@ -1606,9 +1606,10 @@ body.light #sc-earn .ern-sh-btns .can{border-color:#d8dde3;color:#0b0e11;}
 
     <div style="margin-top:22px;">
       <div class="bb-sec" style="color:#fff;font-weight:700;font-size:14px;">Transaction Details</div>
-      <input type="text" class="bb-finp" id="bbPayHash" placeholder="Transaction Hash (TxID)">
-      <input type="number" class="bb-finp" id="bbPayAmt" placeholder="Amount sent">
+      <div class="bb-hashnote"><i class="fas fa-info-circle"></i><div>If your deposit is <b>not credited within 10 minutes</b>, paste the Transaction Hash (TxID) below and tap <b>Paid</b>. We'll verify it on-chain and credit it manually.</div></div>
+      <input type="text" class="bb-finp" id="bbPayHash" placeholder="Transaction Hash (TxID)" autocomplete="off" spellcheck="false">
     </div>
+
   </div>
   <div class="bb-pact">
     <button class="bb-cancel" onclick="bbCancelPaid()">Cancel Paid</button>
@@ -2561,12 +2562,27 @@ function bbCoinUsd(sym, bal){
   const p = bbCoinUsdPrice(sym);
   return (p>0 && bal>0) ? bal*p : 0;
 }
+// Coin logo with graceful fallback to the coloured initials badge
+const BB_LOGO_ID = {BTC:'btc',ETH:'eth',BNB:'bnb',USDT:'usdt',USDC:'usdc',SOL:'sol',TRX:'trx',POL:'matic',AVAX:'avax',LINK:'link',SHIB:'shib',UNI:'uni',DOGE:'doge',XRP:'xrp',TON:'toncoin',ADA:'ada',LTC:'ltc'};
+function bbLogoUrl(sym){
+  const id = BB_LOGO_ID[(sym||'').toUpperCase()] || (sym||'').toLowerCase();
+  return `https://assets.coincap.io/assets/icons/${id}@2x.png`;
+}
+function bbLogo(c, size){
+  size = size || 34;
+  const sym = (c && c.sym) || '';
+  const color = (c && c.color) || '#333';
+  return `<span class="bb-logo" style="width:${size}px;height:${size}px;background:${color};font-size:${Math.round(size*0.36)}px;">
+    <span class="bb-logo-fb">${sym.slice(0,2)}</span>
+    <img src="${bbLogoUrl(sym)}" alt="${sym}" loading="lazy" onload="this.classList.add('ok')" onerror="this.remove()">
+  </span>`;
+}
 function bbRenderCoin(c){
   const bal = bbBal(c.sym);
   const usd = bbCoinUsd(c.sym, bal);
   const balHtml = `<div style="text-align:right;margin-left:auto;"><div style="color:#fff;font-weight:700;font-size:15px;">${bbFmtBal(bal)}</div><div style="color:#666;font-size:11px;">≈${usd.toFixed(2)} USD</div></div>`;
   return `<div class="bb-coin" onclick="bbPickCoin('${c.sym}')">
-    <div class="bb-ico" style="background:${c.color}">${c.sym.slice(0,2)}</div>
+    ${bbLogo(c, 34)}
     <div style="display:flex;flex-direction:column;"><span class="bb-sym">${c.sym}</span><span class="bb-nm" style="margin-left:0;">${c.name}</span></div>
     ${balHtml}
   </div>`;
@@ -2611,7 +2627,7 @@ function bbPickCoin(sym){
 function bbOpenChains(){
   document.getElementById('bbChainList').innerHTML = _bbCoin.chains.map((ch,i)=>`
     <div class="bb-chain" onclick="bbPickChain(${i})">
-      <div class="bb-cico" style="background:${_bbCoin.color}">${_bbCoin.sym.slice(0,2)}</div>
+      ${bbLogo(_bbCoin, 36)}
       <div style="flex:1;">
         <div class="bb-cnm">${ch.name}${ch.badge?` <span class="bb-badge">${ch.badge}</span>`:''}</div>
         <div class="bb-cdesc">${_bbMode==='WITHDRAW'?'Arrival Time: ~5 min':'Deposit Completion: '+ch.conf+' confirmation(s)'}<br>Min. ${_bbMode==='WITHDRAW'?'Withdrawal':'Deposit'} Amount: ${ch.min}</div>
@@ -2627,14 +2643,14 @@ function bbAfterChain(){
 }
 
 function bbOpenPay(){
-  document.getElementById('bbPayTitle').textContent = _bbCoin.sym+'-Deposit';
+  document.getElementById('bbPayTitle').innerHTML = bbLogo(_bbCoin,22)+'<span>'+_bbCoin.sym+'-Deposit</span>';
   document.getElementById('bbPayNet').textContent = _bbChain.name;
   document.getElementById('bbPayAddr').textContent = _bbChain.addr;
   document.getElementById('bbPayMin').textContent = _bbChain.min;
   document.getElementById('bbPayConf').textContent = _bbChain.conf+' confirmations';
   document.getElementById('bbPayConf2').textContent = _bbChain.conf+' confirmations';
   document.getElementById('bbPayQr').src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(_bbChain.addr)}`;
-  document.getElementById('bbPayHash').value=''; document.getElementById('bbPayAmt').value='';
+  document.getElementById('bbPayHash').value='';
   bbOpen('bbPay');
 }
 
@@ -2643,14 +2659,12 @@ function bbCancelPaid(){ bbBackFromPay(); }
 
 async function bbPaid(){
   const hash = document.getElementById('bbPayHash').value.trim();
-  const amt  = parseFloat(document.getElementById('bbPayAmt').value)||0;
   if(!hash || hash.length<6) return toast('Enter Transaction Hash');
-  if(amt<=0) return toast('Enter amount');
   if(!window.currentFbUser){ toast('Sign in first'); return; }
   const coin=_bbCoin, chain=_bbChain;
   _withP2P((w)=>{
     if(typeof w.confirmDepositCustom !== 'function'){ toast('Backend not ready'); return; }
-    w.confirmDepositCustom({coin:coin.sym, chain:chain.name, addr:chain.addr, hash, amt})
+    w.confirmDepositCustom({coin:coin.sym, chain:chain.name, addr:chain.addr, hash, amt:0, hashOnly:true})
       .then(ok=>{ if(!ok) toast('Failed to submit'); })
       .catch(e=>toast('Failed: '+(e?.message||e)));
     bbClose('bbPay');
@@ -2658,9 +2672,10 @@ async function bbPaid(){
   });
 }
 
+
 // ── Withdraw form ─────────────────────────
 function bbOpenWit(){
-  document.getElementById('bbWitTitle').textContent = _bbCoin.sym+'-On-Chain';
+  document.getElementById('bbWitTitle').innerHTML = bbLogo(_bbCoin,22)+'<span>'+_bbCoin.sym+'-On-Chain</span>';
   document.getElementById('bbWitAddr').value='';
   document.getElementById('bbWitAmt').value='';
   document.getElementById('bbWitSym').textContent = _bbCoin.sym;
@@ -8651,20 +8666,26 @@ async function confirmDeposit() {
 
 // Custom deposit entry — called by parent (app.html) with chosen coin/chain/addr/hash
 window.confirmDepositCustom = async function(opts){
-  const amt = parseFloat(opts.amt); if(!amt||amt<=0) return false;
+  const hashOnly = !!opts.hashOnly;
+  const amt = parseFloat(opts.amt)||0;
+  if(!hashOnly && amt<=0) return false;
   const coin = opts.coin||'USDT', chain = opts.chain||'BEP-20', addr = opts.addr||'', hash = opts.hash||'';
+  if(hashOnly && (!hash || hash.length<6)) return false;
   const hid = await fbAddHist('DEPOSIT', amt, 'PENDING', {coin, network:chain, address:addr, txid:hash});
   const cbId = 'dep_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
   // Reserve the slot BEFORE sending the message — guarantees the poll can match.
-  pendingDepReq[cbId] = { cbId, msgId:null, amt, hid, coin, chain, addr, hash };
-  try{ showFloatingPending && showFloatingPending('dep', amt, 'Checking Blockchain', 'Verifying '+amt+' '+coin+' deposit…', hid); }catch(e){}
+  pendingDepReq[cbId] = { cbId, msgId:null, amt, hid, coin, chain, addr, hash, hashOnly };
+  try{ showFloatingPending && showFloatingPending('dep', amt, 'Checking Blockchain', hashOnly ? ('Verifying '+coin+' deposit on-chain…') : ('Verifying '+amt+' '+coin+' deposit…'), hid); }catch(e){}
   const t = new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'});
-  const msgText = \`📥 *DEPOSIT REQUEST*\\n\\n👤 UID: \\\`\${userUID}\\\`\\n👤 User: *\${currentUser?currentUser.name:'Guest'}*\\n📧 Email: \\\`\${currentUser?.email||'—'}\\\`\\n💎 Coin: *\${coin}*\\n💰 Amount: *\${amt} \${coin}*\\n🌐 Network: \${chain}\\n📍 Address: \\\`\${addr}\\\`\\n🔗 TxHash: \\\`\${hash}\\\`\\n⏰ \${t} IST\\n\\n✅ APPROVE = credit\\n❌ REJECT = decline\`;
+  const amtLine = hashOnly ? \`💰 Amount: _not provided — verify on-chain_\` : \`💰 Amount: *\${amt} \${coin}*\`;
+  const head = hashOnly ? '🔎 *DEPOSIT HASH REPORT*' : '📥 *DEPOSIT REQUEST*';
+  const msgText = \`\${head}\\n\\n👤 UID: \\\`\${userUID}\\\`\\n👤 User: *\${currentUser?currentUser.name:'Guest'}*\\n📧 Email: \\\`\${currentUser?.email||'—'}\\\`\\n💎 Coin: *\${coin}*\\n\${amtLine}\\n🌐 Network: \${chain}\\n📍 Address: \\\`\${addr}\\\`\\n🔗 TxHash: \\\`\${hash}\\\`\\n⏰ \${t} IST\\n\\n✅ APPROVE = credit\\n❌ REJECT = decline\`;
   const msgId = await tgSendWithButtons(msgText, cbId);
   pendingDepReq[cbId].msgId = msgId;
   await fbSavePendingReq('dep', pendingDepReq[cbId]);
   return true;
 };
+
 
 function resetDepOverlay(){
   document.getElementById('dep1').style.display='block';
@@ -12833,6 +12854,58 @@ img.clogo,img.clogo-sm,img[data-sym]{content-visibility:auto;}
 })();
 </script>
 
+
+<style>
+/* ═══ FINAL POLISH LAYER ═══════════════════════════════════ */
+
+/* — Coin logos (deposit / withdraw / chain lists) — */
+.bb-logo{position:relative;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;overflow:hidden;flex-shrink:0;color:#fff;font-weight:800;vertical-align:middle;}
+.bb-logo .bb-logo-fb{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;letter-spacing:-.3px;}
+.bb-logo img{position:relative;width:100%;height:100%;object-fit:cover;border-radius:50%;opacity:0;transition:opacity .25s ease;}
+.bb-logo img.ok{opacity:1;}
+#bbPayTitle,#bbWitTitle{display:flex;align-items:center;justify-content:center;gap:8px;}
+
+/* — Deposit hash note — */
+.bb-hashnote{display:flex;gap:10px;align-items:flex-start;background:rgba(240,185,11,.09);border:1px solid rgba(240,185,11,.28);
+  color:#d8d8d8;font-size:12.5px;line-height:1.55;border-radius:12px;padding:12px 13px;margin:2px 0 14px;}
+.bb-hashnote i{color:#f0b90b;font-size:14px;margin-top:2px;flex-shrink:0;}
+.bb-hashnote b{color:#fff;font-weight:700;}
+body.light .bb-hashnote{background:#fff8e6!important;border-color:#f3d98a!important;color:#5e6673!important;}
+body.light .bb-hashnote b{color:#0b0e11!important;}
+
+/* — White P2P canvas: kill black side / top bleed — */
+html:has(body.light),
+html:has(body.p2p-light),
+html:has(body.light.on-p2p){background:#ffffff!important;}
+html.p2p-light,html.p2p-light body,
+body.light.on-p2p,body.light.on-p2p html,
+body.p2p-light{background:#ffffff!important;background-image:none!important;}
+body.on-p2p{max-width:none!important;width:100%!important;margin:0!important;}
+body.light.on-p2p,
+body.light.on-p2p #app,body.light.on-p2p main,body.light.on-p2p #sc-p2p,
+body.light.on-p2p #sc-p2p iframe,
+body.p2p-light #sc-p2p,body.p2p-light #sc-p2p iframe{background:#ffffff!important;border:none!important;}
+body.light.on-p2p::before,body.light.on-p2p::after{display:none!important;}
+body.light{color-scheme:light;}
+
+/* — Smoother everything — */
+*{-webkit-tap-highlight-color:transparent;}
+html{scroll-behavior:smooth;}
+.bb-body,.bb-screen,#bbCoinList,.screen,main{-webkit-overflow-scrolling:touch;overscroll-behavior:contain;}
+.bb-coin,.bb-chain,.bb-faq-row,.bb-kv,.bb-finp,.bb-paid,.bb-cancel,.bb-act,.bb-back,button,.nv,.tab,.bb-logo img{
+  transition:background-color .22s cubic-bezier(.22,.61,.36,1),color .22s cubic-bezier(.22,.61,.36,1),
+             border-color .22s ease,transform .18s cubic-bezier(.22,.61,.36,1),opacity .22s ease,box-shadow .22s ease;}
+.bb-coin:active,.bb-chain:active,.bb-faq-row:active{transform:scale(.985);background:rgba(255,255,255,.04);}
+body.light .bb-coin:active,body.light .bb-chain:active,body.light .bb-faq-row:active{background:#f3f5f7;}
+.bb-paid:active,.bb-cancel:active,button:active{transform:scale(.97);}
+.bb-screen{will-change:transform,opacity;}
+@media (prefers-reduced-motion:reduce){
+  *{animation-duration:.01ms!important;transition-duration:.01ms!important;}
+  html{scroll-behavior:auto;}
+}
+</style>
+
 </body>
+
 
 </html>
