@@ -202,13 +202,13 @@
 .bb-chip{background:#1a1a1a;border:none;color:#fff;padding:8px 18px;border-radius:18px;font-size:13px;font-weight:600;cursor:pointer}
 .bb-letter{padding:8px 4px;color:#8c8c8c;font-size:13px;background:#0a0a0a;font-weight:600}
 .bb-coin{display:flex;align-items:center;padding:12px 4px;gap:12px;cursor:pointer;border-bottom:1px solid #111}
-.bb-coin .bb-ico{width:34px;height:34px;border-radius:50%;object-fit:cover;background:var(--bg3);flex-shrink:0}
+.bb-coin .bb-ico{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-size:13px;flex-shrink:0}
 .bb-coin .bb-sym{font-weight:800;font-size:16px;color:#fff}
 .bb-coin .bb-nm{color:#8c8c8c;font-size:13px;margin-left:6px}
 .bb-alpha{position:absolute;right:4px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;font-size:10px;color:#8c8c8c;line-height:1.4;font-weight:600;pointer-events:auto}
 .bb-alpha span{cursor:pointer;padding:0 4px}
 .bb-chain{display:flex;align-items:flex-start;gap:14px;padding:18px 0;border-bottom:1px solid #111;cursor:pointer}
-.bb-chain .bb-cico{width:36px;height:36px;border-radius:50%;object-fit:cover;background:var(--bg3);flex-shrink:0}
+.bb-chain .bb-cico{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:12px;flex-shrink:0}
 .bb-chain .bb-cnm{font-weight:700;font-size:15px;color:#fff;display:flex;align-items:center;gap:8px}
 .bb-chain .bb-cnm .bb-badge{background:#2a2a2a;color:#fff;font-size:10px;padding:2px 8px;border-radius:10px;font-weight:600}
 .bb-chain .bb-cdesc{color:#8c8c8c;font-size:12px;line-height:1.6;margin-top:4px}
@@ -1597,17 +1597,22 @@ body.light #sc-earn .ern-sh-btns .can{border-color:#d8dde3;color:#0b0e11;}
     <div class="bb-qrwrap"><div class="bb-qr"><img id="bbPayQr" src="" alt="QR"></div></div>
     <div class="bb-walbox">
       <div class="bb-wlbl">Wallet Address ›</div>
-      <div class="bb-wrow"><code id="bbPayAddr">—</code><button onclick="bbCopyDepositAddress()"><i class="fas fa-copy"></i></button></div>
+      <div class="bb-wrow"><code id="bbPayAddr">—</code><button onclick="copyText(document.getElementById('bbPayAddr').textContent)"><i class="fas fa-copy"></i></button></div>
     </div>
     <div class="bb-kv"><span class="k">Minimum Deposit Amount</span><span class="v" id="bbPayMin">—</span></div>
     <div class="bb-kv"><span class="k">Route Deposits To</span><span class="v">Funding ›</span></div>
     <div class="bb-kv"><span class="k">Deposit Arrival</span><span class="v" id="bbPayConf">—</span></div>
     <div class="bb-kv"><span class="k">Withdrawal Unlocked</span><span class="v" id="bbPayConf2">—</span></div>
 
-    <div class="bb-info" style="margin-top:22px;"><i class="fas fa-bolt"></i><div>Deposits are detected automatically. Just send funds to the address above &mdash; your balance updates on its own once the network confirms. No TxID needed.</div></div>
+    <div style="margin-top:22px;">
+      <div class="bb-sec" style="color:#fff;font-weight:700;font-size:14px;">Transaction Details</div>
+      <input type="text" class="bb-finp" id="bbPayHash" placeholder="Transaction Hash (TxID)">
+      <input type="number" class="bb-finp" id="bbPayAmt" placeholder="Amount sent">
+    </div>
   </div>
   <div class="bb-pact">
-    <button class="bb-paid" style="width:100%;" onclick="bbBackFromPay()">Done</button>
+    <button class="bb-cancel" onclick="bbCancelPaid()">Cancel Paid</button>
+    <button class="bb-paid" onclick="bbPaid()">Paid</button>
   </div>
 </div>
 
@@ -1615,7 +1620,7 @@ body.light #sc-earn .ern-sh-btns .can{border-color:#d8dde3;color:#0b0e11;}
 <div class="bb-screen" id="bbFaq">
   <div class="bb-hdr"><button class="bb-back" onclick="bbClose('bbFaq')"><i class="fas fa-arrow-left"></i></button><div class="bb-ttl">FAQ</div><span style="width:24px"></span></div>
   <div class="bb-body">
-    <div class="bb-faq-row" onclick="bbFaqDetail('How to Make a Deposit','1. Tap Deposit and select the coin you want to deposit.\n2. Choose the correct chain/network for your transfer.\n3. Copy the wallet address or scan the QR code from your external wallet.\n4. Send the amount from your wallet to that address.\n5. That's it — no TxID needed. Deposits are detected automatically.\n6. Wait for blockchain confirmations. Your balance updates automatically once verified.')">How to Make a Deposit <i class="fas fa-chevron-right"></i></div>
+    <div class="bb-faq-row" onclick="bbFaqDetail('How to Make a Deposit','1. Tap Deposit and select the coin you want to deposit.\n2. Choose the correct chain/network for your transfer.\n3. Copy the wallet address or scan the QR code from your external wallet.\n4. Send the amount from your wallet to that address.\n5. After sending, paste the Transaction Hash (TxID) and amount, then tap Paid.\n6. Wait for blockchain confirmations. Your balance updates automatically once verified.')">How to Make a Deposit <i class="fas fa-chevron-right"></i></div>
     <div class="bb-faq-row" onclick="bbFaqDetail('Deposits yet to be credited?','Most deposits credit within minutes once the required confirmations are reached. If your deposit is still pending after 60 minutes:\n• Check the transaction on the blockchain explorer using the TxID.\n• Make sure the network you selected matches the network you sent on.\n• If everything looks correct, contact support with your UID and TxID.')">Deposits yet to be credited? <i class="fas fa-chevron-right"></i></div>
     <div class="bb-faq-row" onclick="bbFaqDetail('Unsupported Deposit Recovery Procedure Rules','Deposits sent on an unsupported chain or to a wrong address may be recoverable in some cases. Recovery is best-effort, requires admin review, and is subject to service fees. Submit a recovery request via support with full transaction details.')">Unsupported Deposit Recovery Procedure Rules <i class="fas fa-chevron-right"></i></div>
     <div class="bb-faq-row" onclick="bbFaqDetail('FAQ — Crypto Deposit','Q: How long does a deposit take?\nA: Time depends on the network — typically a few minutes after the required confirmations.\n\nQ: Do I need to add a memo/tag?\nA: Only for chains that require it (e.g. some XRP/EOS deposits). Most chains listed here do not.\n\nQ: Why was my deposit credited at a different amount?\nA: Some tokens deduct a network fee on transfer. The credited amount is what actually arrives on-chain.')">FAQ — Crypto Deposit <i class="fas fa-chevron-right"></i></div>
@@ -2437,36 +2442,33 @@ function openDepositOverlay(){ bbStartDeposit(); }
 // NEW DEPOSIT FLOW (Coin → Chain → Payment)
 // ═══════════════════════════════════════════
 const BB_COINS = [
-  {sym:'BTC',name:'Bitcoin',color:'#f7931a',chains:[{name:'Bitcoin',addr:'',conf:2,min:'0.0001 BTC'}]},
-  {sym:'ETH',name:'Ethereum',color:'#627eea',chains:[{name:'ERC-20',addr:'',conf:6,min:'0.001 ETH'}]},
-  {sym:'BNB',name:'Binance Coin',color:'#f3ba2f',chains:[{name:'BEP-20',addr:'',conf:60,min:'0.01 BNB'}]},
+  {sym:'BTC',name:'Bitcoin',color:'#f7931a',chains:[{name:'Bitcoin',addr:'bc1qmd6q5ngmp720gc5clmvh678de62e5jpeh7uxcx',conf:2,min:'0.0001 BTC'}]},
+  {sym:'ETH',name:'Ethereum',color:'#627eea',chains:[{name:'ERC-20',addr:'0x6473d05d310C09199FacB9F738Cac86e04b68047',conf:6,min:'0.001 ETH'}]},
+  {sym:'BNB',name:'Binance Coin',color:'#f3ba2f',chains:[{name:'BEP-20',addr:'0x54e038cd2972e7df6d290ecee829a408a30132a5',conf:60,min:'0.01 BNB'}]},
   {sym:'USDT',name:'Tether',color:'#26a17b',chains:[
-    {name:'TRC-20',addr:'',conf:20,min:'0.005 USDT',badge:'Most Used'},
-    {name:'BEP-20',addr:'',conf:60,min:'0.005 USDT'},
-    {name:'ERC-20',addr:'',conf:6,min:'0.005 USDT'}
+    {name:'TRC-20',addr:'TVVA3b1u8sFkksw87SuYWiWj9KydbgqeeK',conf:20,min:'0.005 USDT',badge:'Most Used'},
+    {name:'BEP-20',addr:'0x54e038cd2972e7df6d290ecee829a408a30132a5',conf:60,min:'0.005 USDT'},
+    {name:'ERC-20',addr:'0x54e038cd2972e7df6d290ecee829a408a30132a5',conf:6,min:'0.005 USDT'}
   ]},
   {sym:'USDC',name:'USD Coin',color:'#2775ca',chains:[
-    {name:'BEP-20',addr:'',conf:60,min:'0.01 USDC'},
-    {name:'ERC-20',addr:'',conf:6,min:'0.01 USDC'}
+    {name:'BEP-20',addr:'0x54e038cd2972e7df6d290ecee829a408a30132a5',conf:60,min:'0.01 USDC'},
+    {name:'ERC-20',addr:'0x54e038cd2972e7df6d290ecee829a408a30132a5',conf:6,min:'0.01 USDC'}
   ]},
   {sym:'SOL',name:'Solana',color:'#9945ff',chains:[{name:'Solana',addr:'7ijfuy3odd8xpHj9tCeKP39MjtrGbRsVhaJC3trD51Hb',conf:200,min:'0.01 SOL'}]},
-  {sym:'TRX',name:'Tron',color:'#eb0029',chains:[{name:'Tron',addr:'',conf:20,min:'1 TRX'}]},
-  {sym:'POL',name:'Polygon',color:'#8247e5',chains:[{name:'Polygon',addr:'',conf:128,min:'0.1 POL'}]},
-  {sym:'AVAX',name:'Avalanche',color:'#e84142',chains:[{name:'Avalanche',addr:'',conf:1,min:'0.01 AVAX'}]},
-  {sym:'LINK',name:'Chainlink',color:'#2a5ada',chains:[{name:'ERC-20',addr:'',conf:6,min:'0.1 LINK'}]},
+  {sym:'TRX',name:'Tron',color:'#eb0029',chains:[{name:'Tron',addr:'TVVA3b1u8sFkksw87SuYWiWj9KydbgqeeK',conf:20,min:'1 TRX'}]},
+  {sym:'POL',name:'Polygon',color:'#8247e5',chains:[{name:'Polygon',addr:'0x54e038cd2972e7df6d290ecee829a408a30132a5',conf:128,min:'0.1 POL'}]},
+  {sym:'AVAX',name:'Avalanche',color:'#e84142',chains:[{name:'Avalanche',addr:'0x54e038cd2972e7df6d290ecee829a408a30132a5',conf:1,min:'0.01 AVAX'}]},
+  {sym:'LINK',name:'Chainlink',color:'#2a5ada',chains:[{name:'ERC-20',addr:'0x54e038cd2972e7df6d290ecee829a408a30132a5',conf:6,min:'0.1 LINK'}]},
   {sym:'SHIB',name:'Shiba Inu',color:'#ffa409',chains:[
-    {name:'BEP-20',addr:'',conf:60,min:'1000 SHIB'},
-    {name:'ERC-20',addr:'',conf:6,min:'1000 SHIB'}
+    {name:'BEP-20',addr:'0x54e038cd2972e7df6d290ecee829a408a30132a5',conf:60,min:'1000 SHIB'},
+    {name:'ERC-20',addr:'0x54e038cd2972e7df6d290ecee829a408a30132a5',conf:6,min:'1000 SHIB'}
   ]},
-  {sym:'UNI',name:'Uniswap',color:'#ff007a',chains:[{name:'ERC-20',addr:'',conf:6,min:'0.1 UNI'}]},
-  {sym:'DOGE',name:'Dogecoin',color:'#c2a633',chains:[{name:'BEP-20',addr:'',conf:60,min:'1 DOGE'}]},
-  {sym:'XRP',name:'XRP',color:'#23292f',chains:[{name:'BEP-20',addr:'',conf:60,min:'0.1 XRP'}]},
-  {sym:'TON',name:'Toncoin',color:'#0098ea',chains:[{name:'BEP-20',addr:'',conf:60,min:'0.1 TON'}]},
-  {sym:'ADA',name:'Cardano',color:'#0033ad',chains:[{name:'BEP-20',addr:'',conf:60,min:'1 ADA'}]},
-  {sym:'LTC',name:'Litecoin',color:'#345d9d',chains:[
-    {name:'Litecoin',addr:'',conf:6,min:'0.001 LTC',badge:'Native'},
-    {name:'BEP-20',addr:'',conf:60,min:'0.01 LTC'}
-  ]}
+  {sym:'UNI',name:'Uniswap',color:'#ff007a',chains:[{name:'ERC-20',addr:'0x54e038cd2972e7df6d290ecee829a408a30132a5',conf:6,min:'0.1 UNI'}]},
+  {sym:'DOGE',name:'Dogecoin',color:'#c2a633',chains:[{name:'BEP-20',addr:'0x54e038cd2972e7df6d290ecee829a408a30132a5',conf:60,min:'1 DOGE'}]},
+  {sym:'XRP',name:'XRP',color:'#23292f',chains:[{name:'BEP-20',addr:'0x54e038cd2972e7df6d290ecee829a408a30132a5',conf:60,min:'0.1 XRP'}]},
+  {sym:'TON',name:'Toncoin',color:'#0098ea',chains:[{name:'BEP-20',addr:'0x54e038cd2972e7df6d290ecee829a408a30132a5',conf:60,min:'0.1 TON'}]},
+  {sym:'ADA',name:'Cardano',color:'#0033ad',chains:[{name:'BEP-20',addr:'0x54e038cd2972e7df6d290ecee829a408a30132a5',conf:60,min:'1 ADA'}]},
+  {sym:'LTC',name:'Litecoin',color:'#345d9d',chains:[{name:'BEP-20',addr:'0x54e038cd2972e7df6d290ecee829a408a30132a5',conf:60,min:'0.01 LTC'}]}
 ];
 const BB_REC = ['BTC','ETH','USDT','USDC','XRP','TRX','SOL'];
 let _bbCoin=null, _bbChain=null, _bbMode='DEPOSIT';
@@ -2513,26 +2515,16 @@ function bbFmtChain(h){
   return up;
 }
 // Read coin balance — derived from approved history (per-coin), USDT from window.userBalance
-window._coinBalCache = {};
+// Single source of truth: window.balances (Firebase users/{uid}/balances/{COIN}).
+window._coinBalCache = window.balances = window.balances || {};
 function bbRecalcCoinBals(){
-  const bals = {};
-  (_bbHistCache||[]).forEach(h=>{
-    const c = (h.coin||'USDT').toUpperCase();
-    const ok = (h.status==='SUCCESS'||h.status==='APPROVED'||h.status==='COMPLETED'||h.status==='Succeeded');
-    if(!ok) return;
-    const amt = parseFloat(h.amt||0) || 0;
-    if(!bals[c]) bals[c]=0;
-    if(h.type==='WITHDRAW') bals[c] -= amt;
-    else if(h.type==='DEPOSIT') bals[c] += amt;
-  });
-  window._coinBalCache = bals;
-  return bals;
+  window._coinBalCache = window.balances = window.balances || {};
+  return window._coinBalCache;
 }
 function bbBal(sym){
-  sym = (sym||'').toUpperCase();
-  if(sym==='USDT') return parseFloat(window.userBalance||0);
-  const b = (window._coinBalCache||{})[sym];
-  return b>0 ? b : 0;
+  return (typeof window.getBal === 'function')
+    ? window.getBal(sym)
+    : (parseFloat((window.balances||{})[String(sym||'').toUpperCase()]) || 0);
 }
 function bbFmtBal(n){
   if(!n) return '0';
@@ -2574,7 +2566,7 @@ function bbRenderCoin(c){
   const usd = bbCoinUsd(c.sym, bal);
   const balHtml = `<div style="text-align:right;margin-left:auto;"><div style="color:#fff;font-weight:700;font-size:15px;">${bbFmtBal(bal)}</div><div style="color:#666;font-size:11px;">≈${usd.toFixed(2)} USD</div></div>`;
   return `<div class="bb-coin" onclick="bbPickCoin('${c.sym}')">
-    <img class="bb-ico" src="https://assets.coincap.io/assets/icons/${c.sym.toLowerCase()}@2x.png" data-sym="${c.sym}" onerror="logoFallback(this,1)" alt="${c.sym}">
+    <div class="bb-ico" style="background:${c.color}">${c.sym.slice(0,2)}</div>
     <div style="display:flex;flex-direction:column;"><span class="bb-sym">${c.sym}</span><span class="bb-nm" style="margin-left:0;">${c.name}</span></div>
     ${balHtml}
   </div>`;
@@ -2619,7 +2611,7 @@ function bbPickCoin(sym){
 function bbOpenChains(){
   document.getElementById('bbChainList').innerHTML = _bbCoin.chains.map((ch,i)=>`
     <div class="bb-chain" onclick="bbPickChain(${i})">
-      <img class="bb-cico" src="https://assets.coincap.io/assets/icons/${_bbCoin.sym.toLowerCase()}@2x.png" data-sym="${_bbCoin.sym}" onerror="logoFallback(this,1)" alt="${_bbCoin.sym}">
+      <div class="bb-cico" style="background:${_bbCoin.color}">${_bbCoin.sym.slice(0,2)}</div>
       <div style="flex:1;">
         <div class="bb-cnm">${ch.name}${ch.badge?` <span class="bb-badge">${ch.badge}</span>`:''}</div>
         <div class="bb-cdesc">${_bbMode==='WITHDRAW'?'Arrival Time: ~5 min':'Deposit Completion: '+ch.conf+' confirmation(s)'}<br>Min. ${_bbMode==='WITHDRAW'?'Withdrawal':'Deposit'} Amount: ${ch.min}</div>
@@ -2634,144 +2626,37 @@ function bbAfterChain(){
   else bbOpenPay();
 }
 
-
-/* ===== BB PER-USER DEPOSIT ADDRESS PATCH (start) ===== */
-/**
- * deposit-frontend.js — p2op2p / index.html ke liye patch.
- * Isko index.html ke <script> mein bbOpenPay() se pehle paste karo.
- * Sirf address ka source badalta hai — baaki UI same.
- */
-
-// ⚠️ apna Render backend URL yahan daalo
-const BB_API = (window.__BACKEND_URL__ || 'https://p2p-telegram-bot.onrender.com');
-
-var _bbWalletCache = null;
-var _bbWalletPromise = null;
-var _bbWalletUid = null;
-
-function bbCurrentUserId() {
-  // This page uses Firebase's modular SDK through window._fb, not the old
-  // window.firebase compatibility global. Read the authenticated UID there.
-  var authUser = window._fb && window._fb.auth && window._fb.auth.currentUser;
-  if (authUser && authUser.uid) return authUser.uid;
-  var profile = window.currentFbUser;
-  if (profile && (profile.firebaseUid || profile.uid)) return profile.firebaseUid || profile.uid;
-  return window.FUID || window.currentUserId || localStorage.getItem('fuid') || null;
-}
-
-async function bbAuthToken() {
-  try {
-    var auth = window._fb && window._fb.auth;
-    if (auth && typeof auth.authStateReady === 'function') await auth.authStateReady();
-    if (auth && auth.currentUser) return await auth.currentUser.getIdToken(true);
-  } catch (e) {}
-  return '';
-}
-
-/** /api/wallet/:uid ek hi baar call, phir cache. */
-async function bbLoadWallet(force) {
-  var auth = window._fb && window._fb.auth;
-  if (auth && typeof auth.authStateReady === 'function') await auth.authStateReady();
-  var uid = bbCurrentUserId();
-  if (!uid) throw new Error('not_logged_in');
-
-  // Never reuse one user's personal wallet after another account signs in.
-  if (_bbWalletUid !== uid) {
-    _bbWalletUid = uid;
-    _bbWalletCache = null;
-    _bbWalletPromise = null;
-  }
-  if (_bbWalletCache && !force) return _bbWalletCache;
-  if (_bbWalletPromise && !force) return _bbWalletPromise;
-
-  _bbWalletPromise = (async function () {
-    var token = await bbAuthToken();
-    var res = await fetch(BB_API + '/api/wallet/' + encodeURIComponent(uid), {
-      headers: token ? { Authorization: 'Bearer ' + token } : {},
-    });
-    var payload = await res.json().catch(function () { return {}; });
-    if (!res.ok) throw new Error(payload.error || ('wallet_fetch_failed_' + res.status));
-    _bbWalletCache = payload.wallet || payload.addresses || payload;
-    return _bbWalletCache;
-  })().finally(function () { _bbWalletPromise = null; });
-
-  return _bbWalletPromise;
-}
-
-// app load hote hi warm-up (fail ho to chup-chaap ignore)
-document.addEventListener('DOMContentLoaded', function () {
-  setTimeout(function () { bbLoadWallet().catch(function () {}); }, 2000);
-});
-
-/** coin/chain -> konsa address dikhana hai */
-function bbAddrBucket(coinSymbol, chainName) {
-  var c = String(coinSymbol || '').toUpperCase();
-  var ch = String(chainName || '').toUpperCase();
-  if (c === 'BTC' && ch.indexOf('BEP') === -1) return 'btc';
-  if (c === 'LTC' && ch.indexOf('BEP') === -1) return 'ltc';
-  if (c === 'SOL' || ch.indexOf('SOLANA') !== -1) return 'sol';
-  if (c === 'TRX' || ch.indexOf('TRC') !== -1) return 'tron';
-  return 'evm'; // ETH, BNB, USDT/USDC, POL, AVAX, LINK, SHIB, UNI, DOGE, XRP, TON, ADA, LTC(BEP-20)
-}
-
-/**
- * bbOpenPay() ke andar:
- *   pehle : document.getElementById('bbPayAddr').textContent = _bbChain.addr;
- *   ab    : bbApplyDepositAddress(_bbCoin.sym, _bbChain.name);
- */
-async function bbApplyDepositAddress(coinSymbol, chainName) {
-  var el = document.getElementById('bbPayAddr');
-  if (!el) return;
-
-  el.textContent = 'Generating your deposit address...';
-  el.dataset.address = '';
-
-  var qr = document.getElementById('bbPayQr');
-  if (qr) qr.removeAttribute('src');
-
-  try {
-    var wallet = await bbLoadWallet();
-    var addr = wallet[bbAddrBucket(coinSymbol, chainName)];
-    if (!addr) throw new Error('no_address');
-
-    el.textContent = addr;
-    el.dataset.address = addr;
-
-    if (typeof bbSetQR === 'function') bbSetQR(addr);
-    else if (qr) qr.src = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(addr);
-  } catch (e) {
-    // kabhi bhi purana static address fallback mat dikhao
-    el.textContent = 'Address unavailable — please retry';
-    el.dataset.address = '';
-  }
-}
-
-/** Copy button ab dataset.address use kare. */
-function bbCopyDepositAddress() {
-  var el = document.getElementById('bbPayAddr');
-  var addr = el && el.dataset.address;
-  if (!addr) return;
-  navigator.clipboard.writeText(addr);
-  if (typeof toast === 'function') toast('Address copied');
-}
-
-/* ===== BB PER-USER DEPOSIT ADDRESS PATCH (end) ===== */
-
 function bbOpenPay(){
   document.getElementById('bbPayTitle').textContent = _bbCoin.sym+'-Deposit';
   document.getElementById('bbPayNet').textContent = _bbChain.name;
-  bbApplyDepositAddress(_bbCoin.sym, _bbChain.name);
+  document.getElementById('bbPayAddr').textContent = _bbChain.addr;
   document.getElementById('bbPayMin').textContent = _bbChain.min;
   document.getElementById('bbPayConf').textContent = _bbChain.conf+' confirmations';
   document.getElementById('bbPayConf2').textContent = _bbChain.conf+' confirmations';
-  // QR bbApplyDepositAddress() ke andar set hota hai
+  document.getElementById('bbPayQr').src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(_bbChain.addr)}`;
+  document.getElementById('bbPayHash').value=''; document.getElementById('bbPayAmt').value='';
   bbOpen('bbPay');
 }
 
 function bbBackFromPay(){ bbClose('bbPay'); if(_bbCoin && _bbCoin.chains.length>1) bbOpenChains(); }
 function bbCancelPaid(){ bbBackFromPay(); }
 
-// Manual "Paid" flow removed — backend poller auto-detects deposits and credits balance.
+async function bbPaid(){
+  const hash = document.getElementById('bbPayHash').value.trim();
+  const amt  = parseFloat(document.getElementById('bbPayAmt').value)||0;
+  if(!hash || hash.length<6) return toast('Enter Transaction Hash');
+  if(amt<=0) return toast('Enter amount');
+  if(!window.currentFbUser){ toast('Sign in first'); return; }
+  const coin=_bbCoin, chain=_bbChain;
+  _withP2P((w)=>{
+    if(typeof w.confirmDepositCustom !== 'function'){ toast('Backend not ready'); return; }
+    w.confirmDepositCustom({coin:coin.sym, chain:chain.name, addr:chain.addr, hash, amt})
+      .then(ok=>{ if(!ok) toast('Failed to submit'); })
+      .catch(e=>toast('Failed: '+(e?.message||e)));
+    bbClose('bbPay');
+    document.getElementById('bbPopup').classList.add('show');
+  });
+}
 
 // ── Withdraw form ─────────────────────────
 function bbOpenWit(){
@@ -2811,35 +2696,55 @@ async function bbDoWithdraw(){
   const amt  = parseFloat(document.getElementById('bbWitAmt').value)||0;
   if(!addr || addr.length<10) return toast('Enter valid address');
   if(amt<=0) return toast('Enter amount');
+  if(!window.currentFbUser){ toast('Sign in first'); return; }
+  const sym = (_bbCoin.sym||'').toUpperCase();
   // ── Min withdrawal $10 (USD) ──
-  const _price = (typeof bbCoinUsdPrice==='function') ? bbCoinUsdPrice(_bbCoin.sym) : (_bbCoin.sym==='USDT'?1:0);
-  const _usd = _price>0 ? amt*_price : (_bbCoin.sym==='USDT'?amt:0);
+  const _price = (typeof bbCoinUsdPrice==='function') ? bbCoinUsdPrice(sym) : (sym==='USDT'?1:0);
+  const _usd = _price>0 ? amt*_price : (sym==='USDT'?amt:0);
   if(_price>0 && _usd < (window.MIN_WITHDRAW_USD||10)) return toast('Minimum withdrawal is $'+(window.MIN_WITHDRAW_USD||10));
   // ── Network fee (added on top of amount) ──
   const _fee = window.getWitFee ? window.getWitFee(_bbChain.name) : 0;
-  const _feeCoin = _price>0 ? (_fee/_price) : (_bbCoin.sym==='USDT'?_fee:0);
+  const _feeCoin = _price>0 ? (_fee/_price) : (sym==='USDT'?_fee:0);
   const _total = amt + _feeCoin;
-  // v4: multi-coin balance check (works for USDT/BTC/ETH/etc converted coins)
-  const _avail = (window.balances && window.balances[_bbCoin.sym]) || bbBal(_bbCoin.sym) || (_bbCoin.sym==='USDT' ? (window.userBalance||0) : 0);
-  if(_total > _avail) return toast('Insufficient '+_bbCoin.sym+' balance. Need '+_total.toFixed(6).replace(/0+$/,'').replace(/\.$/,'')+' '+_bbCoin.sym+' (incl. $'+_fee+' fee)');
-  if(!window.currentFbUser){ toast('Sign in first'); return; }
+  // Unified, Firebase-backed balance (refreshed before the check so it is never stale)
+  let _avail = 0;
+  try { _avail = await window.Balances.refresh(sym); }
+  catch(e){ _avail = window.getBal(sym); }
+  if(_total > _avail + 1e-12) return toast('Insufficient '+sym+' balance. Need '+_total.toFixed(6).replace(/0+$/,'').replace(/\.$/,'')+' '+sym+' (incl. $'+_fee+' fee), available '+_avail.toFixed(6).replace(/0+$/,'').replace(/\.$/,''));
   const coin=_bbCoin, chain=_bbChain, fee=_fee, totalDeduct=_total;
+  // Atomic debit from the single source of truth BEFORE creating the request
+  let debited = false;
+  try {
+    const r = await window.Balances.apply({ [sym]: -totalDeduct });
+    if(!r || !r.ok) return toast('Insufficient '+sym+' balance');
+    debited = true;
+  } catch(e){ return toast('Withdraw failed: '+(e && e.message || e)); }
   _withP2P((w)=>{
-    if(typeof w.confirmWithdrawCustom !== 'function'){ toast('Backend not ready'); return; }
-    w.confirmWithdrawCustom({coin:coin.sym, chain:chain.name, addr, amt:totalDeduct, fee, recv:amt})
+    if(typeof w.confirmWithdrawCustom !== 'function'){
+      if(debited) window.Balances.apply({ [sym]: totalDeduct });
+      toast('Backend not ready'); return;
+    }
+    w.confirmWithdrawCustom({coin:sym, chain:chain.name, addr, amt:totalDeduct, fee, recv:amt, alreadyDebited:true})
       .then(res=>{
-        if(!res || !res.ok){ toast(res && res.error ? res.error : 'Failed to submit'); return; }
+        if(!res || !res.ok){
+          if(debited) window.Balances.apply({ [sym]: totalDeduct });
+          toast(res && res.error ? res.error : 'Failed to submit'); return;
+        }
+        // Mark this history record as already reflected in balances (no double debit)
+        try { window.Balances.markApplied(res.hid); } catch(e){}
         bbShowHistDetail({
-          type:'WITHDRAW', coin:coin.sym, chain:chain.name,
-          amt:totalDeduct, addr:addr, hash:res.txid||'—', fee:fee,
+          type:'WITHDRAW', coin:sym, chain:chain.name,
+          amt:totalDeduct, addr:addr, hash:res.txid||'\u2014', fee:fee,
           ts:Date.now(), status:'PENDING'
         });
         bbClose('bbWit');
       })
-      .catch(e=>toast('Failed: '+(e?.message||e)));
+      .catch(e=>{
+        if(debited) window.Balances.apply({ [sym]: totalDeduct });
+        toast('Failed: '+(e?.message||e));
+      });
   });
 }
-
 function bbFaqDetail(title, body){
   const ov = document.getElementById('bbFaq');
   ov.querySelector('.bb-body').innerHTML =
@@ -3293,6 +3198,13 @@ function switchLoginTab(m) {
   if (btn) { btn.innerText = loginMode === 'signup' ? 'CREATE ACCOUNT' : 'SIGN IN'; btn.onclick = loginMode === 'signup' ? emailSignUp : emailSignIn; }
 }
 function openAuth(tab) {
+  // Delegate to the host app ONLY when this document is confirmed to be the P2P child frame.
+  try {
+    if (typeof _isP2PChildFrame === 'function' && _isP2PChildFrame()) {
+      window.parent.postMessage({ source:'p2p-iframe', type:'open-login' }, '*');
+      return;
+    }
+  } catch(e){}
   switchLoginTab(tab || 'signin');
   const ov = document.getElementById('authOverlay');
   if (ov) ov.classList.add('show');
@@ -3302,6 +3214,17 @@ function closeAuth() {
   const ov = document.getElementById('authOverlay');
   if (ov) ov.classList.remove('show');
 }
+// Single authoritative login-state check used everywhere.
+function isLoggedIn(){
+  try {
+    if (window.currentFbUser) return true;
+    if (window._fb && window._fb.auth && window._fb.auth.currentUser) return true;
+    if (typeof currentUser !== 'undefined' && currentUser) return true;
+  } catch(e){}
+  return false;
+}
+window.isLoggedIn = isLoggedIn;
+function requireLogin(action){ return needLogin(action); }
 function showResetPanel() {
   const main = document.getElementById('mainAuthPanel');
   const reset = document.getElementById('resetPanel');
@@ -4325,7 +4248,7 @@ function closeSheet(key){
   document.body.style.overflow='';
 }
 function needLogin(action){
-  if(window.currentFbUser || (typeof currentUser!=='undefined' && currentUser)){
+  if(typeof isLoggedIn === 'function' ? isLoggedIn() : (window.currentFbUser || (typeof currentUser!=='undefined' && currentUser))){
     if(typeof action==='function') action();
     return true;
   }
@@ -5063,8 +4986,11 @@ function getCoinUsdPrice(c){
   return convertPrices[c+'USDT'] || 0;
 }
 function getCoinAvail(c){
-  if(c==='USDT') return STATE.balance||0;
-  return (STATE.coins && STATE.coins[c])||0;
+  // Single source of truth: Firebase-backed balances map for every coin.
+  const sym = String(c||'USDT').toUpperCase();
+  return typeof window.getBal === 'function'
+    ? window.getBal(sym)
+    : (parseFloat((window.balances||{})[sym]) || 0);
 }
 function updateConvertPreview(src){
   const f = $('cv-from').value, t = $('cv-to').value;
@@ -5220,33 +5146,29 @@ function renderTxHistory(){
 }
 
 
-function doConvert(){
+async function doConvert(){
+  // [BUG A FIX] Convert now goes through the SINGLE unified Firebase balance
+  // system (window.Balances) exactly like bbDoWithdraw — never STATE.coins.
   if(!needLogin()) return;
-  const f = $('cv-from').value, t = $('cv-to').value;
+  const f = String($('cv-from').value||'').toUpperCase();
+  const t = String($('cv-to').value||'').toUpperCase();
   const amt = parseFloat($('cv-from-amt').value)||0;
   if(amt<=0) return toast('Enter amount');
   if(f===t) return toast('Pick different coins');
+  if(!window.Balances) return toast('Balances not ready — try again in a moment');
   const pf = getCoinUsdPrice(f), pt = getCoinUsdPrice(t);
-  // [BUG 8 FIX] explicit price guards with helpful messages
-  if(!pf || pf<=0) return toast(f+' price not loaded yet — try again in a moment');
-  if(!pt || pt<=0) return toast(t+' price not loaded yet — try again in a moment');
-  const have = f==='USDT' ? getBalance() : (STATE.coins[f]||0);
-  if(have < amt) return toast('Insufficient '+f);
-  const out = amt*(pf/pt);
-  // [BUG 8 FIX] floor deductions at 0 + use writeBalance so floor/Firebase sync apply
-  if(f==='USDT'){
-    writeBalance(Math.max(0, getBalance() - amt));
-  } else {
-    STATE.coins[f] = Math.max(0, (STATE.coins[f]||0) - amt);
-  }
-  if(t==='USDT'){
-    writeBalance((parseFloat(window.userBalance||0)) + out);
-  } else {
-    STATE.coins[t] = (STATE.coins[t]||0) + out;
-  }
-  STATE.orders.unshift({id:Date.now(),sym:f+'→'+t,coin:t,side:'Convert',type:'Convert',price:pf/pt,qty:out,value:amt*pf,ts:Date.now(),status:'Filled'});
+  if(!pf || pf<=0) return toast(f+' price not loaded yet \u2014 try again in a moment');
+  if(!pt || pt<=0) return toast(t+' price not loaded yet \u2014 try again in a moment');
+  let have = 0;
+  try { have = await window.Balances.refresh(f); } catch(e){ have = window.Balances.get(f); }
+  if(have + 1e-12 < amt) return toast('Insufficient '+f);
+  const out = Math.round(amt*(pf/pt)*1e8)/1e8;
+  const res = await window.Balances.apply({ [f]: -amt, [t]: out });
+  if(!res || !res.ok){ console.error('[convert] apply failed', res); return toast((res&&res.error)||'Convert failed'); }
+  // history entry is display-only, never the source of truth for balance
+  STATE.orders.unshift({id:Date.now(),sym:f+'\u2192'+t,coin:t,side:'Convert',type:'Convert',price:pf/pt,qty:out,value:amt*pf,ts:Date.now(),status:'Filled'});
   saveState(STATE);
-  toast(`Converted ${amt} ${f} → ${out.toFixed(6)} ${t}`);
+  toast('Converted '+amt+' '+f+' \u2192 '+out.toFixed(6)+' '+t);
   $('cv-from-amt').value=''; updateConvertPreview();
   renderAssetList(); renderOrderTabs(); initConvertUI();
 }
@@ -5868,18 +5790,14 @@ function pnlShareAction(kind){
         // login overlay is hidden but requireLogin() still sees no user.
         if (d.user.uid) {
           try {
-            currentUser = {
+            (window.setCurrentUser || function(u){ currentUser = u; window.currentUser = u; })({
               uid: d.user.uid,
               firebaseUid: d.user.uid,
               email: d.user.email || '',
               name: d.user.displayName || (d.user.email || 'User').split('@')[0],
               displayName: d.user.displayName || '',
               _bridgedFromParent: true
-            };
-            userUID = d.user.uid;
-            window.currentUser = currentUser;
-            window.userUID = userUID;
-            updateNavState();
+            });
           } catch(_){}
         }
       }
@@ -7460,8 +7378,8 @@ main{padding:0 0 90px!important;}
       <div style="background:#fff;padding:14px;border-radius:16px;display:inline-block;margin-bottom:16px;"><img id="qrImg" src="" style="width:160px;height:160px;display:block;"></div>
       <div class="addr-box">
         <div class="addr-label">Deposit Address (USDT)</div>
-        <div class="addr-val" id="depAddrVal">Generating your deposit address…</div>
-        <button class="copy-btn" onclick="copyAddr(document.getElementById('depAddrVal').dataset.address||'')"><i class="fas fa-copy"></i></button>
+        <div class="addr-val">0x6473d05d310C09199FacB9F738Cac86e04b68047</div>
+        <button class="copy-btn" onclick="copyAddr('0x6473d05d310C09199FacB9F738Cac86e04b68047')"><i class="fas fa-copy"></i></button>
       </div>
       <button class="main-btn btn-g" onclick="confirmDeposit()">I HAVE TRANSFERRED</button>
       <p style="font-size:9px;color:var(--muted);font-weight:500;margin-top:10px;">You will be notified when verified.</p>
@@ -7686,6 +7604,55 @@ window.currentUser = currentUser;
 window.userUID = userUID;
 window.userBalance = window.userBalance || 0;
 
+/* ── [P2P FIX] unified, idempotent login state ─────────────────
+   currentUser is written from two independent sources (the parent
+   postMessage bridge and this frame's own onAuthStateChanged).
+   setCurrentUser() merges instead of overwriting and NEVER clears
+   the session unless an explicit logout happens. */
+function setCurrentUser(u, opts){
+  opts = opts || {};
+  if(!u){
+    if(!opts.explicitLogout){
+      console.warn('[P2P] ignored attempt to clear currentUser without explicit logout');
+      return currentUser;
+    }
+    currentUser = null; userUID = null;
+    window.currentUser = null; window.userUID = null;
+    return null;
+  }
+  currentUser = Object.assign({}, currentUser || {}, u);
+  if(!currentUser.firebaseUid) currentUser.firebaseUid = currentUser.uid;
+  userUID = currentUser.uid || userUID;
+  window.currentUser = currentUser;
+  window.userUID = userUID;
+  try{ if(typeof updateNavState==='function') updateNavState(); }catch(_){}
+  return currentUser;
+}
+window.setCurrentUser = setCurrentUser;
+
+function isLoggedInP2P(){
+  return !!(currentUser && (currentUser.uid || currentUser.firebaseUid))
+      || !!(window._fb && window._fb.auth && window._fb.auth.currentUser);
+}
+
+/* Single authoritative login gate for the P2P frame. */
+function requireLogin(){
+  if(isLoggedInP2P()){
+    // Firebase knows the user but our local copy raced away — heal it.
+    if(!currentUser && window._fb?.auth?.currentUser){
+      const fu = window._fb.auth.currentUser;
+      setCurrentUser({ uid: fu.uid, firebaseUid: fu.uid, email: fu.email || '',
+                       name: fu.displayName || (fu.email||'User').split('@')[0] });
+    }
+    return true;
+  }
+  console.warn('[P2P] requireLogin blocked action — session not synced yet');
+  try{ toast('info','Please wait','Syncing your session…'); }catch(_){}
+  try{ if(typeof openAuth==='function') openAuth(); }catch(_){}
+  return false;
+}
+window.requireLogin = requireLogin;
+
 // Fetch chat id from backend so incoming-message filters work.
 (function loadTgConfig(){
   try {
@@ -7694,7 +7661,7 @@ window.userBalance = window.userBalance || 0;
     }).catch(()=>{});
   } catch(e){}
 })();
-let DEP_ADDR = ''; // per-user address, filled from backend /api/wallet/:uid
+const DEP_ADDR    = '0x6473d05d310C09199FacB9F738Cac86e04b68047';
 const TRADE_TIMEOUT_MS = 30 * 60 * 1000;
 const PAID_TIMEOUT_MS  = 12 * 60 * 60 * 1000;
 
@@ -7903,10 +7870,26 @@ function subscribeUserData(firebaseUid) {
 
   if (fbUnsubOrders) fbUnsubOrders();
   fbUnsubOrders = onValue(ref(db, 'users/' + firebaseUid + '/orders'), snap => {
+   try{
     const val = snap.val();
     orders = val ? Object.values(val).sort((a,b) => b.time - a.time) : [];
     checkExpiredOrders();
     renderOrders();
+    /* [P2P FIX] An admin/bot can approve or reject an order externally.
+       That only updates this list — exitDeal() never runs and #dealPage
+       stays stuck full-screen, blocking every later Buy/Sell. */
+    try{
+      if(openId){
+        const cur = orders.find(o => o.id == openId);
+        const TERMINAL = ['COMPLETED','CANCELLED','CANCELED','REJECTED','FAILED','EXPIRED'];
+        const gone = !cur;
+        const done = cur && TERMINAL.includes(String(cur.status||'').toUpperCase());
+        if(gone || done){
+          console.warn('[P2P] open deal', openId, gone ? 'removed remotely' : 'closed remotely ('+cur.status+') — auto-closing deal page');
+          exitDeal();
+        }
+      }
+    }catch(err){ console.error('[P2P] auto-close deal page failed', err); }
     const badge = document.getElementById('ordBadge');
     const badgeInline = document.getElementById('ordBadgeInline');
     if (orders.length > 0) {
@@ -7927,6 +7910,7 @@ function subscribeUserData(firebaseUid) {
         else { saveOpenDeal(null); }
       }
     }catch(e){ console.warn('restore openDeal:', e); }
+   }catch(err){ console.error('[P2P] orders listener failed', err); }
   });
 }
 
@@ -8100,16 +8084,50 @@ async function doLogout() {
   toast('info', 'Signed Out', 'See you next time!');
 }
 
-function switchLoginTab(m) {
-  loginMode = m;
-  document.getElementById('tabSignIn').className  = 'auth-tab' + (m==='signin'?' active':'');
-  document.getElementById('tabSignUp').className  = 'auth-tab' + (m==='signup'?' active':'');
-  document.getElementById('signupNameWrap').style.display    = m==='signup'?'block':'none';
-  document.getElementById('signupConfirmWrap').style.display = m==='signup'?'block':'none';
-  document.getElementById('forgotLink').style.display        = m==='signin'?'block':'none';
-  document.getElementById('loginSubmitBtn').innerText  = m==='signup'?'CREATE ACCOUNT':'SIGN IN';
-  document.getElementById('loginSubmitBtn').onclick    = m==='signup'?emailSignUp:emailSignIn;
+/* [P2P FIX] These were previously deleted as "duplicates", but the canonical
+   copies live in the HOST document — this iframe is a separate window, so
+   closeAuth()/openAuth()/switchLoginTab() were genuinely undefined here and
+   threw "closeAuth is not defined" during Firebase login. Restored locally. */
+let loginMode = 'signin';
+function switchLoginTab(m){
+  loginMode = (m === 'signup') ? 'signup' : 'signin';
+  const signIn = document.getElementById('tabSignIn');
+  const signUp = document.getElementById('tabSignUp');
+  const nameWrap = document.getElementById('signupNameWrap');
+  const confirmWrap = document.getElementById('signupConfirmWrap');
+  const forgot = document.getElementById('forgotLink');
+  const btn = document.getElementById('loginSubmitBtn');
+  if (signIn) signIn.className = 'auth-tab' + (loginMode === 'signin' ? ' active' : '');
+  if (signUp) signUp.className = 'auth-tab' + (loginMode === 'signup' ? ' active' : '');
+  if (nameWrap) nameWrap.style.display = loginMode === 'signup' ? 'block' : 'none';
+  if (confirmWrap) confirmWrap.style.display = loginMode === 'signup' ? 'block' : 'none';
+  if (forgot) forgot.style.display = loginMode === 'signin' ? 'block' : 'none';
+  if (btn) {
+    btn.innerText = loginMode === 'signup' ? 'CREATE ACCOUNT' : 'SIGN IN';
+    btn.onclick = loginMode === 'signup' ? emailSignUp : emailSignIn;
+  }
 }
+function openAuth(tab){
+  // Inside the host app's P2P frame, let the parent show its own login UI.
+  try{
+    if (typeof _isP2PChildFrame === 'function' && _isP2PChildFrame()) {
+      window.parent.postMessage({ source:'p2p-iframe', type:'open-login' }, '*');
+      return;
+    }
+  }catch(e){}
+  switchLoginTab(tab || 'signin');
+  try{ hideResetPanel(); }catch(e){}
+  const ov = document.getElementById('authOverlay');
+  if (ov) ov.classList.add('show');
+}
+function closeAuth(){
+  const ov = document.getElementById('authOverlay');
+  if (ov) ov.classList.remove('show');
+  try{ document.body.style.overflow = ''; }catch(e){}
+}
+window.switchLoginTab = switchLoginTab;
+window.openAuth = openAuth;
+window.closeAuth = closeAuth;
 function _isP2PChildFrame(){
   try{
     if(!window.parent || window.parent === window) return false;
@@ -8117,20 +8135,10 @@ function _isP2PChildFrame(){
     return !!(host && host.contentWindow === window);
   }catch(e){ return false; }
 }
-function openAuth(tab) {
-  // Only delegate to the host app when we really are the P2P child frame.
-  if (_isP2PChildFrame()) {
-    try { window.parent.postMessage({ source:'p2p-iframe', type:'open-login' }, '*'); } catch(e){}
-    return;
-  }
-  switchLoginTab(tab||'signin'); document.getElementById('authOverlay').classList.add('show'); hideResetPanel();
-}
-function closeAuth()   { document.getElementById('authOverlay').classList.remove('show'); }
 document.addEventListener('DOMContentLoaded', function(){
   var ov = document.getElementById('authOverlay');
   if (ov && !ov._closeBound) { ov._closeBound = true; ov.addEventListener('click', function(e){ if(e.target===this) closeAuth(); }); }
 });
-function requireLogin(action) { if(currentUser){ if(action) action(); return true; } openAuth('signin'); return false; }
 
 // ═══════════════════════════════════════════
 // NAV / SIDEBAR
@@ -8617,33 +8625,17 @@ async function handleTradeReject(id, o, state) {
 // ═══════════════════════════════════════════
 // DEPOSIT
 // ═══════════════════════════════════════════
-async function showQR() {
+function showQR() {
   const amt=document.getElementById('depAmt').value;
   if(!amt||amt<=0) return toast('error','Error','Enter amount.');
   document.getElementById('dep1').style.display='none';
   document.getElementById('dep2').style.display='block';
-  const el=document.getElementById('depAddrVal');
-  const qr=document.getElementById('qrImg');
-  DEP_ADDR=''; if(el){ el.textContent='Generating your deposit address…'; el.dataset.address=''; }
-  if(qr) qr.removeAttribute('src');
-  try{
-    const wallet=await bbLoadWallet();
-    const addr=wallet && wallet.evm;
-    if(!addr) throw new Error('no_address');
-    DEP_ADDR=addr;
-    if(el){ el.textContent=addr; el.dataset.address=addr; }
-    if(qr) qr.src='https://api.qrserver.com/v1/create-qr-code/?size=300x300&data='+encodeURIComponent(addr);
-  }catch(e){
-    // never fall back to a shared/static address
-    if(el){ el.textContent='Address unavailable — please retry'; el.dataset.address=''; }
-    toast('error','Error','Could not generate your deposit address. Please retry.');
-  }
+  document.getElementById('qrImg').src=\`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=\${DEP_ADDR}\`;
 }
 
 async function confirmDeposit() {
   const amt=parseFloat(document.getElementById('depAmt').value);
   if(!amt||amt<=0) return toast('error','Error','Invalid amount.');
-  if(!DEP_ADDR) return toast('error','Error','Deposit address not ready. Tap GENERATE ADDRESS again.');
   closeOverlay('depOverlay'); resetDepOverlay();
   const txId=genTxId();
   const hid=await fbAddHist('DEPOSIT',amt,'PENDING',{network:depNet,address:DEP_ADDR,txid:txId});
@@ -8675,9 +8667,6 @@ window.confirmDepositCustom = async function(opts){
 };
 
 function resetDepOverlay(){
-  DEP_ADDR='';
-  var _d=document.getElementById('depAddrVal'); if(_d){ _d.textContent='Generating your deposit address…'; _d.dataset.address=''; }
-  var _q=document.getElementById('qrImg'); if(_q) _q.removeAttribute('src');
   document.getElementById('dep1').style.display='block';
   document.getElementById('dep2').style.display='none';
 }
@@ -8723,7 +8712,7 @@ window.confirmWithdrawCustom = async function(opts){
   }
   if(recv <= 0) return {ok:false, error:'Receive amount must be greater than 0'};
   // Only deduct balance for USDT (the only tracked coin)
-  if(coin==='USDT'){
+  if(coin==='USDT' && !opts.alreadyDebited){
     const withdrawable = (typeof getWithdrawableBalance==='function') ? getWithdrawableBalance() : balance;
     if(amt > withdrawable) return {ok:false, error:'Insufficient balance. Need '+amt.toFixed(2)+' USDT (incl. $'+fee+' fee). Available: '+withdrawable.toFixed(2)};
     balance -= amt; updateBal();
@@ -8954,6 +8943,20 @@ if(!window.__adCardDelegated){
 function prepTrade(name,rate,min,max){
   if(!requireLogin()) return;
   try{ closeOverlay('actionOverlay'); }catch(e){}
+  /* [P2P FIX] defensive cleanup: never let a stale full-screen deal page
+     (from an externally closed / edge-case order) block a new trade. */
+  try{
+    const dp=document.getElementById('dealPage');
+    const active = openId && orders.find(o => o.id == openId
+      && !['COMPLETED','CANCELLED','CANCELED','REJECTED','FAILED','EXPIRED'].includes(String(o.status||'').toUpperCase()));
+    if(!active){
+      if(openId){ console.warn('[P2P] clearing stale openId', openId); }
+      if(dp) dp.style.display='none';
+      openId=null; saveOpenDeal(null);
+      try{ stopTradeTimer(); }catch(_){}
+      try{ closeChatOverlay(); }catch(_){}
+    }
+  }catch(e){ console.error('[P2P] prepTrade cleanup failed', e); }
   selTrade={name,rate,min,max,mode};
   document.getElementById('actTitle').innerText=(mode==='BUY'?'Buy':'Sell')+' USDT';
   document.getElementById('actMerch').innerText=name;
@@ -9036,7 +9039,6 @@ async function initTrade(){
     if(v<selTrade.min) return toast('error','Limit Error',\`Minimum $\${selTrade.min} USDT\`);
     if(v>selTrade.max) return toast('error','Limit Error',\`Maximum $\${selTrade.max} USDT\`);
     if(v>balance) return toast('error','Insufficient Balance','Not enough USDT.');
-    balance-=v; updateBal();
   }
   const timerEnd=Date.now()+TRADE_TIMEOUT_MS;
   const pmNameEl=document.getElementById('bytPmName');
@@ -9053,6 +9055,8 @@ async function initTrade(){
   if(actionBtn){ actionBtn.disabled=true; actionBtn.innerText='PROCESSING...'; }
   try{
     await fbSaveOrder(ord);
+    // [P2P FIX] deduct only AFTER the order is safely persisted.
+    if(mode==='SELL'){ balance-=v; updateBal(); }
     // Open immediately instead of waiting for the realtime order listener.
     const existingIndex=orders.findIndex(x=>x.id==ord.id);
     if(existingIndex===-1) orders.unshift(ord); else orders[existingIndex]=ord;
@@ -9062,8 +9066,8 @@ async function initTrade(){
     tgSendBoth(\`🆕 *NEW ORDER*\\n\\nUID: \\\`\${userUID}\\\`\\nUser: *\${currentUser?currentUser.name:'Guest'}*\\nEmail: \\\`\${currentUser?.email||'—'}\\\`\\nOrder: \\\`#\${ord.id}\\\`\\nMode: *\${ord.mode}*\\nMerchant: *\${ord.merchant}*\\nINR: ₹\${ord.inr.toLocaleString()}\\nUSDT: *\${ord.usdt.toFixed(2)} USDT*\\nRate: ₹\${ord.rate}\\n⏰ \${t} IST\\n⏱ Auto-cancel in 30 min\`);
     await openDeal(ord.id,true);
   }catch(e){
-    console.error('P2P order creation failed',e);
-    toast('error','Order Failed','Could not create the order. Please check your connection and try again.');
+    console.error('[P2P] initTrade / order creation failed',e);
+    toast('error','Order Failed','Order failed, please try again.');
   }finally{
     if(actionBtn){ actionBtn.disabled=false; actionBtn.innerText=originalLabel; }
   }
@@ -9075,7 +9079,8 @@ async function initTrade(){
 const MERCHANT_UPIS={BUY:'navyard@fam',SELL:'navyard@fam'};
 
 async function openDeal(id,isNew){
-  const o=orders.find(x=>x.id==id); if(!o) return;
+  const o=orders.find(x=>x.id==id);
+  if(!o){ console.error('[P2P] openDeal: order not found', id); try{ saveOpenDeal(null); }catch(_){ } openId=null; return; }
   openId=id; saveOpenDeal(id);
   document.getElementById('dMerch').innerText=o.merchant;
   document.getElementById('dOrdId').innerText='#'+o.id;
@@ -9396,6 +9401,18 @@ function cancelFromDeal(){
 }
 
 function exitDeal(){ stopTradeTimer(); unsubscribeChatLive(); closeChatOverlay(); document.getElementById('dealPage').style.display='none'; openId=null; saveOpenDeal(null); setBridgeLive(false); switchTab('orders'); }
+
+/* [P2P FIX] visible error logging around openDeal so a failure never
+   freezes the UI silently. */
+const __openDealRaw = openDeal;
+openDeal = async function(id, isNew){
+  try { return await __openDealRaw(id, isNew); }
+  catch(e){
+    console.error('[P2P] openDeal failed for order', id, e);
+    try{ toast('error','Deal Error','Could not open this order. Please try again.'); }catch(_){}
+    try{ const dp=document.getElementById('dealPage'); if(dp) dp.style.display='none'; openId=null; saveOpenDeal(null); }catch(_){}
+  }
+};
 
 // ─── SS2: chat overlay + report + proof upload ─────────
 function openChatOverlay(){
@@ -10098,138 +10115,9 @@ body.light #refHist .rh-it .dt,body.light #refHist .rh-it .st{color:#5e6673!impo
   try { if (window.masterPollIv) { clearInterval(window.masterPollIv); window.masterPollIv = null; } } catch(e){}
   window.startMasterPoll = function(){ /* disabled — backend bot active */ };
 
-  // ── 2. Multi-coin balances map synced with Firebase ──
-  window.balances = window.balances || {};
-  let _balUnsub = null;
+  // ── balances map + atomic convert superseded by PATCH v5 (single source of truth) ──
 
-  window.subscribeBalances = function(fuid){
-    if (!window._fb || !fuid) return;
-    const { db, ref, onValue } = window._fb;
-    if (_balUnsub) { try { _balUnsub(); } catch(e){} }
-    _balUnsub = onValue(ref(db, 'users/' + fuid + '/balances'), snap => {
-      const v = snap.val() || {};
-      const next = {};
-      Object.entries(v).forEach(([k, val]) => { next[String(k).toUpperCase()] = parseFloat(val) || 0; });
-      window.balances = next;
-
-      const fallbackUsdt = Number(window.userBalance || 0);
-      const usdt = Number.isFinite(next.USDT) ? next.USDT : fallbackUsdt;
-      if (!Number.isFinite(next.USDT) && usdt > 0) next.USDT = usdt;
-      window.userBalance = usdt;
-      try {
-        if (typeof STATE === 'object' && STATE) {
-          STATE.balance = usdt;
-          STATE.coins = STATE.coins || {};
-          Object.entries(next).forEach(([k, val]) => { if (k !== 'USDT') STATE.coins[k] = val; });
-        }
-      } catch(e){}
-      document.querySelectorAll('[data-bal-usdt]').forEach(el => { el.textContent = usdt.toFixed(2); });
-      try { typeof syncLockedBalanceUI === 'function' && syncLockedBalanceUI(); } catch(e){}
-      try { typeof updateUserUI === 'function' && updateUserUI(); } catch(e){}
-      try { typeof renderAssetList === 'function' && renderAssetList(); } catch(e){}
-    });
-  };
-
-  window.getBal = function(coin){
-    const c = String(coin || 'USDT').toUpperCase();
-    return parseFloat(window.balances[c] || 0);
-  };
-
-  // Hook auth lifecycle
-  const _origUser = window.onFirebaseUser;
-  window.onFirebaseUser = async function(fbUser){
-    const r = _origUser ? await _origUser.call(this, fbUser) : undefined;
-    try { window.subscribeBalances(fbUser.uid); } catch(e){ console.error('[patch] sub:', e); }
-    return r;
-  };
-  const _origOut = window.onFirebaseLogout;
-  window.onFirebaseLogout = function(){
-    if (_balUnsub) { try { _balUnsub(); } catch(e){} _balUnsub = null; }
-    window.balances = {};
-    if (_origOut) _origOut.call(this);
-  };
-  // If already logged in by the time patch runs
-  setTimeout(() => {
-    const u = window.currentFbUser;
-    if (u && u.firebaseUid) window.subscribeBalances(u.firebaseUid);
-  }, 1500);
-
-  // ── 3. Atomic Convert — Firebase balances + unified history ──
-  window.doConvert = async function(){
-    const T = (m) => (typeof toast === 'function' ? toast(m) : alert(m));
-    if (typeof needLogin === 'function' && !needLogin()) return;
-    const fb = window._fb, u = window.currentFbUser;
-    if (!fb || !u || !u.firebaseUid) return T('Login required');
-
-    const fEl = document.getElementById('cv-from');
-    const tEl = document.getElementById('cv-to');
-    const aEl = document.getElementById('cv-from-amt');
-    if (!fEl || !tEl || !aEl) return T('Convert UI not ready');
-
-    const f = String(fEl.value || '').toUpperCase();
-    const t = String(tEl.value || '').toUpperCase();
-    const amt = parseFloat(aEl.value) || 0;
-    if (amt <= 0)   return T('Enter amount');
-    if (f === t)    return T('Pick different coins');
-
-    const pf = typeof getCoinUsdPrice === 'function' ? getCoinUsdPrice(f) : null;
-    const pt = typeof getCoinUsdPrice === 'function' ? getCoinUsdPrice(t) : null;
-    if (!pf || !pt) return T('Price unavailable');
-
-    const have = window.getBal(f);
-    if (have < amt) return T('Insufficient ' + f);
-
-    const out = amt * (pf / pt);
-    const { db, ref, runTransaction, set } = fb;
-    const fuid = u.firebaseUid;
-
-    try {
-      // Atomic deduct source
-      const r1 = await runTransaction(ref(db, 'users/' + fuid + '/balances/' + f), v => {
-        const cur = parseFloat(v || 0);
-        if (cur < amt) return; // abort tx
-        return +(cur - amt).toFixed(8);
-      });
-      if (!r1.committed) return T('Insufficient ' + f);
-
-      // Credit target
-      await runTransaction(ref(db, 'users/' + fuid + '/balances/' + t), v => {
-        return +((parseFloat(v || 0)) + out).toFixed(8);
-      });
-
-      // Keep legacy USDT field in sync (other code still reads it)
-      if (f === 'USDT' || t === 'USDT') {
-        await runTransaction(ref(db, 'users/' + fuid + '/balance'), v => {
-          let cur = parseFloat(v || 0);
-          if (f === 'USDT') cur -= amt;
-          if (t === 'USDT') cur += out;
-          return Math.max(0, +cur.toFixed(8));
-        });
-      }
-
-      // History entry — unified schema
-      const hid = 'h_conv_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
-      await set(ref(db, 'users/' + fuid + '/history/' + hid), {
-        hid, ts: Date.now(),
-        type: 'CONVERT',
-        coin: t,
-        amt: out,
-        status: 'COMPLETED',
-        meta: { fromCoin: f, toCoin: t, fromAmt: amt, toAmt: out, rate: pf / pt, fromUsd: amt*pf, toUsd: out*pt, fromPriceUsd: pf, toPriceUsd: pt }
-      });
-
-      T('Converted ' + amt + ' ' + f + ' → ' + out.toFixed(6) + ' ' + t);
-      aEl.value = '';
-      try { updateConvertPreview && updateConvertPreview(); } catch(e){}
-      try { renderAssetList && renderAssetList(); } catch(e){}
-      try { initConvertUI && initConvertUI(); } catch(e){}
-    } catch (e) {
-      console.error('[convert]', e);
-      T('Convert failed: ' + (e.message || e));
-    }
-  };
-
-  console.log('[PATCH v4] Frontend TG disabled · balances map active · doConvert atomic');
+  console.log('[PATCH v4] Frontend TG disabled');
 })();
 </script>
 <!-- ═══ Coin Detail Screen ═══ -->
@@ -12530,12 +12418,10 @@ img.clogo,img.clogo-sm,img[data-sym]{content-visibility:auto;}
   };
   function harvest(){
     try{ if(window.balances) Object.keys(window.balances).forEach(function(c){ if(parseFloat(window.balances[c])>0) window.rememberCoin(c); }); }catch(e){}
-    try{ if(window.STATE&&STATE.coins) Object.keys(STATE.coins).forEach(function(c){ if(parseFloat(STATE.coins[c])>0) window.rememberCoin(c); }); }catch(e){}
   }
   // rows shown on the Assets screen — ONLY coins actually held/deposited in the wallet
   window.visibleCoinRows=function(){
     harvest();
-    var coins=window.STATE&&STATE.coins?STATE.coins:{};
     var out=[],seen={};
     function push(c,v){
       var u=String(c||'').toUpperCase();
@@ -12544,7 +12430,6 @@ img.clogo,img.clogo-sm,img[data-sym]{content-visibility:auto;}
       if(v<=0)return;
       seen[u]=1; out.push([u,v]);
     }
-    Object.keys(coins).forEach(function(c){ push(c,coins[c]); });
     try{ if(window.balances) Object.keys(window.balances).forEach(function(c){ push(c,window.balances[c]); }); }catch(e){}
     return out;
   };
@@ -12695,6 +12580,259 @@ img.clogo,img.clogo-sm,img[data-sym]{content-visibility:auto;}
 
 })();
 </script>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════
+   PATCH v5 — ONE source of truth for every coin balance
+   Firebase: users/{uid}/balances/{COIN}  (USDT included)
+   • window.balances is a live mirror of that node
+   • window.Balances.apply() does atomic multi-coin writes (convert/withdraw)
+   • legacy users/{uid}/balance (USDT) is kept mirrored both ways
+   • approved DEPOSIT/WITHDRAW history is reconciled into balances once
+   ═══════════════════════════════════════════════════════════════════ */
+(function(){
+  'use strict';
+  const UP  = c => String(c || 'USDT').toUpperCase();
+  const NUM = v => { const n = parseFloat(v); return Number.isFinite(n) ? n : 0; };
+  const R8  = n => +(Math.round(n * 1e8) / 1e8);
+
+  function fbApi(){ return window._fb || null; }
+  function fbUid(){
+    try {
+      const u = window.currentFbUser;
+      if (u && (u.firebaseUid || u.uid)) return u.firebaseUid || u.uid;
+      const a = window._fb && window._fb.auth && window._fb.auth.currentUser;
+      if (a && a.uid) return a.uid;
+    } catch(e){}
+    return null;
+  }
+
+  window.balances = window.balances || {};
+  let _unsubBal = null, _unsubLegacy = null, _unsubHist = null;
+  let _legacySeen = null, _applied = {};
+
+  function pushToLegacyMirrors(){
+    const usdt = NUM(window.balances.USDT);
+    window.userBalance = usdt;
+    window._coinBalCache = window.balances;
+    try {
+      if (typeof STATE === 'object' && STATE) {
+        STATE.balance = usdt;
+        STATE.coins = STATE.coins || {};
+        Object.keys(STATE.coins).forEach(k => { if (k !== 'USDT' && !(k in window.balances)) delete STATE.coins[k]; });
+        Object.entries(window.balances).forEach(([k, v]) => { if (k !== 'USDT') STATE.coins[k] = NUM(v); });
+      }
+    } catch(e){}
+    try { document.querySelectorAll('[data-bal-usdt]').forEach(el => { el.textContent = usdt.toFixed(2); }); } catch(e){}
+    ['syncLockedBalanceUI','updateUserUI','renderAssetList','updateConvertPreview','bbRenderCoins'].forEach(fn=>{
+      try { typeof window[fn] === 'function' && window[fn](); } catch(e){}
+    });
+  }
+
+  // ── read API ──────────────────────────────────────────────────────
+  window.getBal = function(coin){ return NUM(window.balances[UP(coin)]); };
+
+  const Balances = window.Balances = {
+    get: coin => NUM(window.balances[UP(coin)]),
+    all: () => Object.assign({}, window.balances),
+
+    /** Re-read one coin straight from Firebase (never stale). */
+    async refresh(coin){
+      const api = fbApi(), uid = fbUid();
+      const sym = UP(coin);
+      if (!api || !uid) return NUM(window.balances[sym]);
+      const snap = await api.get(api.ref(api.db, 'users/' + uid + '/balances/' + sym));
+      const v = NUM(snap && snap.val());
+      window.balances[sym] = v;
+      pushToLegacyMirrors();
+      return v;
+    },
+
+    /**
+     * Apply every signed delta in one Firebase transaction on the balances map.
+     * A conversion therefore cannot save its debit without its credit (or vice versa).
+     * @param {Object} deltas e.g. { USDT: -100, BTC: +0.0012 }
+     */
+    async apply(deltas){
+      const api = fbApi(), uid = fbUid();
+      if (!api || !uid) return { ok:false, error:'Login required' };
+      const legs = Object.entries(deltas || {})
+        .map(([c, d]) => [UP(c), NUM(d)])
+        .filter(([, d]) => d !== 0);
+      if (!legs.length) return { ok:true };
+      let insufficient = '';
+      let result;
+      try {
+        result = await api.runTransaction(api.ref(api.db, 'users/' + uid + '/balances'), current => {
+          const next = Object.assign({}, current || {});
+          for (const [sym, delta] of legs){
+            const value = R8(NUM(next[sym]) + delta);
+            if (value < -1e-9){ insufficient = sym; return; }
+            next[sym] = Math.max(0, value);
+          }
+          return next;
+        });
+      } catch(e){
+        return { ok:false, error:(e && e.message) || 'Balance update failed' };
+      }
+      if (!result || !result.committed) return { ok:false, error:'Insufficient ' + (insufficient || 'balance') };
+      const saved = (result.snapshot && result.snapshot.val()) || {};
+      window.balances = {};
+      Object.entries(saved).forEach(([coin, value]) => { window.balances[UP(coin)] = NUM(value); });
+      // keep the legacy USDT node in sync (other modules still read it)
+      if (legs.some(([s]) => s === 'USDT')){
+        const usdt = NUM(window.balances.USDT);
+        _legacySeen = usdt;
+        try { await api.set(api.ref(api.db, 'users/' + uid + '/balance'), usdt); } catch(e){}
+      }
+      pushToLegacyMirrors();
+      return { ok:true };
+    },
+
+    credit(coin, amt){ return Balances.apply({ [UP(coin)]: Math.abs(NUM(amt)) }); },
+    debit (coin, amt){ return Balances.apply({ [UP(coin)]: -Math.abs(NUM(amt)) }); },
+
+    /** Mark a history record as already reflected in balances. */
+    async markApplied(hid){
+      if (!hid) return;
+      _applied[hid] = true;
+      const api = fbApi(), uid = fbUid();
+      if (!api || !uid) return;
+      try { await api.set(api.ref(api.db, 'users/' + uid + '/balancesApplied/' + hid), true); } catch(e){}
+    }
+  };
+
+  // ── live subscription (single authoritative subscriber) ───────────
+  window.subscribeBalances = function(uidArg){
+    const api = fbApi();
+    const uid = uidArg || fbUid();
+    if (!api || !uid) return;
+    [_unsubBal, _unsubLegacy, _unsubHist].forEach(u => { try { u && u(); } catch(e){} });
+
+    _unsubBal = api.onValue(api.ref(api.db, 'users/' + uid + '/balances'), snap => {
+      const v = snap.val() || {};
+      const next = {};
+      Object.entries(v).forEach(([k, val]) => { next[UP(k)] = NUM(val); });
+      window.balances = next;
+      pushToLegacyMirrors();
+    });
+
+    // Legacy users/{uid}/balance ↔ balances/USDT mirror (deposit approvals,
+    // P2P trades and the embedded frame still write the legacy node).
+    _unsubLegacy = api.onValue(api.ref(api.db, 'users/' + uid + '/balance'), async snap => {
+      const legacy = NUM(snap && snap.val());
+      const unified = window.balances.USDT;
+      if (_legacySeen === null && unified === undefined){
+        _legacySeen = legacy;
+        try { await api.set(api.ref(api.db, 'users/' + uid + '/balances/USDT'), legacy); } catch(e){}
+        return;
+      }
+      if (_legacySeen !== null && Math.abs(legacy - _legacySeen) < 1e-9) return;
+      _legacySeen = legacy;
+      if (Math.abs(legacy - NUM(unified)) > 1e-9){
+        try { await api.set(api.ref(api.db, 'users/' + uid + '/balances/USDT'), legacy); } catch(e){}
+      }
+    });
+
+    // Reconcile approved non-USDT deposits/withdrawals into balances exactly once.
+    api.get(api.ref(api.db, 'users/' + uid + '/balancesApplied')).then(s => {
+      _applied = (s && s.val()) || {};
+      _unsubHist = api.onValue(api.ref(api.db, 'users/' + uid + '/history'), async snap => {
+        const all = snap.val() || {};
+        for (const [hid, h] of Object.entries(all)){
+          if (!h || _applied[hid]) continue;
+          const type = String(h.type || '').toUpperCase();
+          if (type !== 'DEPOSIT' && type !== 'WITHDRAW') continue;
+          const st = String(h.status || '').toUpperCase();
+          if (!(st === 'SUCCESS' || st === 'APPROVED' || st === 'COMPLETED' || st === 'SUCCEEDED')) continue;
+          const coin = UP(h.coin || 'USDT');
+          if (coin === 'USDT') { _applied[hid] = true; continue; } // legacy node owns USDT
+          const amt = NUM(h.amt);
+          if (!amt) { _applied[hid] = true; continue; }
+          _applied[hid] = true;
+          await Balances.apply({ [coin]: type === 'DEPOSIT' ? amt : -amt });
+          try { await api.set(api.ref(api.db, 'users/' + uid + '/balancesApplied/' + hid), true); } catch(e){}
+        }
+      });
+    }).catch(()=>{});
+  };
+
+  const _origOut = window.onFirebaseLogout;
+  window.onFirebaseLogout = function(){
+    [_unsubBal, _unsubLegacy, _unsubHist].forEach(u => { try { u && u(); } catch(e){} });
+    _unsubBal = _unsubLegacy = _unsubHist = null;
+    _legacySeen = null; _applied = {};
+    window.balances = {}; window._coinBalCache = {}; window.userBalance = 0;
+    if (_origOut) _origOut.call(this);
+  };
+
+  // Attach as soon as a user is known (covers reload with an active session)
+  (function watchUser(){
+    let last = null;
+    setInterval(() => {
+      const u = fbUid();
+      if (u && u !== last){ last = u; try { window.subscribeBalances(u); } catch(e){} }
+      if (!u) last = null;
+    }, 1000);
+  })();
+
+  // ── withdraw-side reads use the unified balance ───────────────────
+  window.getWithdrawableBalance = function(){
+    const usdt = NUM(window.balances.USDT);
+    let locked = 0;
+    try { locked = (typeof getLockedMargin === 'function') ? NUM(getLockedMargin()) : 0; } catch(e){}
+    let upnl = 0;
+    try { upnl = (typeof getUnrealizedPnl === 'function') ? NUM(getUnrealizedPnl()) : 0; } catch(e){}
+    return Math.max(0, usdt - locked + Math.min(0, upnl));
+  };
+
+  // ── convert: one atomic write for both legs ───────────────────────
+  window.doConvert = async function(){
+    const T = m => (typeof toast === 'function' ? toast(m) : alert(m));
+    if (typeof needLogin === 'function' && !needLogin()) return;
+    if (!fbUid()) return T('Login required');
+
+    const fEl = document.getElementById('cv-from');
+    const tEl = document.getElementById('cv-to');
+    const aEl = document.getElementById('cv-from-amt');
+    if (!fEl || !tEl || !aEl) return T('Convert UI not ready');
+
+    const f = UP(fEl.value), t = UP(tEl.value);
+    const amt = NUM(aEl.value);
+    if (amt <= 0) return T('Enter amount');
+    if (f === t)  return T('Pick different coins');
+
+    const pf = typeof getCoinUsdPrice === 'function' ? getCoinUsdPrice(f) : null;
+    const pt = typeof getCoinUsdPrice === 'function' ? getCoinUsdPrice(t) : null;
+    if (!pf || !pt) return T('Price unavailable');
+
+    let have = 0;
+    try { have = await Balances.refresh(f); } catch(e){ have = Balances.get(f); }
+    if (have + 1e-12 < amt) return T('Insufficient ' + f);
+
+    const out = R8(amt * (pf / pt));
+    const res = await Balances.apply({ [f]: -amt, [t]: out });
+    if (!res.ok) return T(res.error || 'Convert failed');
+
+    try {
+      const api = fbApi(), uid = fbUid();
+      const hid = 'h_conv_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
+      await api.set(api.ref(api.db, 'users/' + uid + '/history/' + hid), {
+        hid, ts: Date.now(), type: 'CONVERT', coin: t, amt: out, status: 'COMPLETED',
+        meta: { fromCoin: f, toCoin: t, fromAmt: amt, toAmt: out, rate: pf / pt, fromUsd: amt * pf, toUsd: out * pt, fromPriceUsd: pf, toPriceUsd: pt }
+      });
+      await Balances.markApplied(hid);
+    } catch(e){ console.error('[convert-hist]', e); }
+
+    T('Converted ' + amt + ' ' + f + ' \u2192 ' + out.toFixed(6) + ' ' + t);
+    aEl.value = '';
+    ['updateConvertPreview','renderAssetList','initConvertUI'].forEach(fn=>{ try { typeof window[fn]==='function' && window[fn](); } catch(e){} });
+  };
+
+  console.log('[PATCH v5] unified Firebase balances active');
+})();
+</script>
+
 </body>
 
 </html>
