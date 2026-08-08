@@ -202,13 +202,13 @@
 .bb-chip{background:#1a1a1a;border:none;color:#fff;padding:8px 18px;border-radius:18px;font-size:13px;font-weight:600;cursor:pointer}
 .bb-letter{padding:8px 4px;color:#8c8c8c;font-size:13px;background:#0a0a0a;font-weight:600}
 .bb-coin{display:flex;align-items:center;padding:12px 4px;gap:12px;cursor:pointer;border-bottom:1px solid #111}
-.bb-coin .bb-ico{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-size:13px;flex-shrink:0}
+.bb-coin .bb-ico{width:34px;height:34px;border-radius:50%;object-fit:cover;background:var(--bg3);flex-shrink:0}
 .bb-coin .bb-sym{font-weight:800;font-size:16px;color:#fff}
 .bb-coin .bb-nm{color:#8c8c8c;font-size:13px;margin-left:6px}
 .bb-alpha{position:absolute;right:4px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;font-size:10px;color:#8c8c8c;line-height:1.4;font-weight:600;pointer-events:auto}
 .bb-alpha span{cursor:pointer;padding:0 4px}
 .bb-chain{display:flex;align-items:flex-start;gap:14px;padding:18px 0;border-bottom:1px solid #111;cursor:pointer}
-.bb-chain .bb-cico{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:12px;flex-shrink:0}
+.bb-chain .bb-cico{width:36px;height:36px;border-radius:50%;object-fit:cover;background:var(--bg3);flex-shrink:0}
 .bb-chain .bb-cnm{font-weight:700;font-size:15px;color:#fff;display:flex;align-items:center;gap:8px}
 .bb-chain .bb-cnm .bb-badge{background:#2a2a2a;color:#fff;font-size:10px;padding:2px 8px;border-radius:10px;font-weight:600}
 .bb-chain .bb-cdesc{color:#8c8c8c;font-size:12px;line-height:1.6;margin-top:4px}
@@ -2463,7 +2463,10 @@ const BB_COINS = [
   {sym:'XRP',name:'XRP',color:'#23292f',chains:[{name:'BEP-20',addr:'',conf:60,min:'0.1 XRP'}]},
   {sym:'TON',name:'Toncoin',color:'#0098ea',chains:[{name:'BEP-20',addr:'',conf:60,min:'0.1 TON'}]},
   {sym:'ADA',name:'Cardano',color:'#0033ad',chains:[{name:'BEP-20',addr:'',conf:60,min:'1 ADA'}]},
-  {sym:'LTC',name:'Litecoin',color:'#345d9d',chains:[{name:'BEP-20',addr:'',conf:60,min:'0.01 LTC'}]}
+  {sym:'LTC',name:'Litecoin',color:'#345d9d',chains:[
+    {name:'Litecoin',addr:'',conf:6,min:'0.001 LTC',badge:'Native'},
+    {name:'BEP-20',addr:'',conf:60,min:'0.01 LTC'}
+  ]}
 ];
 const BB_REC = ['BTC','ETH','USDT','USDC','XRP','TRX','SOL'];
 let _bbCoin=null, _bbChain=null, _bbMode='DEPOSIT';
@@ -2571,7 +2574,7 @@ function bbRenderCoin(c){
   const usd = bbCoinUsd(c.sym, bal);
   const balHtml = `<div style="text-align:right;margin-left:auto;"><div style="color:#fff;font-weight:700;font-size:15px;">${bbFmtBal(bal)}</div><div style="color:#666;font-size:11px;">≈${usd.toFixed(2)} USD</div></div>`;
   return `<div class="bb-coin" onclick="bbPickCoin('${c.sym}')">
-    <div class="bb-ico" style="background:${c.color}">${c.sym.slice(0,2)}</div>
+    <img class="bb-ico" src="https://assets.coincap.io/assets/icons/${c.sym.toLowerCase()}@2x.png" data-sym="${c.sym}" onerror="logoFallback(this,1)" alt="${c.sym}">
     <div style="display:flex;flex-direction:column;"><span class="bb-sym">${c.sym}</span><span class="bb-nm" style="margin-left:0;">${c.name}</span></div>
     ${balHtml}
   </div>`;
@@ -2616,7 +2619,7 @@ function bbPickCoin(sym){
 function bbOpenChains(){
   document.getElementById('bbChainList').innerHTML = _bbCoin.chains.map((ch,i)=>`
     <div class="bb-chain" onclick="bbPickChain(${i})">
-      <div class="bb-cico" style="background:${_bbCoin.color}">${_bbCoin.sym.slice(0,2)}</div>
+      <img class="bb-cico" src="https://assets.coincap.io/assets/icons/${_bbCoin.sym.toLowerCase()}@2x.png" data-sym="${_bbCoin.sym}" onerror="logoFallback(this,1)" alt="${_bbCoin.sym}">
       <div style="flex:1;">
         <div class="bb-cnm">${ch.name}${ch.badge?` <span class="bb-badge">${ch.badge}</span>`:''}</div>
         <div class="bb-cdesc">${_bbMode==='WITHDRAW'?'Arrival Time: ~5 min':'Deposit Completion: '+ch.conf+' confirmation(s)'}<br>Min. ${_bbMode==='WITHDRAW'?'Withdrawal':'Deposit'} Amount: ${ch.min}</div>
@@ -2705,9 +2708,10 @@ function bbAddrBucket(coinSymbol, chainName) {
   var c = String(coinSymbol || '').toUpperCase();
   var ch = String(chainName || '').toUpperCase();
   if (c === 'BTC' && ch.indexOf('BEP') === -1) return 'btc';
+  if (c === 'LTC' && ch.indexOf('BEP') === -1) return 'ltc';
   if (c === 'SOL' || ch.indexOf('SOLANA') !== -1) return 'sol';
   if (c === 'TRX' || ch.indexOf('TRC') !== -1) return 'tron';
-  return 'evm'; // ETH, BNB, USDT/USDC, POL, AVAX, LINK, SHIB, UNI, DOGE, XRP, TON, ADA, LTC
+  return 'evm'; // ETH, BNB, USDT/USDC, POL, AVAX, LINK, SHIB, UNI, DOGE, XRP, TON, ADA, LTC(BEP-20)
 }
 
 /**
