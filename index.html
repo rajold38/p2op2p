@@ -13071,8 +13071,8 @@ body.light .sheet,body.light .bottom-sheet,body.light .modal,body.light .modal-c
 body.light .popup,body.light .pop,body.light .dialog,body.light .drawer,
 body.light .overlay-card,body.light .toast,body.light .snackbar,body.light .dropdown,
 body.light .menu,body.light .tooltip,body.light .row,body.light .list-item,
-body.light .tab-body,body.light .tabpane,body.light .segment,body.light .chip,
-body.light .pill,body.light .badge,body.light .tile,body.light .item,
+body.light .tab-body,body.light .tabpane,body.light .segment,
+body.light .tile,body.light .item,
 body.light .bb-card,body.light .bb-sheet,body.light .bb-pop{
   background-color:var(--bg-surface)!important;color:var(--text-primary)!important;
   border-color:var(--border-color)!important;}
@@ -13134,9 +13134,17 @@ body.light [style*="color:#eee"],body.light [style*="color:#f5f5f5"],
 body.light [style*="color:#cfd1d6"],body.light [style*="color:white"],
 body.light [style*="color: white"],body.light [style*="color:rgba(255,255,255"],
 body.light [style*="color: rgba(255, 255, 255"]{color:var(--text-primary)!important;}
-/* keep semantic accents readable in both themes */
+/* keep semantic accents readable in both themes (text-only accents) */
 body.light .green,body.light .up,body.light .buy,body.light .pos{color:#00a06b!important;}
 body.light .red,body.light .down,body.light .sell,body.light .neg{color:#e0393f!important;}
+/* ...but NEVER on a filled coloured badge/pill: keep that text white */
+body.light .pill,body.light .chip,body.light .badge,body.light .tag,
+body.light .pill *,body.light .chip *,body.light .badge *,body.light .tag *,
+body.light .pct,body.light .chg,body.light .change,body.light .pill.green,
+body.light .badge.green,body.light .chip.green,body.light .badge.red,
+body.light .pill.red,body.light .chip.red{color:#fff!important;}
+body.light .pill.plain,body.light .chip.plain,body.light .badge.plain,
+body.light .pill.ghost,body.light .chip.ghost{color:var(--text-primary)!important;}
 
 /* ─── 4. SMOOTH THEME TRANSITION (surfaces only, taps stay snappy) ─ */
 body,#app,main,section[id^="sc-"],.screen,.scr,.card,.crd,.panel,.sheet,.modal,
@@ -13248,8 +13256,20 @@ body.light [class$="-bg"],body.light [id$="-bg"],body.light [class*="sheet-bg"]{
         ? 'rgba(16,20,26,'+Math.min(bg[3],0.38)+')'
         : 'var(--bg-surface)');
     }
+    /* effective background: own, else nearest ancestor with an opaque colour */
+    var eff=(bg&&bg[3]>0.5)?bg:null,p=el.parentElement,guard=0;
+    while(!eff&&p&&guard++<8){
+      var pb=rgb(getComputedStyle(p).backgroundColor);
+      if(pb&&pb[3]>0.5) eff=pb; else p=p.parentElement;
+    }
     var fg=rgb(cs.color);
-    if(fg&&grey(fg)&&lum(fg)>0.72) set(el,'color','var(--text-primary)');
+    if(eff&&!grey(eff)){
+      /* saturated plate (green/red/blue badge, brand button): force contrast text */
+      if(fg&&(grey(fg)||lum(fg)<0.5||Math.abs(lum(fg)-lum(eff))<0.28))
+        set(el,'color',lum(eff)<0.68?'#fff':'#0b0e11');
+    }else if(fg&&grey(fg)&&lum(fg)>0.72){
+      set(el,'color','var(--text-primary)');
+    }
     var bc=rgb(cs.borderTopColor);
     if(bc&&bc[3]>0.04&&grey(bc)&&lum(bc)<0.35&&parseFloat(cs.borderTopWidth)>0)
       set(el,'border-color','var(--border-color)');
