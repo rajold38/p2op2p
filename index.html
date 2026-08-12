@@ -261,8 +261,8 @@ body.light .txh-quick span.active{color:#000!important}
 .bb-popup .bb-pop-ttl{font-size:17px;font-weight:800;margin-bottom:8px}
 .bb-popup .bb-pop-sub{font-size:13px;color:#999;line-height:1.5;margin-bottom:18px}
 .bb-popup .bb-pop-btn{width:100%;background:var(--orange);color:#000;border:none;border-radius:24px;padding:13px;font-weight:800;font-size:14px;cursor:pointer}
-:root{--bg:#000;--bg2:#0d0d0d;--bg3:#1a1a1a;--bg4:#222;--text:#fff;--text2:#8c8c8c;--text3:#444;--green:#00c087;--red:#f0444b;--orange:#f7a600;--border:#1f1f1f;--card:#111}
-body.light{--bg:#fff;--bg2:#f7f8fa;--bg3:#eff2f5;--bg4:#e6e8eb;--text:#0b0e11;--text2:#5e6673;--text3:#a1a7b0;--border:#eaecef;--card:#fff}
+:root{--bg:#000;--bg2:#0d0d0d;--bg3:#1a1a1a;--bg4:#222;--text:#fff;--text2:#8c8c8c;--text3:#444;--green:#00c087;--red:#f0444b;--orange:#f7a600;--border:#1f1f1f;--card:#111;--donut-empty:#2b2f36}
+body.light{--bg:#fff;--bg2:#f7f8fa;--bg3:#eff2f5;--bg4:#e6e8eb;--text:#0b0e11;--text2:#5e6673;--text3:#a1a7b0;--border:#eaecef;--card:#fff;--donut-empty:#eaecef}
 body.light .ibt,body.light .st,body.light .pill{color:var(--text)}
 .theme-toggle-icon{transition:transform .35s ease}
 body.light .theme-toggle-icon{transform:rotate(180deg)}
@@ -9637,6 +9637,9 @@ window.addEventListener('load',()=>{
   setInterval(()=>{ if(!openId) renderGrid(); },5*60*1000);
 });
 <\/script>
+
+
+
 </body>
 </html>`;
 </script>
@@ -12050,7 +12053,7 @@ body.light [style*="background:#181a20"]{color:#0b0e11 !important}
 <style>
 /* ── Assets: allocation donut ── */
 .atab-ic{width:19px;height:19px;fill:none;stroke:var(--text2);stroke-width:1.6;cursor:pointer;transition:.2s;}
-.atab-ic:hover,.atab-ic.on{stroke:#fff;}
+.atab-ic:hover,.atab-ic.on{stroke:var(--text);}
 .alloc-panel{display:none;padding:14px 0 6px;}
 .alloc-panel.show{display:block;animation:allocIn .25s ease;}
 @keyframes allocIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
@@ -12059,11 +12062,11 @@ body.light [style*="background:#181a20"]{color:#0b0e11 !important}
 .alloc-legend{flex:1;min-width:0;display:flex;flex-direction:column;gap:9px;}
 .alloc-row{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;}
 .alloc-row .adot{width:8px;height:8px;border-radius:50%;flex:0 0 8px;}
-.alloc-row .asym{color:#fff;}
-.alloc-row .apct{margin-left:auto;color:#fff;font-weight:600;}
+.alloc-row .asym{color:var(--text);}
+.alloc-row .apct{margin-left:auto;color:var(--text);font-weight:600;}
 .alloc-empty{color:var(--text2);font-size:12px;padding:8px 0;}
 .alloc-dots{display:flex;justify-content:center;gap:6px;margin-top:12px;}
-.alloc-dots .ad{width:22px;height:3px;border-radius:2px;background:#2b2f36;}
+.alloc-dots .ad{width:22px;height:3px;border-radius:2px;background:var(--donut-empty);}
 .alloc-dots .ad.on{background:#8a9099;}
 
 /* ── Login page: solid black ── */
@@ -12110,7 +12113,7 @@ body.light [style*="background:#181a20"]{color:#0b0e11 !important}
     list.sort(function(a,b){return b.usd-a.usd;});
     var total=list.reduce(function(a,r){return a+r.usd;},0);
     var donut=document.getElementById('allocDonut'), leg=document.getElementById('allocLegend');
-    if(!total){ donut.innerHTML='<svg viewBox="0 0 120 120" width="100%" height="100%"><circle cx="60" cy="60" r="42" fill="none" stroke="#2b2f36" stroke-width="15"></circle></svg>'; leg.innerHTML='<div class="alloc-empty">No assets yet</div>'; return; }
+    if(!total){ donut.innerHTML='<svg viewBox="0 0 120 120" width="100%" height="100%"><circle cx="60" cy="60" r="42" fill="none" stroke="var(--donut-empty)" stroke-width="15"></circle></svg>'; leg.innerHTML='<div class="alloc-empty">No assets yet</div>'; return; }
     var R=42, C=2*Math.PI*R, off=0, segs='';
     list.forEach(function(r,i){
       var frac=r.usd/total, len=frac*C, col=COLORS[i%COLORS.length];
@@ -12475,22 +12478,22 @@ img.clogo,img.clogo-sm,img[data-sym]{content-visibility:auto;}
 .acct-legend{flex:1;min-width:0;display:flex;flex-direction:column;gap:11px;}
 .acct-lrow{display:flex;align-items:center;gap:9px;font-size:14px;}
 .acct-lrow .adot{width:9px;height:9px;border-radius:50%;flex:0 0 9px;}
-.acct-lrow .anm{color:#fff;font-weight:500;}
-.acct-lrow .apct{margin-left:auto;color:#fff;font-weight:600;text-align:right;}
+.acct-lrow .anm{color:var(--text);font-weight:500;}
+.acct-lrow .apct{margin-left:auto;color:var(--text);font-weight:600;text-align:right;}
 .acct-lrow .aval{margin-left:auto;color:var(--text2);font-size:12.5px;font-weight:600;}
 .alloc-track{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
 .alloc-track::-webkit-scrollbar{display:none;}
 .alloc-page{flex:0 0 100%;min-width:100%;scroll-snap-align:start;display:flex;flex-direction:column;gap:11px;}
 .alloc-dots{display:flex;justify-content:center;gap:5px;margin-top:10px;}
 .alloc-dot{width:16px;height:3px;border-radius:2px;background:#3a3f47;transition:background .2s;}
-.alloc-dot.on{background:#fff;}
+.alloc-dot.on{background:var(--text);}
 .acct-ltot{color:var(--text2);font-size:12.5px;font-weight:600;margin-bottom:2px;}
 .acct-sec{color:var(--text2);font-size:14px;font-weight:500;margin:22px 0 4px;}
 .acct-item{display:flex;align-items:center;gap:10px;padding:16px 0;cursor:pointer;}
 
 .acct-item .ai-l{min-width:0;flex:1;}
-.acct-item .ai-t{color:#fff;font-size:15px;font-weight:500;}
-.acct-item .ai-v{color:#fff;font-size:15px;margin-top:6px;}
+.acct-item .ai-t{color:var(--text);font-size:15px;font-weight:500;}
+.acct-item .ai-v{color:var(--text);font-size:15px;margin-top:6px;}
 .acct-item .ai-a{color:var(--text2);flex:0 0 auto;font-size:14px;}
 </style>
 <script>
@@ -12525,7 +12528,7 @@ img.clogo,img.clogo-sm,img[data-sym]{content-visibility:auto;}
     var shown=LEG_ORDER.map(function(n){ return byName[n]||{name:n,usd:0}; });
     var R=42, C=2*Math.PI*R, off=0, segs='';
     if(!total){
-      segs='<circle cx="60" cy="60" r="'+R+'" fill="none" stroke="#2b2f36" stroke-width="15"></circle>';
+      segs='<circle cx="60" cy="60" r="'+R+'" fill="none" stroke="var(--donut-empty)" stroke-width="15"></circle>';
     } else {
       shown.slice().sort(function(a,b){return b.usd-a.usd;}).forEach(function(r){
         if(r.usd<=0) return;
@@ -13017,6 +13020,340 @@ body.light.on-p2p::before,body.light.on-p2p::after{display:none!important;conten
     if(!e.target||e.target.id!=='bbPayHash') return;
     var el=e.target; setTimeout(function(){go(el);},60);
   },true);
+})();
+</script>
+<!-- ══════════════════════════════════════════════════════════════════
+     LIGHT THEME UNIFIED FIX v5  (dark theme untouched)
+     1. semantic theme variables
+     2. app-wide light overrides (every screen / modal / overlay)
+     3. runtime normalizer for JS-set + inline hardcoded colors
+     4. smooth theme transition
+     5. scroll / tab / modal jank reduction
+     6. spacing + hierarchy polish
+     ══════════════════════════════════════════════════════════════════ -->
+<style id="lt-fix-v5">
+/* ─── 1. SEMANTIC THEME VARIABLES ─────────────────────────────── */
+:root,body{
+  --bg-primary:#000;--bg-surface:#111;--bg-surface-2:#1a1a1a;--bg-surface-3:#222;
+  --text-primary:#fff;--text-secondary:#8c8c8c;--text-tertiary:#5a5f66;
+  --border-color:#1f1f1f;--border-strong:#2a2d33;
+  --overlay-scrim:rgba(0,0,0,.62);--elev-shadow:0 8px 30px rgba(0,0,0,.45);
+  --t-fast:.14s;--t-base:.25s;--ease:cubic-bezier(.4,0,.2,1);
+}
+body.light{
+  --bg-primary:#fff;--bg-surface:#f7f8fa;--bg-surface-2:#f3f5f7;--bg-surface-3:#eff2f5;
+  --text-primary:#0b0e11;--text-secondary:#5e6673;--text-tertiary:#a1a7b0;
+  --border-color:#eaecef;--border-strong:#d8dde3;
+  --overlay-scrim:rgba(16,20,26,.38);--elev-shadow:0 8px 30px rgba(16,24,40,.12);
+}
+
+/* ─── 2. APP-WIDE LIGHT OVERRIDES ─────────────────────────────── */
+/* canvas + shells */
+body.light,body.light #app,body.light main,body.light .screen,body.light .scr,
+body.light .page,body.light .view,body.light section[id^="sc-"]{
+  background-color:var(--bg-primary)!important;color:var(--text-primary)!important;}
+
+/* every known screen root (home, wallet/mine, trade, futures, p2p, earn, deal,
+   deposit/withdraw, coin picker, leaderboard, settings, chat, auth) */
+body.light #sc-home,body.light #sc-mine,body.light #sc-wallet,body.light #sc-assets,
+body.light #sc-trade,body.light #sc-futures,body.light #sc-market,body.light #sc-markets,
+body.light #sc-p2p,body.light #sc-earn,body.light #sc-deal,body.light #dealScr,
+body.light #sc-deposit,body.light #sc-withdraw,body.light #depScr,body.light #wdScr,
+body.light #coinPick,body.light #coinPicker,body.light #coinDetail,body.light #sd,
+body.light #leaderboard,body.light #lbScr,body.light #sc-settings,body.light #setScr,
+body.light #chatScr,body.light #supportScr,body.light #authScr,body.light #refScr,
+body.light #refHist,body.light .bb-screen{
+  background-color:var(--bg-primary)!important;color:var(--text-primary)!important;}
+
+/* generic surfaces / cards / sheets / modals / popups / toasts / dropdowns */
+body.light .card,body.light .crd,body.light .box,body.light .panel,
+body.light .sheet,body.light .bottom-sheet,body.light .modal,body.light .modal-content,
+body.light .popup,body.light .pop,body.light .dialog,body.light .drawer,
+body.light .overlay-card,body.light .toast,body.light .snackbar,body.light .dropdown,
+body.light .menu,body.light .tooltip,body.light .row,body.light .list-item,
+body.light .tab-body,body.light .tabpane,body.light .segment,body.light .chip,
+body.light .pill,body.light .badge,body.light .tile,body.light .item,
+body.light .bb-card,body.light .bb-sheet,body.light .bb-pop{
+  background-color:var(--bg-surface)!important;color:var(--text-primary)!important;
+  border-color:var(--border-color)!important;}
+body.light .card.plain,body.light .row,body.light .list-item,body.light .item{
+  background-color:transparent!important;}
+
+/* text hierarchy */
+body.light h1,body.light h2,body.light h3,body.light h4,body.light h5,
+body.light .ttl,body.light .title,body.light .nm,body.light .name,body.light .val,
+body.light .value,body.light .amt,body.light .big,body.light b,body.light strong,
+body.light label,body.light td,body.light th,body.light li{color:var(--text-primary)!important;}
+body.light .sub,body.light .subtitle,body.light .sb,body.light .meta,body.light .hint,
+body.light .lbl,body.light .label,body.light .muted,body.light small,
+body.light .desc,body.light .tp,body.light .l,body.light .k,body.light .dim,
+body.light ::placeholder{color:var(--text-secondary)!important;}
+
+/* inputs / selects / textareas / search */
+body.light input,body.light select,body.light textarea,body.light .inp,
+body.light .input,body.light .srch,body.light .search{
+  background-color:var(--bg-surface-2)!important;color:var(--text-primary)!important;
+  border-color:var(--border-color)!important;}
+
+/* borders + dividers */
+body.light hr,body.light .divider,body.light .sep,body.light .line,
+body.light [class*="border"]{border-color:var(--border-color)!important;}
+
+/* scrims / backdrops — never pure black in light */
+body.light .backdrop,body.light .scrim,body.light .mask,body.light .overlay,
+body.light .modal-backdrop,body.light .sheet-mask{
+  background-color:var(--overlay-scrim)!important;}
+
+/* iframe hosts (P2P etc.) */
+body.light iframe{background-color:#fff!important;}
+
+/* chat / support bubbles */
+body.light .msg,body.light .bubble,body.light .chat-msg,body.light .chat-bubble,
+body.light .cm-in,body.light .cm-out{color:var(--text-primary)!important;}
+body.light .msg.in,body.light .bubble.in,body.light .cm-in{
+  background-color:var(--bg-surface-2)!important;}
+body.light .msg.out,body.light .bubble.out,body.light .cm-out{
+  background-color:#e8f2fb!important;}
+
+/* coin logos / avatars on dark plates */
+body.light .coin-logo,body.light .logo,body.light .ico,body.light .avatar,
+body.light .icn,body.light .sym-ico{background-color:var(--bg-surface-3)!important;}
+
+/* INLINE-STYLE CATCH-ALL: any element whose inline style hardcodes a dark bg */
+body.light [style*="#000"],body.light [style*="#0a0a0a"],body.light [style*="#0b0b0b"],
+body.light [style*="#111"],body.light [style*="#15171c"],body.light [style*="#16181d"],
+body.light [style*="#1a1a1a"],body.light [style*="#1c1c1c"],body.light [style*="#1e1e1e"],
+body.light [style*="#222"],body.light [style*="#23262d"],body.light [style*="#2a2a2a"],
+body.light [style*="#2a2d33"],body.light [style*="#333"],body.light [style*="rgba(0,0,0"],
+body.light [style*="rgba(0, 0, 0"],body.light [style*="background:black"],
+body.light [style*="background: black"]{
+  background-color:var(--bg-surface)!important;}
+body.light [style*="color:#fff"],body.light [style*="color: #fff"],
+body.light [style*="color:#ffffff"],body.light [style*="color: #ffffff"],
+body.light [style*="color:#eee"],body.light [style*="color:#f5f5f5"],
+body.light [style*="color:#cfd1d6"],body.light [style*="color:white"],
+body.light [style*="color: white"],body.light [style*="color:rgba(255,255,255"],
+body.light [style*="color: rgba(255, 255, 255"]{color:var(--text-primary)!important;}
+/* keep semantic accents readable in both themes */
+body.light .green,body.light .up,body.light .buy,body.light .pos{color:#00a06b!important;}
+body.light .red,body.light .down,body.light .sell,body.light .neg{color:#e0393f!important;}
+
+/* ─── 4. SMOOTH THEME TRANSITION (surfaces only, taps stay snappy) ─ */
+body,#app,main,section[id^="sc-"],.screen,.scr,.card,.crd,.panel,.sheet,.modal,
+.modal-content,.popup,.drawer,.dropdown,.menu,.toast,.tile,.box,.bb-card,.bb-sheet{
+  transition:background-color var(--t-base) var(--ease),color var(--t-base) var(--ease),
+             border-color var(--t-base) var(--ease);}
+button,.btn,.ibt,.pill,.chip,input,select,textarea,.tab,.ni,.hact,a{
+  transition:background-color var(--t-fast) var(--ease),color var(--t-fast) var(--ease),
+             border-color var(--t-fast) var(--ease),transform var(--t-fast) var(--ease),
+             opacity var(--t-fast) var(--ease);}
+body.lt-theme-switching *{transition-duration:var(--t-base)!important;}
+@media (prefers-reduced-motion:reduce){*{transition-duration:.01ms!important;animation-duration:.01ms!important}}
+
+/* ─── 5. SMOOTHNESS / JANK PASS ───────────────────────────────── */
+html,body{-webkit-tap-highlight-color:transparent;text-rendering:optimizeLegibility;}
+.scroll,.scroller,.list,.tab-body,.sheet,.modal-content,section[id^="sc-"],
+[class*="scroll"],[style*="overflow"]{
+  -webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;scrollbar-width:none;}
+.scroll::-webkit-scrollbar,.scroller::-webkit-scrollbar,
+[class*="scroll"]::-webkit-scrollbar{width:0;height:0;}
+/* transform/opacity driven overlays instead of layout properties */
+.modal,.popup,.sheet,.drawer,.overlay,.bb-sheet,.bb-pop{
+  will-change:transform,opacity;backface-visibility:hidden;}
+.modal:not(.show),.popup:not(.show),.bb-pop:not(.show){
+  opacity:0;transform:translate3d(0,8px,0);pointer-events:none;}
+.modal.show,.popup.show,.bb-pop.show{opacity:1;transform:translate3d(0,0,0);}
+.sheet,.bb-sheet,.drawer{transition:transform .28s var(--ease),opacity .2s var(--ease);}
+.tab-body,.tabpane{contain:layout paint;}
+img,canvas,iframe{content-visibility:auto;}
+
+/* ─── 6. UI POLISH (both themes, same design language) ────────── */
+.card,.crd,.panel,.box,.tile,.bb-card{border-radius:14px;}
+.sheet,.modal-content,.bb-sheet{border-radius:18px 18px 0 0;}
+.card,.crd,.panel,.box,.tile{padding:14px;}
+.row,.list-item,.item{padding-top:12px;padding-bottom:12px;}
+h1,h2,.ttl,.title{letter-spacing:-.01em;font-weight:700;}
+.sub,.meta,.hint,.lbl{font-weight:500;line-height:1.45;}
+.btn,button.primary,.cta{border-radius:12px;font-weight:600;}
+.row,.list-item,.item,.kv{display:flex;align-items:center;gap:10px;}
+.pill,.chip,.badge{border-radius:999px;padding:4px 10px;font-weight:600;}
+/* targeted catch-all for id/class-named surfaces (earn sheets, history cards, etc.) */
+body.light [class*="-box"],body.light [class*="-card"],body.light [class*="-sheet"],
+body.light [class*="-panel"],body.light [class*="-inp"],body.light [id*="Sheet"],
+body.light [id*="Box"],body.light [id*="Card"],body.light [class*="histcard"],
+body.light [class*="apr-box"]{background-color:var(--bg-surface)!important;color:var(--text-primary)!important;border-color:var(--border-color)!important;}
+body.light [class$="-bg"],body.light [id$="-bg"],body.light [class*="sheet-bg"]{background-color:var(--overlay-scrim)!important;}
+</style>
+<script>
+/* ── 3. RUNTIME COLOR NORMALIZER ─────────────────────────────────
+   Catches colors coming from anywhere: inline style="", CSS classes, or JS
+   written at runtime (element.style.color='#fff', .background='#000', chat
+   renders, deal pages, tab switches, toasts, post-render paints, iframes).
+   Only near-greyscale darks/lights are remapped, so brand/accent colors and
+   red/green P&L stay intact. The element's original inline style attribute is
+   stashed and restored on switch back, so DARK THEME IS BYTE-IDENTICAL. */
+(function(){
+  var writing=false;
+  function rgb(v){
+    if(!v) return null; v=(''+v).trim().toLowerCase();
+    if(v==='transparent'||v==='inherit'||v==='initial'||v==='currentcolor') return null;
+    if(v==='white') return [255,255,255,1];
+    if(v==='black') return [0,0,0,1];
+    var m=v.match(/^#([0-9a-f]{3,8})$/);
+    if(m){var h=m[1];
+      if(h.length===3) h=h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
+      if(h.length===8) h=h.slice(0,6);
+      if(h.length!==6) return null;
+      return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16),1];}
+    m=v.match(/rgba?\(([^)]+)\)/);
+    if(m){var p=m[1].split(/[,\/\s]+/).filter(Boolean).map(Number);
+      if(p.length<3||p.some(isNaN)) return null;
+      return [p[0],p[1],p[2],p.length>3?p[3]:1];}
+    return null;
+  }
+  function grey(c){return Math.max(c[0],c[1],c[2])-Math.min(c[0],c[1],c[2])<=26;}
+  function lum(c){return (0.2126*c[0]+0.7152*c[1]+0.0722*c[2])/255;}
+  function isLight(){return document.body&&document.body.classList.contains('light');}
+
+  function stash(el){
+    if(el.dataset.ltStyle===undefined) el.dataset.ltStyle=el.getAttribute('style')||'';
+  }
+  function set(el,prop,val){
+    stash(el); writing=true;
+    el.__ltSkip=(el.__ltSkip||0)+1;
+    try{ el.style.setProperty(prop,val,'important'); }catch(e){}
+    writing=false;
+  }
+  function restore(el){
+    if(el.dataset.ltStyle===undefined) return;
+    var orig=el.dataset.ltStyle; writing=true;
+    el.__ltSkip=(el.__ltSkip||0)+1;
+    try{
+      if(orig) el.setAttribute('style',orig); else el.removeAttribute('style');
+    }catch(e){}
+    delete el.dataset.ltStyle; writing=false;
+  }
+
+  var SKIP={SCRIPT:1,STYLE:1,LINK:1,META:1,HEAD:1,TITLE:1,CANVAS:1,IMG:1,VIDEO:1,BR:1};
+  function fix(el){
+    if(!el||el.nodeType!==1||SKIP[el.tagName]) return;
+    if(el.namespaceURI&&el.namespaceURI.indexOf('svg')>-1) return;
+    if(el!==document.body&&el.getClientRects&&el.getClientRects().length===0) return;
+    var cs;
+    try{ cs=getComputedStyle(el); }catch(e){ return; }
+    if(!cs) return;
+    var bg=rgb(cs.backgroundColor);
+    if(bg&&bg[3]>0.04&&grey(bg)&&lum(bg)<0.32){
+      set(el,'background-color',bg[3]<0.85
+        ? 'rgba(16,20,26,'+Math.min(bg[3],0.38)+')'
+        : 'var(--bg-surface)');
+    }
+    var fg=rgb(cs.color);
+    if(fg&&grey(fg)&&lum(fg)>0.72) set(el,'color','var(--text-primary)');
+    var bc=rgb(cs.borderTopColor);
+    if(bc&&bc[3]>0.04&&grey(bc)&&lum(bc)<0.35&&parseFloat(cs.borderTopWidth)>0)
+      set(el,'border-color','var(--border-color)');
+  }
+
+  function list(root){
+    var scope=(root&&root.nodeType===1)?root:document.body;
+    if(!scope) return [];
+    return [scope].concat(Array.prototype.slice.call(scope.querySelectorAll('*')));
+  }
+  window.ltNormalize=function(root){
+    if(!document.body) return;
+    var L=isLight(),all=list(root);
+    for(var i=0;i<all.length;i++){
+      restore(all[i]);            /* always back to the authored value first */
+      if(L) fix(all[i]);          /* then re-derive the light value */
+    }
+  };
+
+  var pending=false,pendRoot=null;
+  function schedule(root){
+    if(pending){ if(pendRoot!==root) pendRoot=null; return; }
+    pending=true; pendRoot=root||null;
+    requestAnimationFrame(function(){
+      var r=pendRoot; pending=false; pendRoot=null; window.ltNormalize(r);
+    });
+  }
+  var mo=new MutationObserver(function(muts){
+    if(writing) return;
+    for(var i=0;i<muts.length;i++){
+      var m=muts[i];
+      if(m.type==='attributes'){
+        var t=m.target;
+        if(t.__ltSkip>0){ t.__ltSkip--; continue; }
+        if(m.attributeName==='style'&&t.dataset) delete t.dataset.ltStyle;
+        if(m.attributeName==='class'){ schedule(t); continue; }
+        restore(t); if(isLight()) fix(t);
+      }else{
+        for(var j=0;j<m.addedNodes.length;j++){
+          var n=m.addedNodes[j];
+          if(n.nodeType===1) schedule(n);
+        }
+      }
+    }
+  });
+  function start(){
+    window.ltNormalize();
+    mo.observe(document.documentElement,{subtree:true,childList:true,
+      attributes:true,attributeFilter:['style','class']});
+    setInterval(function(){ if(isLight()) schedule(); },2500); /* safety net */
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',start);
+  else start();
+
+  /* ── re-apply every theme-dependent branch on toggle (nothing gets stuck) ── */
+  function reapply(mode){
+    var L=(mode==='light');
+    if(document.body){
+      document.body.classList.add('lt-theme-switching');
+      setTimeout(function(){document.body.classList.remove('lt-theme-switching');},320);
+    }
+    window.ltNormalize();
+    try{
+      var ch=(window.tvChart||null);
+      if(ch&&ch.applyOptions) ch.applyOptions({
+        layout:{background:{color:L?'#ffffff':'#000000'},textColor:L?'#5e6673':'#666'},
+        grid:{vertLines:{color:L?'#eaecef':'#111'},horzLines:{color:L?'#eaecef':'#111'}},
+        rightPriceScale:{borderColor:L?'#eaecef':'#222',textColor:L?'#5e6673':'#666'},
+        timeScale:{borderColor:L?'#eaecef':'#222',textColor:L?'#5e6673':'#666'}
+      });
+    }catch(e){}
+    try{ if(typeof syncP2PThemeToFrame==='function') syncP2PThemeToFrame(); }catch(e){}
+    try{ if(typeof applyEmbeddedP2PTheme==='function') applyEmbeddedP2PTheme(L?'light':'dark'); }catch(e){}
+    try{
+      Array.prototype.forEach.call(document.querySelectorAll('iframe'),function(f){
+        try{ f.contentWindow.postMessage({source:'host-app',type:'theme',mode:L?'light':'dark'},'*'); }catch(e){}
+      });
+    }catch(e){}
+    ['renderTrades','renderOrders','renderHistory','renderChat','renderDeal','renderEarn',
+     'renderWallet','renderMarket','renderCoins','renderLeaderboard','paintTheme','refreshUI']
+      .forEach(function(fn){ try{ if(typeof window[fn]==='function') window[fn](); }catch(e){} });
+    try{ document.dispatchEvent(new CustomEvent('themechange',{detail:{mode:mode,light:L}})); }catch(e){}
+    setTimeout(function(){window.ltNormalize();},80);
+    setTimeout(function(){window.ltNormalize();},450);
+  }
+  function wrap(){
+    if(typeof window.toggleTheme!=='function'||window.toggleTheme.__ltWrapped) return false;
+    var orig=window.toggleTheme;
+    window.toggleTheme=function(){
+      var r=orig.apply(this,arguments);
+      reapply(isLight()?'light':'dark');
+      return r;
+    };
+    window.toggleTheme.__ltWrapped=true;
+    return true;
+  }
+  if(!wrap()){ var tries=0,iv=setInterval(function(){ if(wrap()||++tries>80) clearInterval(iv); },100); }
+  var last=null;
+  new MutationObserver(function(){
+    if(!document.body) return;
+    var m=isLight()?'light':'dark';
+    if(m!==last){ last=m; reapply(m); }
+  }).observe(document.documentElement,{attributes:true,subtree:true,attributeFilter:['class']});
+  window.addEventListener('load',function(){ reapply(isLight()?'light':'dark'); });
 })();
 </script>
 </body>
