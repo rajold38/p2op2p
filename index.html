@@ -13895,6 +13895,652 @@ body.light #biexcPromo{background:#f3f5f7}
 })();
 </script>
 
+<style id="walletcore-css">
+/* ── WalletCore v6 — real-exchange assets screen ── */
+#wcToolbar{display:flex;align-items:center;gap:10px;margin:16px 0 4px;}
+#wcToolbar .wc-srch{flex:1;display:flex;align-items:center;gap:8px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:8px 11px;}
+#wcToolbar .wc-srch i{color:var(--text2);font-size:13px;}
+#wcToolbar .wc-srch input{flex:1;min-width:0;background:transparent;border:0;outline:0;color:var(--text);font-size:14px;font-weight:500;}
+#wcToolbar .wc-small{display:flex;align-items:center;gap:7px;color:var(--text2);font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap;}
+#wcToolbar .wc-box{width:16px;height:16px;border-radius:4px;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:10px;color:transparent;transition:.16s}
+#wcToolbar .wc-small.on .wc-box{background:var(--yellow,#F7A600);border-color:var(--yellow,#F7A600);color:#000;}
+#asset-coin-list .crow{display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--border);cursor:pointer;transition:opacity .16s}
+#asset-coin-list .crow:last-child{border-bottom:0}
+#asset-coin-list .crow:active{opacity:.6}
+#asset-coin-list .camts{text-align:right}
+#asset-coin-list .camts .ca{color:var(--text);font-size:15px;font-weight:600}
+#asset-coin-list .camts .cu{color:var(--text2);font-size:12.5px;margin-top:3px}
+#asset-coin-list .wc-lock{color:var(--text2);font-size:11.5px;margin-top:3px}
+#asset-coin-list .wc-empty{padding:34px 0;text-align:center;color:var(--text2);font-size:13.5px}
+.wc-avi .albl{color:var(--text2);font-size:12px}
+.wc-avi .aval{color:var(--text);font-size:14px;font-weight:600;margin-top:4px}
+</style>
+<script>
+/* ═══════════════════════════════════════════════════════════════════════
+   WalletCore v6 — SINGLE owner of every balance number in this app.
+   • Reads ONLY Firebase: users/{uid}/balances, /balance (fallback),
+     /orders, /earn, /prefs.  No localStorage for money or settings.
+   • Writes go through the existing window.Balances.apply() transaction.
+   • Every DOM balance write happens in ONE paint() inside one rAF, so two
+     sources can never overwrite each other (no blinking, no phantom 0).
+   ═══════════════════════════════════════════════════════════════════════ */
+(function(){
+  'use strict';
+  var UP  = function(c){ return String(c||'USDT').toUpperCase(); };
+  var NUM = function(v){ var n = parseFloat(v); return isFinite(n) ? n : 0; };
+  var STABLE = {USDT:1,USDC:1,DAI:1,BUSD:1,TUSD:1,FDUSD:1};
+
+  function fb(){ return window._fb || null; }
+  function uidOf(){
+    try{
+      var u = window.currentFbUser;
+      if(u && (u.firebaseUid || u.uid)) return u.firebaseUid || u.uid;
+      var a = fb() && fb().auth && fb().auth.currentUser;
+      if(a && a.uid) return a.uid;
+    }catch(e){}
+    return null;
+  }
+  function fmt(n,d){
+    try{ return window.fmtMoney(n, d==null?2:d); }
+    catch(e){ return NUM(n).toFixed(d==null?2:d); }
+  }
+  function fmtQty(n){
+    n = NUM(n);
+    if(!n) return '0';
+    if(n < 1) return n.toFixed(8).replace(/0+$/,'').replace(/\.$/,'');
+    if(n < 1000) return n.toFixed(6).replace(/0+$/,'').replace(/\.$/,'');
+    return n.toFixed(2);
+  }
+
+  var W = window.WalletCore = {
+    uid: null,
+    ready: false,            // true once Firebase answered for this user
+    coins: {},               // SYM -> free amount (users/{uid}/balances)
+    locked: {},              // SYM -> locked by open spot orders / pending withdraw
+    prices: {USDT:1},
+    chg: {},
+    earn: {positions:[], history:[], total:0, today:0},
+    prefs: {hidden:false, currency:'USDT', hideSmall:false},
+    query: ''
+  };
+
+  /* ── one-time cleanup: money/settings must not live in localStorage ── */
+  try{
+    ['biexc_balance_store','biexc_balances_hidden','hideSmallAssets','displayCurrency']
+      .forEach(function(k){ localStorage.removeItem(k); });
+    Object.keys(localStorage).forEach(function(k){ if(k.indexOf('pnlSeed_')===0) localStorage.removeItem(k); });
+  }catch(e){}
+
+  /* ══════════════ derived numbers ══════════════ */
+  function priceOf(sym){
+    sym = UP(sym);
+    if(STABLE[sym]) return 1;
+    if(W.prices[sym] > 0) return W.prices[sym];
+    try{
+      var t = (typeof getTickerRecord==='function')
+        && (getTickerRecord('spot', sym+'USDT') || getTickerRecord('linear', sym+'USDT'));
+      var p = t ? parseFloat(t.lastPrice) : 0;
+      if(p > 0){ W.prices[sym] = p; return p; }
+    }catch(e){}
+    return 0;
+  }
+  function freeOf(sym){ return Math.max(0, NUM(W.coins[UP(sym)])); }
+  function lockedOf(sym){ return Math.max(0, NUM(W.locked[UP(sym)])); }
+  function earnUsd(){
+    return (W.earn.positions||[]).reduce(function(s,p){
+      return s + (NUM(p.amount) + NUM(p.earned)) * (priceOf(p.coin) || 0);
+    }, 0);
+  }
+  function marginLocked(){
+    try{ return Math.max(0, NUM(typeof getLockedMargin==='function' ? getLockedMargin() : 0)); }catch(e){ return 0; }
+  }
+  function unrealPnl(){
+    try{ return NUM(typeof getUnrealizedPnl==='function' ? getUnrealizedPnl() : 0); }catch(e){ return 0; }
+  }
+  function coinRows(){
+    var out = [], seen = {};
+    Object.keys(W.coins).forEach(function(c){
+      var sym = UP(c);
+      if(seen[sym]) return;
+      var free = freeOf(sym), lk = lockedOf(sym);
+      if(free <= 0 && lk <= 0 && sym !== 'USDT') return;
+      seen[sym] = 1;
+      out.push({sym:sym, free:free, locked:lk, px:priceOf(sym)});
+    });
+    if(!seen.USDT) out.push({sym:'USDT', free:freeOf('USDT'), locked:lockedOf('USDT'), px:1});
+    out.forEach(function(r){ r.usd = (r.free + r.locked) * (r.px||0); });
+    out.sort(function(a,b){
+      if(a.sym==='USDT') return -1;
+      if(b.sym==='USDT') return 1;
+      return b.usd - a.usd;
+    });
+    return out;
+  }
+  function totals(){
+    var rows = coinRows();
+    var spot = rows.reduce(function(s,r){ return s + r.usd; }, 0);
+    var pnl = unrealPnl();
+    var earn = earnUsd();
+    var lockedM = marginLocked();
+    var usdtFree = freeOf('USDT');
+    var available = Math.max(0, usdtFree - lockedM - lockedOf('USDT') + Math.min(0, pnl));
+    return {
+      rows: rows,
+      spot: spot,
+      earn: earn,
+      pnl: pnl,
+      total: spot + earn + pnl,
+      locked: lockedM + lockedOf('USDT'),
+      available: available,
+      wallet: usdtFree
+    };
+  }
+  function todayPnl(){
+    try{
+      var today = new Date().toISOString().slice(0,10);
+      var hist = [];
+      try{ hist = JSON.parse(localStorage.getItem('futuresHistory')||'[]'); }catch(e){ hist = []; }
+      return hist.filter(function(t){ return t && t.closedAt && String(t.closedAt).slice(0,10)===today; })
+                 .reduce(function(a,t){ return a + NUM(t.realizedPnl); }, 0);
+    }catch(e){ return 0; }
+  }
+
+  /* ══════════════ the single paint ══════════════ */
+  var rafId = 0, toolbarBuilt = false;
+  W.paint = function(){
+    cancelAnimationFrame(rafId);
+    rafId = requestAnimationFrame(doPaint);
+  };
+  function display(valUsdt){
+    var cur = W.prefs.currency, btc = priceOf('BTC');
+    if(cur==='BTC' && btc>0) return {txt:(valUsdt/btc).toFixed(8), lbl:'BTC'};
+    if(cur==='INR') return {txt:fmt(valUsdt*87,2), lbl:'INR'};
+    if(cur==='USD') return {txt:fmt(valUsdt,2), lbl:'USD'};
+    return {txt:fmt(valUsdt,2), lbl:'USDT'};
+  }
+  function setTxt(id, val){
+    var e = document.getElementById(id);
+    if(!e) return;
+    e.classList.remove('balance-skeleton');
+    e.textContent = W.prefs.hidden ? '*****' : val;
+  }
+  function doPaint(){
+    var t = totals();
+    var loading = !!W.uid && !W.ready;
+    var d = display(t.total);
+    var totalTxt = loading ? '—' : d.txt;
+
+    setTxt('totalAssetUSD', totalTxt);
+    setTxt('assetsTotalUSD', totalTxt);
+    setTxt('assetsAvail', loading ? '—' : fmt(t.available));
+    setTxt('assetsInUse', loading ? '—' : fmt(t.locked));
+    setTxt('wcEarnVal',  loading ? '—' : fmt(t.earn));
+    setTxt('witBal', fmt(t.available));
+    setTxt('navBal', fmt(t.wallet));
+    var btc = priceOf('BTC');
+    var eqTxt = btc>0 ? ('≈ '+(t.total/btc).toFixed(8)+' BTC') : '≈ 0.00000000 BTC';
+    setTxt('assetsBtcEq', eqTxt);
+    setTxt('homeBtcEq', eqTxt);
+    var la = document.getElementById('assetsCurLabel'); if(la) la.textContent = d.lbl+' \u25be';
+    var lh = document.getElementById('homeCurLabel');   if(lh) lh.textContent = d.lbl+' \u25be';
+    document.querySelectorAll('[data-bal-usdt]').forEach(function(el){
+      el.classList.remove('balance-skeleton');
+      el.textContent = W.prefs.hidden ? '*****' : fmt(t.wallet);
+    });
+
+    /* Today's P&L — real closed futures trades only, never random */
+    var diff = todayPnl();
+    var sign = diff>=0 ? '+' : '';
+    var col  = diff>=0 ? 'var(--green)' : 'var(--red)';
+    var ph = document.getElementById('homePnl');
+    if(ph){ ph.style.color = col; ph.textContent = "Today's P&L "+sign+diff.toFixed(2)+' USD'; }
+    var pa = document.querySelector('#sc-assets .pnl');
+    if(pa){ pa.style.color = col; pa.textContent = "Today's P&L "+sign+diff.toFixed(2)+' USDT'; }
+
+    /* eyes */
+    document.querySelectorAll('.balance-eye,#ernEye').forEach(function(e){
+      e.className = (W.prefs.hidden ? 'fas fa-eye-slash' : 'far fa-eye') + (e.id==='ernEye' ? '' : ' balance-eye');
+      e.setAttribute('aria-label', W.prefs.hidden ? 'Show balances' : 'Hide balances');
+    });
+    setTxt('ernTotalHdr', (W.earn.total||0).toFixed(2));
+
+    /* keep legacy mirrors in sync for other modules (read-only copies) */
+    window.userBalance = t.wallet;
+    window.balances = W.coins;
+    window._coinBalCache = W.coins;
+    try{
+      if(typeof STATE === 'object' && STATE){
+        STATE.balance = t.wallet;
+        STATE.coins = STATE.coins || {};
+        Object.keys(W.coins).forEach(function(c){ if(c!=='USDT') STATE.coins[c] = NUM(W.coins[c]); });
+      }
+    }catch(e){}
+    if(window.BalanceStore){
+      window.BalanceStore.total = t.total; window.BalanceStore.avail = t.available;
+      window.BalanceStore.locked = t.locked; window.BalanceStore.btcEq = eqTxt;
+      window.BalanceStore.hidden = W.prefs.hidden; window.BalanceStore.ready = W.ready;
+    }
+    window._lastTotalUsdt = t.total;
+    window._assetAlloc = t.rows.map(function(r){ return {sym:r.sym, amt:r.free+r.locked, usd:r.usd}; });
+
+    buildToolbar();
+    paintCoins(t);
+    paintAccount(t);
+    try{ if(typeof renderAssetAlloc==='function') renderAssetAlloc(); }catch(e){}
+    try{ document.querySelectorAll('.balance-skeleton').forEach(function(el){ el.classList.remove('balance-skeleton'); }); }catch(e){}
+  }
+
+  /* ── Available / In Use / Earn cards + search toolbar ── */
+  function buildToolbar(){
+    if(toolbarBuilt) return;
+    var list = document.getElementById('asset-coin-list');
+    if(!list) return;
+    var row = document.querySelector('#sc-assets .avail-row');
+    if(row && !document.getElementById('wcEarnVal')){
+      var c = document.createElement('div');
+      c.className = 'avi wc-avi';
+      c.innerHTML = '<div class="albl">Earn</div><div class="aval"><span id="wcEarnVal">0.00</span> USDT</div>';
+      c.onclick = function(){ try{ go('earn'); }catch(e){} };
+      c.style.cursor = 'pointer';
+      row.appendChild(c);
+    }
+    if(!document.getElementById('wcToolbar')){
+      var tb = document.createElement('div');
+      tb.id = 'wcToolbar';
+      tb.innerHTML =
+        '<label class="wc-srch"><i class="fas fa-search"></i>'+
+        '<input id="wcSearch" type="search" autocomplete="off" placeholder="Search coin"></label>'+
+        '<span class="wc-small'+(W.prefs.hideSmall?' on':'')+'" id="wcSmallBtn">'+
+        '<span class="wc-box"><i class="fas fa-check"></i></span>Hide &lt; $1</span>';
+      list.parentNode.insertBefore(tb, list);
+      tb.querySelector('#wcSearch').addEventListener('input', function(e){
+        W.query = String(e.target.value||'').trim().toUpperCase();
+        paintCoins(totals());
+      });
+      tb.querySelector('#wcSmallBtn').addEventListener('click', function(){
+        W.setPref('hideSmall', !W.prefs.hideSmall);
+      });
+    }
+    toolbarBuilt = true;
+  }
+
+  function paintCoins(t){
+    var wrap = document.getElementById('asset-coin-list');
+    if(!wrap) return;
+    var sb = document.getElementById('wcSmallBtn');
+    if(sb) sb.classList.toggle('on', !!W.prefs.hideSmall);
+    var mask = W.prefs.hidden;
+    var rows = t.rows.filter(function(r){
+      if(W.query && r.sym.indexOf(W.query) !== 0) return false;
+      if(W.prefs.hideSmall && r.usd < 1 && r.sym !== 'USDT') return false;
+      return true;
+    });
+    if(!rows.length){
+      wrap.innerHTML = '<div class="wc-empty">'+(W.query ? 'No coin found' : 'No assets yet — deposit to get started')+'</div>';
+      return;
+    }
+    wrap.innerHTML = rows.map(function(r){
+      var chg = W.chg[r.sym];
+      var chgTxt = (chg!=null) ? ((chg>=0?'+':'')+chg.toFixed(2)+'%') : '—';
+      var chgCol = (chg!=null) ? (chg>=0 ? 'var(--green)' : 'var(--red)') : 'var(--text2)';
+      var lock = r.locked > 0
+        ? '<div class="wc-lock">Locked '+(mask?'*****':fmtQty(r.locked))+'</div>' : '';
+      return '<div class="crow" onclick="openCoinDetail(\''+r.sym+'\')">'+
+        '<div style="display:flex;align-items:center;gap:11px;">'+
+          '<img class="clogo" style="width:34px;height:34px;" src="https://assets.coincap.io/assets/icons/'+r.sym.toLowerCase()+'@2x.png" data-sym="'+r.sym+'" onerror="logoFallback(this,1)" alt="'+r.sym+'">'+
+          '<div><div class="cname2">'+r.sym+'</div><div class="cchg" style="color:'+chgCol+';">'+chgTxt+'</div></div>'+
+        '</div>'+
+        '<div class="camts"><div class="ca">'+(mask?'*****':fmtQty(r.free))+'</div>'+
+        '<div class="cu">'+(mask?'*****':fmt(r.usd)+' USD')+'</div>'+lock+'</div>'+
+      '</div>';
+    }).join('');
+  }
+
+  var BUCKET_COLORS = {Earn:'#2ebd85', Funding:'#f0932b', 'Unified Trading':'#f7c948'};
+  function paintAccount(t){
+    var p = document.getElementById('assetAccountPanel');
+    if(!p || !p.classList.contains('show')) return;
+    var list = [
+      {name:'Funding', usd:Math.max(0, t.spot - marginLocked())},
+      {name:'Unified Trading', usd:marginLocked() + Math.max(0, t.pnl)},
+      {name:'Earn', usd:t.earn, sec:'Invested Products'}
+    ];
+    var total = list.reduce(function(a,r){ return a + r.usd; }, 0);
+    var donut = document.getElementById('acctDonut'), leg = document.getElementById('acctLegend');
+    var R = 42, C = 2*Math.PI*R, off = 0, segs = '';
+    if(!total){
+      segs = '<circle cx="60" cy="60" r="'+R+'" fill="none" stroke="var(--donut-empty)" stroke-width="15"></circle>';
+    } else {
+      list.slice().sort(function(a,b){ return b.usd-a.usd; }).forEach(function(r){
+        if(r.usd <= 0) return;
+        var len = r.usd/total*C;
+        segs += '<circle cx="60" cy="60" r="'+R+'" fill="none" stroke="'+(BUCKET_COLORS[r.name]||'#8a9099')+'" stroke-width="15" stroke-dasharray="'+len+' '+(C-len)+'" stroke-dashoffset="'+(-off)+'" transform="rotate(-90 60 60)"></circle>';
+        off += len;
+      });
+    }
+    if(donut) donut.innerHTML = '<svg viewBox="0 0 120 120" width="100%" height="100%">'+segs+'</svg>';
+    if(leg) leg.innerHTML = list.map(function(r){
+      var pct = total ? (r.usd/total*100) : 0;
+      var txt = (total && pct>0 && pct<0.01) ? '< 0.01%' : pct.toFixed(2)+'%';
+      return '<div class="acct-lrow"><span class="adot" style="background:'+(BUCKET_COLORS[r.name]||'#8a9099')+'"></span><span class="anm">'+r.name+'</span><span class="apct">'+txt+'</span></div>';
+    }).join('');
+    var mask = W.prefs.hidden;
+    var html = '';
+    list.forEach(function(r){
+      if(r.sec) html += '<div class="acct-sec">'+r.sec+'</div>';
+      html += '<div class="acct-item" onclick="onAccountRow(\''+r.name+'\')">'+
+        '<div class="ai-l"><div class="ai-t">'+r.name+'</div><div class="ai-v">'+(mask?'*****':fmt(r.usd)+' USD')+'</div></div>'+
+        '<span class="ai-a">\u2192</span></div>';
+    });
+    var held = t.rows.filter(function(r){ return (r.free + r.locked) > 0; });
+    if(held.length){
+      html += '<div class="acct-sec">Coins in Wallet</div>';
+      html += held.map(function(r){
+        return '<div class="acct-item" onclick="openCoinDetail(\''+r.sym+'\')">'+
+          '<div class="ai-l"><div class="ai-t">'+r.sym+'</div><div class="ai-v">'+
+          (mask ? '*****' : fmtQty(r.free)+' &nbsp;·&nbsp; '+fmt(r.usd)+' USD')+'</div></div>'+
+          '<span class="ai-a">\u2192</span></div>';
+      }).join('');
+    }
+    var rowsEl = document.getElementById('acctRows');
+    if(rowsEl) rowsEl.innerHTML = html;
+  }
+
+  /* ══════════════ prices (never block a paint) ══════════════ */
+  var pricesBusy = false;
+  W.refreshPrices = function(){
+    if(pricesBusy || typeof bybitGET !== 'function') return;
+    pricesBusy = true;
+    Promise.resolve(bybitGET('/v5/market/tickers', {category:'spot'})).then(function(r){
+      ((r && r.list) || []).forEach(function(tk){
+        var s = String(tk.symbol||'');
+        if(s.slice(-4) !== 'USDT') return;
+        var sym = s.slice(0, -4);
+        var px = parseFloat(tk.lastPrice);
+        if(px > 0) W.prices[sym] = px;
+        var ch = parseFloat(tk.price24hPcnt);
+        if(isFinite(ch)) W.chg[sym] = ch*100;
+      });
+      if(W.prices.BTC > 0) window._btcPxCache = W.prices.BTC;
+      W.paint();
+    }).catch(function(){}).then(function(){ pricesBusy = false; });
+  };
+
+  /* ══════════════ Firebase subscriptions (one set per login) ══════════════ */
+  var subs = [];
+  function dropSubs(){ subs.forEach(function(u){ try{ u && u(); }catch(e){} }); subs = []; }
+
+  var readyTimer = 0;
+  function subscribe(uid){
+    var api = fb();
+    if(!api || !uid) return;
+    if(W.uid === uid && subs.length) return;   // already attached — never reset a live wallet
+    dropSubs();
+    W.uid = uid;
+    W.ready = false;
+    /* safety net: if Firebase never answers, show real computed numbers
+       instead of leaving a loading dash on screen forever */
+    clearTimeout(readyTimer);
+    readyTimer = setTimeout(function(){ if(!W.ready){ W.ready = true; W.paint(); } }, 4000);
+    var R = function(p){ return api.ref(api.db, 'users/'+uid+'/'+p); };
+
+    /* coins — the ONE source of truth */
+    subs.push(api.onValue(R('balances'), function(snap){
+      var v = snap.val() || {};
+      var next = {};
+      Object.keys(v).forEach(function(k){ next[UP(k)] = NUM(v[k]); });
+      W.coins = next;
+      W.ready = true;
+      W.paint();
+    }));
+
+    /* legacy users/{uid}/balance — fallback ONLY while balances/USDT is absent
+       (the server keeps both nodes in sync, so this can never ping-pong) */
+    subs.push(api.onValue(R('balance'), function(snap){
+      var legacy = NUM(snap && snap.val());
+      if(W.coins.USDT === undefined){
+        W.coins.USDT = legacy;
+        W.ready = true;
+        W.paint();
+        try{ api.set(api.ref(api.db, 'users/'+uid+'/balances/USDT'), legacy); }catch(e){}
+      }
+    }));
+
+    /* locked amounts from open spot orders + pending withdrawals */
+    subs.push(api.onValue(R('orders'), function(snap){
+      var all = snap.val() || {}, lk = {};
+      Object.keys(all).forEach(function(k){
+        var o = all[k]; if(!o) return;
+        var st = String(o.status||'').toUpperCase();
+        if(st && st.indexOf('OPEN')<0 && st.indexOf('NEW')<0 && st.indexOf('PENDING')<0 && st.indexOf('PART')<0) return;
+        var sym = UP(o.lockCoin || o.payCoin || (String(o.side||'').toUpperCase()==='SELL' ? (o.base||o.coin) : 'USDT'));
+        var amt = NUM(o.lockAmt != null ? o.lockAmt : o.remaining != null ? o.remaining : o.amt);
+        if(amt > 0) lk[sym] = NUM(lk[sym]) + amt;
+      });
+      W.locked = lk;
+      W.paint();
+    }));
+
+    /* Earn — positions and history now live in Firebase */
+    subs.push(api.onValue(R('earn'), function(snap){
+      var v = snap.val() || {};
+      var pos = v.positions ? Object.keys(v.positions).map(function(k){ return v.positions[k]; }) : [];
+      var hist = v.history ? Object.keys(v.history).map(function(k){ return v.history[k]; }) : [];
+      W.earn.positions = pos.filter(Boolean);
+      W.earn.history = hist.filter(Boolean).sort(function(a,b){
+        return String(b.endDate||'').localeCompare(String(a.endDate||''));
+      });
+      W.earn.total = W.earn.positions.reduce(function(s,p){ return s + NUM(p.earned); }, 0);
+      try{
+        if(typeof earnState === 'object' && earnState){
+          earnState.activePositions = W.earn.positions;
+          earnState.history = W.earn.history;
+          earnState.totalEarned = W.earn.total;
+        }
+        if(typeof renderMyEarn === 'function') renderMyEarn();
+      }catch(e){}
+      W.paint();
+    }));
+
+    /* display preferences — Firebase, not localStorage */
+    subs.push(api.onValue(R('prefs'), function(snap){
+      var v = snap.val() || {};
+      W.prefs.hidden    = !!v.hideBalances;
+      W.prefs.currency  = UP(v.displayCurrency || 'USDT');
+      W.prefs.hideSmall = !!v.hideSmallAssets;
+      W.paint();
+    }));
+
+    W.refreshPrices();
+    W.paint();
+  }
+  W.subscribe = subscribe;
+
+  W.setPref = function(key, val){
+    var map = {hidden:'hideBalances', currency:'displayCurrency', hideSmall:'hideSmallAssets'};
+    W.prefs[key] = (key==='currency') ? UP(val) : !!val;
+    W.paint();
+    var api = fb(), uid = W.uid || uidOf();
+    if(!api || !uid) return;
+    var patch = {}; patch[map[key]] = W.prefs[key];
+    try{ api.update(api.ref(api.db, 'users/'+uid+'/prefs'), patch); }catch(e){}
+  };
+
+  /* ══════════════ Earn persistence (Firebase) ══════════════ */
+  W.saveEarn = function(){
+    var api = fb(), uid = W.uid || uidOf();
+    if(!api || !uid) return;
+    var pos = {}, hist = {};
+    try{
+      (earnState.activePositions||[]).forEach(function(p){
+        if(!p) return;
+        pos['p'+p.id] = {
+          id:p.id, coin:UP(p.coin), type:p.type||'', apr:NUM(p.apr), amount:NUM(p.amount),
+          earned:NUM(p.earned), startDate:p.startDate||new Date().toISOString(),
+          lockDays:NUM(p.lockDays), lock:p.lock||'Flexible', status:'active'
+        };
+      });
+      (earnState.history||[]).slice(0,100).forEach(function(h){
+        if(!h) return;
+        hist['h'+h.id] = {
+          id:h.id, coin:UP(h.coin), type:h.type||'', apr:NUM(h.apr), amount:NUM(h.amount),
+          earned:NUM(h.earned), startDate:h.startDate||'', endDate:h.endDate||new Date().toISOString(),
+          status:h.status||'Completed'
+        };
+      });
+    }catch(e){ return; }
+    try{ api.set(api.ref(api.db, 'users/'+uid+'/earn'), {positions:pos, history:hist}); }catch(e){}
+  };
+
+  function wrap(name, after){
+    var orig = window[name];
+    if(typeof orig !== 'function') return;
+    window[name] = function(){
+      var r = orig.apply(this, arguments);
+      try{ after.apply(this, arguments); }catch(e){}
+      return r;
+    };
+  }
+
+  /* Stake / redeem — money moves through the atomic Firebase transaction, and
+     the position itself is stored in Firebase so it survives a reload. */
+  function applyDelta(coin, delta){
+    if(window.Balances && typeof window.Balances.apply === 'function')
+      return window.Balances.apply(Object.defineProperty({}, UP(coin), {value:delta, enumerable:true}));
+    return Promise.resolve({ok:false, error:'Login required'});
+  }
+  window.confirmStake = function(){
+    var p = _ernSubCtx; if(!p) return;
+    var amt = NUM((document.getElementById('ernSubAmt')||{}).value);
+    var err = document.getElementById('ernSubErr');
+    var box = document.getElementById('ernSubInpBox');
+    function fail(msg){
+      if(err){ err.textContent = msg; err.style.display = 'block'; }
+      if(box){ box.classList.add('shake'); setTimeout(function(){ box.classList.remove('shake'); }, 300); }
+    }
+    if(!(W.uid || uidOf())) { try{ needLogin(); }catch(e){} return; }
+    if(amt < NUM(p.min)) return fail('Minimum amount is '+p.min+' '+p.coin);
+    if(amt > freeOf(p.coin)) return fail('Insufficient balance');
+    applyDelta(p.coin, -amt).then(function(res){
+      if(!res || !res.ok) return fail((res && res.error) || 'Balance update failed');
+      (earnState.activePositions = earnState.activePositions || []).push({
+        id: Date.now(), coin: UP(p.coin), type: p.type, apr: NUM(p.apr), amount: amt, earned: 0,
+        startDate: new Date().toISOString(), lockDays: NUM(p.lockDays), lock: p.lock, status: 'active'
+      });
+      W.earn.positions = earnState.activePositions;
+      W.saveEarn(); W.paint();
+      try{ closeSubscribeSheet(); toast('\u2713 Subscribed! Earning starts tomorrow.'); switchEarnTab('my'); }catch(e){}
+    });
+  };
+  window.confirmRedeem = function(){
+    var pos = _ernRedCtx; if(!pos) return;
+    var full = _ernRedFull;
+    var redeem = NUM(pos.amount) + NUM(pos.earned);
+    if(!full){
+      var v = NUM((document.getElementById('ernRedInp')||{}).value);
+      if(v <= 0 || v > redeem){ try{ toast('Invalid amount'); }catch(e){} return; }
+      redeem = v;
+    }
+    applyDelta(pos.coin, redeem).then(function(res){
+      if(!res || !res.ok){ try{ toast((res && res.error) || 'Redeem failed'); }catch(e){} return; }
+      if(full || NUM(pos.amount) - redeem <= 0.0000001){
+        earnState.activePositions = (earnState.activePositions||[]).filter(function(x){ return x.id !== pos.id; });
+        (earnState.history = earnState.history || []).unshift(Object.assign({}, pos, {endDate:new Date().toISOString(), status:'Completed'}));
+      } else {
+        pos.amount = Math.max(0, NUM(pos.amount) - redeem);
+      }
+      W.earn.positions = earnState.activePositions;
+      W.earn.history = earnState.history;
+      W.saveEarn(); W.paint();
+      try{ closeRedeemSheet(); toast('\u2713 Redeemed successfully! Funds sent to Spot Wallet.'); renderMyEarn(); }catch(e){}
+    });
+  };
+
+  /* every balance write lands in Firebase and paints optimistically once */
+  window.writeBalance = function(newVal){
+    var v = Math.max(0, NUM(newVal));
+    W.coins.USDT = v;
+    W.paint();
+    var api = fb(), uid = W.uid || uidOf();
+    if(!api || !uid) return Promise.resolve();
+    var patch = {};
+    patch['users/'+uid+'/balance'] = v;
+    patch['users/'+uid+'/balances/USDT'] = v;
+    return Promise.resolve(api.update(api.ref(api.db), patch)).catch(function(){
+      try{ api.set(api.ref(api.db,'users/'+uid+'/balance'), v); }catch(e){}
+      try{ api.set(api.ref(api.db,'users/'+uid+'/balances/USDT'), v); }catch(e){}
+    }).then(function(){ try{ if(typeof updateUserUI==='function') updateUserUI(); }catch(e){} });
+  };
+  setInterval(function(){ if((W.earn.positions||[]).length) W.saveEarn(); }, 60000);
+
+  /* ══════════════ take over every legacy renderer ══════════════ */
+  window.renderAssetList = function(){ W.refreshPrices(); W.paint(); return Promise.resolve(); };
+  window.renderBalances  = function(){ W.paint(); };
+  window.updateBalanceStore = function(){ W.paint(); };
+  window.syncLockedBalanceUI = function(){
+    try{ if(typeof refreshDynamicLiquidationPrices==='function') refreshDynamicLiquidationPrices(); }catch(e){}
+    var t = totals();
+    W.paint();
+    return {wallet:t.wallet, locked:t.locked, available:t.available, equity:t.wallet + Math.max(0, t.pnl)};
+  };
+  window.renderAccountPanel = function(){ W.paint(); };
+  window.getDisplayCurrency = function(){ return W.prefs.currency; };
+  window.toggleGlobalBalances = function(){ W.setPref('hidden', !W.prefs.hidden); };
+  window.toggleAmountVisibility = function(){ W.setPref('hidden', !W.prefs.hidden); };
+  window.toggleHideSmallAssets = function(){
+    W.setPref('hideSmall', !W.prefs.hideSmall);
+    var tg = document.getElementById('assetSetToggle');
+    if(tg) tg.classList.toggle('on', W.prefs.hideSmall);
+  };
+  wrap('openAssetSettings', function(){
+    var tg = document.getElementById('assetSetToggle');
+    if(tg) tg.classList.toggle('on', W.prefs.hideSmall);
+  });
+  window.pickCurrency = function(c){
+    W.setPref('currency', c);
+    var ov = document.getElementById('curPickerOv'); if(ov) ov.remove();
+  };
+  window.getBal = function(coin){ return freeOf(coin); };
+  window.getWalletBalance = function(){ return freeOf('USDT'); };
+  window.getAvailableBalance = function(){ return totals().available; };
+  window.getWithdrawableBalance = function(){ return totals().available; };
+  /* WalletBalance shim — older code still calls these */
+  window.WalletBalance = {
+    get: function(){ return freeOf('USDT'); },
+    set: function(){ W.paint(); return freeOf('USDT'); },
+    render: function(){ W.paint(); },
+    reset: function(){ W.uid = null; W.coins = {}; W.locked = {}; W.ready = false; W.paint(); }
+  };
+  window.subscribeBalance  = function(u){ subscribe(u || uidOf()); };
+  window.subscribeBalances = function(u){ subscribe(u || uidOf()); };
+
+  var prevLogout = window.onFirebaseLogout;
+  window.onFirebaseLogout = function(){
+    dropSubs();
+    W.uid = null; W.ready = false; W.coins = {}; W.locked = {};
+    W.earn = {positions:[], history:[], total:0, today:0};
+    W.prefs = {hidden:false, currency:'USDT', hideSmall:false};
+    var r = prevLogout ? prevLogout.apply(this, arguments) : undefined;
+    W.paint();
+    return r;
+  };
+
+  /* attach as soon as a user is known; re-attach on account switch */
+  var lastUid = null;
+  setInterval(function(){
+    var u = uidOf();
+    if(u && u !== lastUid){ lastUid = u; subscribe(u); }
+    if(!u && lastUid){ lastUid = null; W.uid = null; W.ready = false; W.coins = {}; W.locked = {}; W.paint(); }
+  }, 700);
+  setInterval(function(){ W.refreshPrices(); }, 20000);
+
+  function boot(){ W.refreshPrices(); W.paint(); }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+  window.addEventListener('load', function(){ setTimeout(boot, 250); });
+})();
+</script>
+
 </body>
 
 
