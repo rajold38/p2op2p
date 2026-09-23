@@ -14058,13 +14058,50 @@ body.light #biexcPromo{background:#f3f5f7}
     if(cur==='USD') return {txt:fmt(valUsdt,2), lbl:'USD'};
     return {txt:fmt(valUsdt,2), lbl:'USDT'};
   }
+  /* ── DOM OWNERSHIP LOCK ───────────────────────────────────────────────
+     Legacy renderers still exist in this file and used to write the same
+     balance nodes a few ms after WalletCore painted them — that double
+     write is exactly what looked like "blinking". Once an element is owned,
+     only a WalletCore paint can change its text. Everything else is a
+     silent no-op, so a number can never flip back and forth again. */
+  var TXT_DESC  = Object.getOwnPropertyDescriptor(Node.prototype, 'textContent');
+  var ITXT_DESC = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'innerText');
+  var HTML_DESC = Object.getOwnPropertyDescriptor(Element.prototype, 'innerHTML');
+  function guard(el, desc, name){
+    if(!desc || !desc.set) return;
+    Object.defineProperty(el, name, {
+      configurable: true,
+      get: function(){ return desc.get.call(this); },
+      set: function(v){ if(window.__wcPainting) desc.set.call(this, v); }
+    });
+  }
+  function own(el){
+    if(!el || el.__wcOwned) return el;
+    el.__wcOwned = true;
+    try{
+      guard(el, TXT_DESC,  'textContent');
+      guard(el, ITXT_DESC, 'innerText');
+      guard(el, HTML_DESC, 'innerHTML');
+    }catch(e){}
+    return el;
+  }
   function setTxt(id, val){
     var e = document.getElementById(id);
     if(!e) return;
+    own(e);
+    var next = W.prefs.hidden ? '*****' : val;
     e.classList.remove('balance-skeleton');
-    e.textContent = W.prefs.hidden ? '*****' : val;
+    window.__wcPainting = true;
+    if(e.textContent !== next) e.textContent = next;   // no needless repaint
+    window.__wcPainting = false;
   }
   function doPaint(){
+    window.__wcPainting = true;
+    try{ realPaint(); }
+    catch(e){ try{ console.warn('[WalletCore] paint', e); }catch(_){} }
+    finally{ window.__wcPainting = false; }
+  }
+  function realPaint(){
     var t = totals();
     var loading = !!W.uid && !W.ready;
     var d = display(t.total);
@@ -14083,9 +14120,11 @@ body.light #biexcPromo{background:#f3f5f7}
     setTxt('homeBtcEq', eqTxt);
     var la = document.getElementById('assetsCurLabel'); if(la) la.textContent = d.lbl+' \u25be';
     var lh = document.getElementById('homeCurLabel');   if(lh) lh.textContent = d.lbl+' \u25be';
+    var walletTxt = W.prefs.hidden ? '*****' : fmt(t.wallet);
     document.querySelectorAll('[data-bal-usdt]').forEach(function(el){
+      own(el);
       el.classList.remove('balance-skeleton');
-      el.textContent = W.prefs.hidden ? '*****' : fmt(t.wallet);
+      if(el.textContent !== walletTxt) el.textContent = walletTxt;
     });
 
     /* Today's P&L — real closed futures trades only, never random */
@@ -14177,23 +14216,47 @@ body.light #biexcPromo{background:#f3f5f7}
     });
     if(!rows.length){
       wrap.innerHTML = '<div class="wc-empty">'+(W.query ? 'No coin found' : 'No assets yet — deposit to get started')+'</div>';
+      wrap.__wcKeys = '';
       return;
     }
-    wrap.innerHTML = rows.map(function(r){
+    /* Rows are reused per coin instead of re-created on every paint — the
+       coin logos no longer re-download, so the list can't flicker. */
+    var keys = rows.map(function(r){ return r.sym; }).join(',');
+    if(wrap.__wcKeys !== keys){
+      wrap.innerHTML = rows.map(function(r){
+        return '<div class="crow" data-wcsym="'+r.sym+'" onclick="openCoinDetail(\''+r.sym+'\')">'+
+          '<div style="display:flex;align-items:center;gap:11px;">'+
+            '<img class="clogo" style="width:34px;height:34px;" src="https://assets.coincap.io/assets/icons/'+r.sym.toLowerCase()+'@2x.png" data-sym="'+r.sym+'" onerror="logoFallback(this,1)" alt="'+r.sym+'">'+
+            '<div><div class="cname2">'+r.sym+'</div><div class="cchg"></div></div>'+
+          '</div>'+
+          '<div class="camts"><div class="ca"></div><div class="cu"></div><div class="wc-lock" style="display:none"></div></div>'+
+        '</div>';
+      }).join('');
+      wrap.__wcKeys = keys;
+    }
+    rows.forEach(function(r){
+      var row = wrap.querySelector('.crow[data-wcsym="'+r.sym+'"]');
+      if(!row) return;
       var chg = W.chg[r.sym];
       var chgTxt = (chg!=null) ? ((chg>=0?'+':'')+chg.toFixed(2)+'%') : '—';
       var chgCol = (chg!=null) ? (chg>=0 ? 'var(--green)' : 'var(--red)') : 'var(--text2)';
-      var lock = r.locked > 0
-        ? '<div class="wc-lock">Locked '+(mask?'*****':fmtQty(r.locked))+'</div>' : '';
-      return '<div class="crow" onclick="openCoinDetail(\''+r.sym+'\')">'+
-        '<div style="display:flex;align-items:center;gap:11px;">'+
-          '<img class="clogo" style="width:34px;height:34px;" src="https://assets.coincap.io/assets/icons/'+r.sym.toLowerCase()+'@2x.png" data-sym="'+r.sym+'" onerror="logoFallback(this,1)" alt="'+r.sym+'">'+
-          '<div><div class="cname2">'+r.sym+'</div><div class="cchg" style="color:'+chgCol+';">'+chgTxt+'</div></div>'+
-        '</div>'+
-        '<div class="camts"><div class="ca">'+(mask?'*****':fmtQty(r.free))+'</div>'+
-        '<div class="cu">'+(mask?'*****':fmt(r.usd)+' USD')+'</div>'+lock+'</div>'+
-      '</div>';
-    }).join('');
+      var elChg = row.querySelector('.cchg'),
+          elAmt = row.querySelector('.ca'),
+          elUsd = row.querySelector('.cu'),
+          elLk  = row.querySelector('.wc-lock');
+      var amtTxt = mask ? '*****' : fmtQty(r.free);
+      var usdTxt = mask ? '*****' : (fmt(r.usd)+' USD');
+      if(elChg){ if(elChg.textContent !== chgTxt) elChg.textContent = chgTxt; elChg.style.color = chgCol; }
+      if(elAmt && elAmt.textContent !== amtTxt) elAmt.textContent = amtTxt;
+      if(elUsd && elUsd.textContent !== usdTxt) elUsd.textContent = usdTxt;
+      if(elLk){
+        if(r.locked > 0){
+          var lkTxt = 'Locked '+(mask?'*****':fmtQty(r.locked));
+          if(elLk.textContent !== lkTxt) elLk.textContent = lkTxt;
+          elLk.style.display = '';
+        } else { elLk.style.display = 'none'; }
+      }
+    });
   }
 
   var BUCKET_COLORS = {Earn:'#2ebd85', Funding:'#f0932b', 'Unified Trading':'#f7c948'};
@@ -14526,11 +14589,21 @@ body.light #biexcPromo{background:#f3f5f7}
   };
 
   /* attach as soon as a user is known; re-attach on account switch */
-  var lastUid = null;
+  var lastUid = null, missCount = 0;
   setInterval(function(){
     var u = uidOf();
-    if(u && u !== lastUid){ lastUid = u; subscribe(u); }
-    if(!u && lastUid){ lastUid = null; W.uid = null; W.ready = false; W.coins = {}; W.locked = {}; W.paint(); }
+    if(u){
+      missCount = 0;
+      if(u !== lastUid){ lastUid = u; subscribe(u); }
+      return;
+    }
+    /* A token refresh can leave currentUser momentarily null. Wiping the
+       wallet on the first miss is what made the balance flash to 0, so we
+       only clear after ~4s of a genuinely signed-out session. */
+    if(!lastUid) return;
+    if(++missCount < 6) return;
+    missCount = 0; lastUid = null;
+    W.uid = null; W.ready = false; W.coins = {}; W.locked = {}; W.paint();
   }, 700);
   setInterval(function(){ W.refreshPrices(); }, 20000);
 
@@ -14541,6 +14614,146 @@ body.light #biexcPromo{background:#f3f5f7}
 })();
 </script>
 
+<style id="biexc-nav-fix-v7">
+/* the tab bar must always be the top-most, always-tappable layer */
+nav.bnav{z-index:600!important;pointer-events:auto!important}
+nav.bnav .ni{pointer-events:auto!important}
+#biexcSwipeShade{pointer-events:none!important}
+.screen.screen-entering,.screen.screen-leaving{pointer-events:none}
+.screen.active:not(.screen-entering):not(.screen-leaving){pointer-events:auto}
+</style>
+<script>
+/* ═══════════════════════════════════════════════════════════════════
+   PATCH v7 — tab bar can never get stuck
+   • go() is wrapped: any leftover transition state is cleared first,
+     and if the target screen did not become active we switch it hard.
+   • a swipe/gesture crash, a stuck navigation lock or a leftover
+     full-screen P2P layer can no longer kill Home / Markets / Trade.
+   ═══════════════════════════════════════════════════════════════════ */
+(function(){
+  'use strict';
+  var ORDER = ['home','markets','trade','earn','assets'];
+  var origGo = window.go;
+
+  function clearStuck(name){
+    try{
+      document.querySelectorAll('.screen.screen-entering,.screen.screen-leaving').forEach(function(s){
+        s.classList.remove('screen-entering','screen-entered','screen-leaving');
+        s.style.removeProperty('transform');
+        s.style.removeProperty('opacity');
+      });
+      document.querySelectorAll('.screen.biexc-swiping,.screen.biexc-swipe-settle').forEach(function(s){
+        s.classList.remove('biexc-swiping','biexc-swipe-settle');
+        s.style.removeProperty('transform');
+      });
+      var shade = document.getElementById('biexcSwipeShade');
+      if(shade){ shade.style.display = 'none'; shade.style.opacity = '0'; }
+      if(name !== 'p2p') document.body.classList.remove('on-p2p');
+      document.body.style.removeProperty('overflow');
+    }catch(e){}
+  }
+
+  function hardSwitch(name){
+    var target = document.getElementById('sc-'+name);
+    if(!target) return false;
+    document.querySelectorAll('.screen.active').forEach(function(s){
+      if(s !== target){
+        s.classList.remove('active','screen-entering','screen-entered','screen-leaving');
+        s.style.removeProperty('transform');
+        s.style.removeProperty('opacity');
+      }
+    });
+    target.classList.add('active');
+    document.querySelectorAll('.ni').forEach(function(n){ n.classList.remove('active'); });
+    var tab = document.getElementById('ni-'+name);
+    if(tab) tab.classList.add('active');
+    document.body.classList.toggle('on-p2p', name === 'p2p');
+    try{
+      if(name === 'markets' && typeof loadMarkets === 'function') loadMarkets();
+      if(name === 'home'    && typeof loadHomeMarket === 'function') loadHomeMarket();
+      if(name === 'assets'  && typeof fetchAssetPrices === 'function') fetchAssetPrices();
+      if(name === 'p2p'     && typeof ensureP2PFrameLoaded === 'function') ensureP2PFrameLoaded();
+      if(name === 'trade'){
+        if(typeof connectKlineWS === 'function') connectKlineWS();
+        if(typeof connectOBWS === 'function') connectOBWS();
+      }
+      if(window.WalletCore) window.WalletCore.paint();
+    }catch(e){}
+    return true;
+  }
+
+  window.go = function(name){
+    name = String(name || 'home');
+    if(!document.getElementById('sc-'+name)) return;
+    clearStuck(name);
+    var before = (document.querySelector('.screen.active') || {}).id || '';
+    if(before === 'sc-'+name){
+      // already there — just make sure the tab highlight is right
+      var tab = document.getElementById('ni-'+name);
+      if(tab && !tab.classList.contains('active')){
+        document.querySelectorAll('.ni').forEach(function(n){ n.classList.remove('active'); });
+        tab.classList.add('active');
+      }
+      return;
+    }
+    try{ if(typeof origGo === 'function') origGo(name); }
+    catch(e){ try{ console.warn('[nav]', e); }catch(_){ } }
+    // the animated path marks the screen active synchronously; if it didn't
+    // (navigation lock stuck, handler threw) switch without animation.
+    var now = (document.querySelector('.screen.active') || {}).id || '';
+    if(now !== 'sc-'+name) hardSwitch(name);
+    // final safety net after the transition window
+    setTimeout(function(){
+      var end = (document.querySelector('.screen.active') || {}).id || '';
+      if(end !== 'sc-'+name) hardSwitch(name);
+    }, 360);
+  };
+
+  /* tap handling straight on the bar, capture phase — works even if an inline
+     handler was replaced or a transparent layer sits in front of the tabs */
+  document.addEventListener('click', function(ev){
+    var item = ev.target && ev.target.closest && ev.target.closest('nav.bnav .ni');
+    if(!item || !item.id) return;
+    var name = item.id.replace('ni-','');
+    if(ORDER.indexOf(name) < 0 && !document.getElementById('sc-'+name)) return;
+    ev.stopPropagation();
+    ev.preventDefault();
+    window.go(name);
+  }, true);
+
+  /* self-heal: the full-screen P2P layer hides the tab bar, so if it is
+     still marked open while another screen is showing, the user would be
+     left with no visible tabs at all. Check every second. */
+  setInterval(function(){
+    var act = (document.querySelector('.screen.active') || {}).id || '';
+    if(!act){ hardSwitch('home'); return; }
+    if(document.body.classList.contains('on-p2p') && act !== 'sc-p2p')
+      document.body.classList.remove('on-p2p');
+    var bar = document.querySelector('nav.bnav');
+    if(bar && act === 'sc-p2p'){
+      bar.style.removeProperty('display');
+      bar.style.removeProperty('pointer-events');
+    } else if(bar){
+      var cs = getComputedStyle(bar);
+      if(cs.display === 'none' || cs.pointerEvents === 'none'){
+        bar.style.setProperty('display','flex','important');
+        bar.style.setProperty('pointer-events','auto','important');
+      }
+    }
+  }, 1000);
+
+  /* a grey loading block must never outlive the value it covers */
+  try{
+    new MutationObserver(function(muts){
+      muts.forEach(function(m){
+        var el = m.target;
+        if(el && el.classList && el.classList.contains('balance-skeleton') && (el.textContent||'').trim())
+          el.classList.remove('balance-skeleton');
+      });
+    }).observe(document.documentElement, {subtree:true, attributes:true, attributeFilter:['class']});
+  }catch(e){}
+})();
+</script>
 </body>
 
 
