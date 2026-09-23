@@ -2997,7 +2997,8 @@ async function writeBalance(newVal){
       try { await update(ref(db,'users/'+fbPathUid+'/balances'), { USDT: window.userBalance }); } catch(e){}
     }
   }catch(e){ console.warn('balance write failed', e); }
-  document.querySelectorAll('[data-bal-usdt]').forEach(el=>{ el.textContent = window.userBalance.toFixed(2); });
+  if(window.WalletBalance) window.WalletBalance.render();
+  else document.querySelectorAll('[data-bal-usdt]').forEach(el=>{ el.textContent = window.userBalance.toFixed(2); });
   try{ if(typeof syncLockedBalanceUI==='function') syncLockedBalanceUI(); }catch(e){}
   if(typeof updateUserUI==='function') updateUserUI();
 }
@@ -3055,9 +3056,10 @@ window.addEventListener('message',(ev)=>{
     if(parentUid && d.uid && String(d.uid) !== String(parentUid)) return;
     const nextBal = Number(d.value);
     if(!Number.isFinite(nextBal)) return;
-    window.userBalance = Math.max(0, nextBal);
+    if(window.WalletBalance) window.WalletBalance.set(Math.max(0, nextBal), {source:'p2p-iframe'});
+    else window.userBalance = Math.max(0, nextBal);
     try{ if(typeof balance !== 'undefined') balance = window.userBalance; }catch(e){}
-    document.querySelectorAll('[data-bal-usdt]').forEach(el=>{ el.textContent = window.userBalance.toFixed(2); });
+    if(window.WalletBalance) window.WalletBalance.render();
     try{ if(typeof syncLockedBalanceUI==='function') syncLockedBalanceUI(); }catch(e){}
   }
   if(d && d.source === 'p2p-iframe' && d.type === 'close'){
@@ -3152,7 +3154,8 @@ window.onFirebaseUser = async function(fbUser) {
 
 window.onFirebaseLogout = function() {
   if (_fbUnsubBalance) { _fbUnsubBalance(); _fbUnsubBalance = null; }
-  window.currentFbUser = null; window.userBalance = 0;
+  window.currentFbUser = null;
+  if (window.WalletBalance) window.WalletBalance.reset(); else window.userBalance = 0;
   // CLEAR in-memory paper state so previous user's coins/positions/orders don't leak
   try{ if(typeof STATE!=='undefined'){ STATE.coins={}; STATE.orders=[]; STATE.positions=[]; STATE.balance=0; } window._coinBalCache={}; }catch(e){}
   updateUserUI();
@@ -3163,7 +3166,11 @@ function subscribeBalance(fuid) {
   const { db, ref, onValue } = window._fb;
   if (_fbUnsubBalance) _fbUnsubBalance();
   _fbUnsubBalance = onValue(ref(db, 'users/' + fuid + '/balance'), snap => {
-    window.userBalance = parseFloat(snap.val() || 0);
+    const raw = snap.val();
+    // Raw value goes to the single setter: null/empty/NaN keeps the last good
+    // value instead of painting a phantom 0.
+    if (window.WalletBalance) window.WalletBalance.set(raw);
+    else window.userBalance = parseFloat(raw || 0);
     // Keep paper-state STATE.balance synced immediately so saveState() never
     // writes a stale 0 back to Firebase before the 800ms interval catches up.
     try { if (typeof STATE === 'object' && STATE) STATE.balance = window.userBalance; } catch(e){}
@@ -3328,7 +3335,7 @@ async function doLogout() {
     closeSideDrawer();
     closeEditProfile();
     window.currentFbUser = null;
-    window.userBalance = 0;
+    if (window.WalletBalance) window.WalletBalance.reset(); else window.userBalance = 0;
     try { if (typeof updateUserUI === 'function') updateUserUI(); } catch(e) {}
     try { if (typeof renderAssetList === 'function') renderAssetList(); } catch(e) {}
     toast('Signed out');
@@ -9674,6 +9681,363 @@ window.addEventListener('load',()=>{
   setInterval(()=>{ if(!openId) renderGrid(); },5*60*1000);
 });
 <\/script>
+<!-- ═══ BIEXC P2P PATCH v3 — smooth motion, solid History, full history data ═══ -->
+<style id="p2p-motion-solid-v3">
+:root{--mo:cubic-bezier(.22,1,.36,1)}
+*{-webkit-tap-highlight-color:transparent}
+button,.ad-card,.hist-card,.order-card,.byt-fchip,.nv,.tab,.byt-tab,.byt-pt,.sheet-row,.hist-fchip,.pm,.byt-pm-card{
+  transition:transform .12s var(--mo),background .2s var(--mo),color .2s var(--mo),border-color .2s var(--mo),opacity .2s var(--mo),box-shadow .2s var(--mo);
+}
+button:active,.ad-card:active,.hist-card:active,.order-card:active,.byt-fchip:active,.nv:active,.hist-fchip:active,.byt-pm-card:active{transform:scale(.97)}
+/* ── page/tab cross-fade ── */
+#marketView,#ordersView,#historyView{transition:opacity .22s var(--mo),transform .22s var(--mo)}
+.p2p-v-out{opacity:0!important;transform:translateY(-6px)!important;pointer-events:none!important}
+.p2p-v-in{opacity:0;transform:translateY(10px)}
+.p2p-v-in.p2p-v-on{opacity:1;transform:none}
+/* ── generic sheet / overlay / popup motion ── */
+.p2p-anim-in{animation:p2pFadeIn .3s var(--mo) both}
+.p2p-anim-out{animation:p2pFadeOut .26s var(--mo) both}
+.p2p-anim-in.p2p-anim-sheet{animation:p2pSheetIn .32s var(--mo) both}
+.p2p-anim-out.p2p-anim-sheet{animation:p2pSheetOut .28s var(--mo) both}
+@keyframes p2pFadeIn{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:none}}
+@keyframes p2pFadeOut{from{opacity:1;transform:none}to{opacity:0;transform:scale(.98)}}
+@keyframes p2pSheetIn{from{opacity:0;transform:translateY(100%)}to{opacity:1;transform:none}}
+@keyframes p2pSheetOut{from{opacity:1;transform:none}to{opacity:0;transform:translateY(100%)}}
+/* ── tab underline slide ── */
+.tab,.byt-tab,.byt-pt{transition:color .25s var(--mo)}
+.tab::after,.byt-pt::after{transition:width .28s var(--mo),left .28s var(--mo),transform .28s var(--mo)}
+/* ══ HISTORY — SOLID SURFACES (no frosted glass) ══ */
+#historyView{background:transparent}
+#histContainer .hist-card{
+  background:#141720!important;background-image:none!important;
+  -webkit-backdrop-filter:none!important;backdrop-filter:none!important;
+  border:1px solid rgba(255,255,255,.07)!important;border-radius:14px!important;box-shadow:none!important;
+}
+#histContainer .hist-card:hover{background:#171b25!important}
+#histContainer .hist-section-title{
+  background:#0F1218!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;
+  border-radius:12px;padding:10px 12px;border:1px solid rgba(255,255,255,.05);
+}
+body.on-history .byt-top,body.on-history .tabs,body.on-history .byt-bot,body.on-history .pending-floating,body.on-history .toast{
+  -webkit-backdrop-filter:none!important;backdrop-filter:none!important;background:#0B0D13!important;
+}
+#histDetailOverlay{background:rgba(0,0,0,.74)!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+#histDetailOverlay .sheet,#histDetailOverlay .sheet-inner{
+  background:#0F1218!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;
+  border:1px solid rgba(255,255,255,.07)!important;
+}
+#histDetailContent .hd-top-banner,#histDetailContent .hd-rows-card{
+  background:#141720!important;background-image:none!important;
+  -webkit-backdrop-filter:none!important;backdrop-filter:none!important;border:1px solid rgba(255,255,255,.07)!important;
+}
+/* light theme — solid too */
+body.p2p-light #histContainer .hist-card,body.p2p-light #histDetailContent .hd-top-banner,body.p2p-light #histDetailContent .hd-rows-card{
+  background:#ffffff!important;border:1px solid #eaecef!important;box-shadow:none!important;backdrop-filter:none!important;
+}
+body.p2p-light #histContainer .hist-section-title{background:#f7f8fa!important;border:1px solid #eaecef!important;color:#5e6673!important}
+body.p2p-light #histDetailOverlay{background:rgba(16,18,22,.45)!important}
+body.p2p-light #histDetailOverlay .sheet{background:#ffffff!important;border:1px solid #eaecef!important}
+body.p2p-light.on-history .byt-top,body.p2p-light.on-history .tabs,body.p2p-light.on-history .byt-bot{background:#ffffff!important;backdrop-filter:none!important}
+/* ── history status filter chips ── */
+.hist-filters{display:flex;gap:8px;padding:12px 14px 2px;overflow-x:auto;scrollbar-width:none}
+.hist-filters::-webkit-scrollbar{display:none}
+.hist-fchip{
+  flex:0 0 auto;padding:7px 14px;border-radius:999px;font-size:10px;font-weight:800;letter-spacing:.08em;
+  text-transform:uppercase;cursor:pointer;border:1px solid rgba(255,255,255,.09);
+  background:#141720;color:#8b90a0;
+}
+.hist-fchip.on{background:#FFD24A;color:#0A0A0A;border-color:#FFD24A}
+body.p2p-light .hist-fchip{background:#f7f8fa;border-color:#eaecef;color:#5e6673}
+body.p2p-light .hist-fchip.on{background:#0b0e11;color:#fff;border-color:#0b0e11}
+.hist-card{animation:p2pRowIn .26s var(--mo) both}
+@keyframes p2pRowIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
+<script>
+/* ═══ 1. SHARED MOTION HELPERS ═══════════════════════════════════ */
+(function(){
+  var REDUCE = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var busy = false;
+
+  /* One helper every screen/tab/view swap goes through. */
+  window.showScreen = function(hideEl, showEl, dir){
+    if(busy || hideEl === showEl) return;
+    busy = true;
+    var D = REDUCE ? 1 : 260;
+    if(showEl){
+      showEl.style.display = 'block';
+      showEl.classList.add('p2p-v-in');
+      if(dir) showEl.style.transform = 'translateX(' + (dir * 14) + 'px)';
+      requestAnimationFrame(function(){ requestAnimationFrame(function(){
+        showEl.style.transform = '';
+        showEl.classList.add('p2p-v-on');
+      }); });
+    }
+    if(hideEl){
+      hideEl.classList.add('p2p-v-out');
+      setTimeout(function(){
+        hideEl.classList.remove('p2p-v-out');
+        hideEl.style.display = 'none';
+      }, REDUCE ? 1 : 170);
+    }
+    setTimeout(function(){
+      if(showEl) showEl.classList.remove('p2p-v-in','p2p-v-on');
+      busy = false;
+    }, D + 40);
+  };
+
+  /* Animated open/close for ANY panel, sheet, overlay, dropdown or popup:
+     the closing animation always plays BEFORE display:none is applied.   */
+  var PANEL = '.sheet,.overlay,.sheet-bg,.popup,.dropdown,.alert-box,.chat-wrap,#dealPage,#sidebarOverlay,[data-anim-panel]';
+  function isSheet(el){ return el.classList.contains('sheet') || el.id === 'dealPage' || el.classList.contains('chat-wrap'); }
+
+  function animateOpen(el){
+    if(REDUCE) return;
+    el.classList.remove('p2p-anim-out');
+    el.classList.add('p2p-anim-in');
+    if(isSheet(el)) el.classList.add('p2p-anim-sheet');
+    setTimeout(function(){ el.classList.remove('p2p-anim-in','p2p-anim-sheet'); }, 340);
+  }
+  function animateClose(el, apply){
+    if(REDUCE){ apply(); return; }
+    el.__p2pClosing = true;
+    el.classList.remove('p2p-anim-in');
+    el.classList.add('p2p-anim-out');
+    if(isSheet(el)) el.classList.add('p2p-anim-sheet');
+    setTimeout(function(){
+      el.classList.remove('p2p-anim-out','p2p-anim-sheet');
+      apply();
+      el.__p2pClosing = false;
+    }, 270);
+  }
+  window.p2pAnimateOpen = animateOpen;
+  window.p2pAnimateClose = animateClose;
+
+  function visible(el){
+    var d = el.style.display;
+    if(d === 'none') return false;
+    return el.offsetParent !== null || d === 'flex' || d === 'block';
+  }
+
+  var obs = new MutationObserver(function(muts){
+    muts.forEach(function(m){
+      var el = m.target;
+      if(!el || el.nodeType !== 1 || !el.matches || !el.matches(PANEL)) return;
+      if(el.__p2pClosing) return;
+      var now = visible(el);
+      if(now && !el.__p2pVisible){ el.__p2pVisible = true; el.__p2pDisp = el.style.display || 'block'; animateOpen(el); }
+      else if(!now && el.__p2pVisible){
+        el.__p2pVisible = false;
+        var disp = el.__p2pDisp || 'block';
+        el.style.display = disp;
+        animateClose(el, function(){ el.style.display = 'none'; });
+      }
+    });
+  });
+  try{ obs.observe(document.documentElement, {subtree:true, attributes:true, attributeFilter:['style','class']}); }catch(e){}
+})();
+
+/* ═══ 2. TAB SWITCHING → routed through showScreen (no instant swap) ═══ */
+(function(){
+  var orig = window.switchTab;
+  if(typeof orig !== 'function' || orig.__animWrapped) return;
+  var ORDER = ['market','orders','history'];
+  window.switchTab = function(v){
+    var cur = null;
+    ORDER.forEach(function(x){
+      var el = document.getElementById(x + 'View');
+      if(el && el.style.display !== 'none') cur = x;
+    });
+    if(cur === v){ if(v === 'history' && typeof renderHist === 'function') renderHist(); return; }
+    var hideEl = cur ? document.getElementById(cur + 'View') : null;
+    var showEl = document.getElementById(v + 'View');
+    var dir = ORDER.indexOf(v) >= ORDER.indexOf(cur) ? 1 : -1;
+    /* let the original run for all its side-effects, then re-do the swap smoothly */
+    var r;
+    try{ r = orig.apply(this, arguments); }catch(e){}
+    try{
+      if(hideEl && showEl){
+        hideEl.style.display = 'block';
+        showEl.style.display = 'none';
+        window.showScreen(hideEl, showEl, dir);
+      }
+    }catch(e){}
+    document.body.classList.toggle('on-history', v === 'history');
+    return r;
+  };
+  window.switchTab.__animWrapped = true;
+})();
+
+/* ═══ 3. HISTORY — every status, de-duplicated, with filter chips ═══ */
+(function(){
+  window.histFilter = window.histFilter || 'all';
+  /* hist/orders are script-scoped lets in this document — read them safely. */
+  function HIST(){ try{ if(typeof hist !== 'undefined' && Array.isArray(hist)) return hist; }catch(e){} return Array.isArray(window.hist) ? window.hist : []; }
+  function ORDERS(){ try{ if(typeof orders !== 'undefined' && Array.isArray(orders)) return orders; }catch(e){} return Array.isArray(window.orders) ? window.orders : []; }
+  var TERMINAL = ['COMPLETED','CANCELLED','CANCELED','REJECTED','FAILED','EXPIRED'];
+
+  function statusClass(s){
+    s = String(s || 'pending').toUpperCase();
+    if(s === 'COMPLETED' || s === 'SUCCESS' || s === 'APPROVED') return 'completed';
+    if(s === 'CANCELLED' || s === 'CANCELED' || s === 'EXPIRED') return 'cancelled';
+    if(s === 'REJECTED' || s === 'FAILED') return 'rejected';
+    return 'pending';
+  }
+  window.histStatusClass = statusClass;
+
+  /* Merge: every history row + any terminal order that has no history row yet.
+     Nothing is filtered out by status and nothing is shown twice.            */
+  function buildRows(){
+    var out = [], seen = {};
+    var list = HIST().slice();
+    list.forEach(function(h){
+      if(!h) return;
+      var key = h.hid || ((h.orderId || '') + '|' + h.type + '|' + h.amt + '|' + (h.ts || ''));
+      var dkey = (h.orderId ? 'o' + h.orderId + '|' + statusClass(h.status) : 'k' + key);
+      if(seen[dkey]) return;
+      seen[dkey] = 1;
+      out.push(h);
+    });
+    ORDERS().forEach(function(o){
+      if(!o) return;
+      var st = String(o.status || '').toUpperCase();
+      if(TERMINAL.indexOf(st) === -1) return;
+      var dkey = 'o' + o.id + '|' + statusClass(st);
+      if(seen[dkey]) return;
+      seen[dkey] = 1;
+      out.push({
+        hid: 'ord_' + o.id, orderId: o.id,
+        type: (o.mode || 'P2P') + (statusClass(st) === 'completed' ? '' : '_CANCEL'),
+        amt: o.usdt, status: st === 'CANCELED' ? 'CANCELLED' : st,
+        ts: o.closedAt || o.time || Date.now(),
+        date: new Date(o.closedAt || o.time || Date.now()).toLocaleString('en-IN', {timeZone:'Asia/Kolkata'}),
+        isoDate: new Date(o.closedAt || o.time || Date.now()).toISOString(),
+        merchant: o.merchant, rate: o.rate, inr: o.inr
+      });
+    });
+    out.sort(function(a, b){ return (b.ts || 0) - (a.ts || 0); });
+    window.__histAll = out;
+    return out;
+  }
+  window.buildHistRows = buildRows;
+
+  window.setHistFilter = function(f){
+    window.histFilter = f;
+    renderHist();
+  };
+
+  function chips(counts){
+    var defs = [['all','All',counts.all],['completed','Completed',counts.completed],['cancelled','Cancelled',counts.cancelled]];
+    var h = '<div class="hist-filters">';
+    defs.forEach(function(d){
+      h += '<div class="hist-fchip' + (window.histFilter === d[0] ? ' on' : '') +
+           '" onclick="setHistFilter(\\'' + d[0] + '\\')">' + d[1] + ' (' + d[2] + ')</div>';
+    });
+    return h + '</div>';
+  }
+
+  window.renderHist = function(){
+    var container = document.getElementById('histContainer');
+    if(!container) return;
+    if(typeof currentUser !== 'undefined' && !currentUser){
+      container.innerHTML = '<div class="login-cta"><div class="login-cta-icon">&#128203;</div>' +
+        '<h3>Sign In to See History</h3><p>Login to view your complete transaction history.</p>' +
+        '<button class="login-cta-btn" onclick="openAuth(\\'signin\\')"><i class="fas fa-user"></i> LOGIN / SIGN UP</button></div>';
+      return;
+    }
+    var rows = buildRows();
+    var counts = {all: rows.length, completed: 0, cancelled: 0};
+    rows.forEach(function(h){
+      var c = statusClass(h.status);
+      if(c === 'completed') counts.completed++;
+      if(c === 'cancelled') counts.cancelled++;
+    });
+    var shown = rows.filter(function(h){
+      if(window.histFilter === 'all') return true;
+      return statusClass(h.status) === window.histFilter;
+    });
+    var html = chips(counts);
+    if(!shown.length){
+      container.innerHTML = html + '<div class="empty">No Transactions Yet</div>';
+      return;
+    }
+    html += '<div class="hist-section-title">' + shown.length + ' Transaction' + (shown.length !== 1 ? 's' : '') + '</div>';
+    shown.forEach(function(h){
+      var ti = (typeof histTypeIcon === 'function') ? histTypeIcon(h.type) : {icon:'&#8226;', cls:''};
+      var sl = statusClass(h.status);
+      var dot = sl === 'pending' ? 'animation:pulse 1.5s infinite;' : '';
+      var prefix = (typeof histAmtPrefix === 'function') ? histAmtPrefix(h.type) : '';
+      var color = (typeof histAmtColor === 'function') ? histAmtColor(h.type) : 'inherit';
+      var meta = (typeof histMetaLine === 'function') ? histMetaLine(h) : '';
+      var dateShort = h.date ? String(h.date).split(',')[0] : '&#8212;';
+      var name = (typeof histDisplayName === 'function') ? histDisplayName(h.type) : h.type;
+      var esc = (typeof escHtml === 'function') ? escHtml : function(x){ return x; };
+      html += '<div class="hist-card" onclick="openHistDetail(\\'' + h.hid + '\\')">' +
+        '<div class="hist-icon ' + ti.cls + '">' + ti.icon + '</div>' +
+        '<div class="hist-mid"><div class="hist-type">' + name + '</div>' +
+        '<div class="hist-meta">' + (esc(meta) || dateShort) + '</div></div>' +
+        '<div class="hist-right"><div class="hist-amt" style="color:' + color + ';">' + prefix +
+        (parseFloat(h.amt) || 0).toFixed(2) + ' <span style="font-size:9px;opacity:.5;">USDT</span></div>' +
+        '<div class="hist-pill ' + sl + '"><div class="hist-pill-dot" style="' + dot + '"></div>' +
+        String(h.status || '').toUpperCase() + '</div></div></div>';
+    });
+    container.innerHTML = html;
+  };
+
+  /* Detail popup must open for every row, including merged/cancelled ones. */
+  var origDetail = window.openHistDetail;
+  if(typeof origDetail === 'function' && !origDetail.__allStatuses){
+    window.openHistDetail = function(hid){
+      var all = window.__histAll || [];
+      var row = all.filter(function(x){ return x.hid === hid; })[0];
+      if(row && !HIST().some(function(x){ return x && x.hid === hid; })){
+        try{ HIST().push(row); }catch(e){}
+      }
+      return origDetail.call(this, hid);
+    };
+    window.openHistDetail.__allStatuses = true;
+  }
+
+  /* No terminal order may end without a history row: backfill anything the
+     bot/admin closed remotely (never fabricates data — copies the order).   */
+  var written = {};
+  function backfill(){
+    if(typeof currentUser === 'undefined' || !currentUser) return;
+    if(typeof fbAddHist !== 'function') return;
+    ORDERS().forEach(function(o){
+      if(!o) return;
+      var st = String(o.status || '').toUpperCase();
+      if(TERMINAL.indexOf(st) === -1) return;
+      var key = o.id + '|' + st;
+      if(written[key]) return;
+      var exists = HIST().some(function(h){
+        return h && String(h.orderId || '') === String(o.id) && statusClass(h.status) === statusClass(st);
+      });
+      if(exists){ written[key] = 1; return; }
+      written[key] = 1;
+      var done = statusClass(st) === 'completed';
+      fbAddHist((o.mode || 'P2P') + (done ? '' : '_CANCEL'), o.usdt, done ? 'COMPLETED' : (st === 'CANCELED' ? 'CANCELLED' : st),
+        {merchant:o.merchant, rate:o.rate, inr:o.inr, orderId:o.id});
+    });
+  }
+  setInterval(function(){ try{ backfill(); }catch(e){} }, 2500);
+
+  /* Tag locally-created history rows with their order id so de-dup works. */
+  var origAdd = window.fbAddHist;
+  if(typeof origAdd === 'function' && !origAdd.__tagged){
+    window.fbAddHist = function(type, amt, status, meta){
+      meta = meta || {};
+      if(meta.orderId === undefined && typeof openId !== 'undefined' && openId) meta.orderId = openId;
+      var p = origAdd.call(this, type, amt, status, meta);
+      Promise.resolve(p).then(function(){ try{ renderHist(); }catch(e){} });
+      return p;
+    };
+    window.fbAddHist.__tagged = true;
+  }
+
+  setTimeout(function(){ try{ renderHist(); }catch(e){} }, 1200);
+})();
+<\/script>
 </body>
 </html>`;
 </script>
@@ -12671,7 +13035,8 @@ img.clogo,img.clogo-sm,img[data-sym]{content-visibility:auto;}
 
   function pushToLegacyMirrors(){
     const usdt = NUM(window.balances.USDT);
-    window.userBalance = usdt;
+    const hasUsdt = window.balances && window.balances.USDT !== undefined;
+    if (hasUsdt) { if (window.WalletBalance) window.WalletBalance.set(usdt, {source:'balances-mirror'}); else window.userBalance = usdt; }
     window._coinBalCache = window.balances;
     try {
       if (typeof STATE === 'object' && STATE) {
@@ -12681,7 +13046,8 @@ img.clogo,img.clogo-sm,img[data-sym]{content-visibility:auto;}
         Object.entries(window.balances).forEach(([k, v]) => { if (k !== 'USDT') STATE.coins[k] = NUM(v); });
       }
     } catch(e){}
-    try { document.querySelectorAll('[data-bal-usdt]').forEach(el => { el.textContent = usdt.toFixed(2); }); } catch(e){}
+    try { if (window.WalletBalance) window.WalletBalance.render();
+          else document.querySelectorAll('[data-bal-usdt]').forEach(el => { el.textContent = usdt.toFixed(2); }); } catch(e){}
     ['syncLockedBalanceUI','updateUserUI','renderAssetList','updateConvertPreview','bbRenderCoins'].forEach(fn=>{
       try { typeof window[fn] === 'function' && window[fn](); } catch(e){}
     });
@@ -12820,7 +13186,8 @@ img.clogo,img.clogo-sm,img[data-sym]{content-visibility:auto;}
     [_unsubBal, _unsubLegacy, _unsubHist].forEach(u => { try { u && u(); } catch(e){} });
     _unsubBal = _unsubLegacy = _unsubHist = null;
     _legacySeen = null; _applied = {};
-    window.balances = {}; window._coinBalCache = {}; window.userBalance = 0;
+    window.balances = {}; window._coinBalCache = {};
+    if (window.WalletBalance) window.WalletBalance.reset(); else window.userBalance = 0;
     if (_origOut) _origOut.call(this);
   };
 
@@ -13084,6 +13451,272 @@ body.light.on-p2p::before,body.light.on-p2p::after{display:none!important;conten
  document.addEventListener('click',e=>{const n=e.target.closest('.ni');if(n){n.classList.remove('nav-bounce');void n.offsetWidth;n.classList.add('nav-bounce')}});
  document.addEventListener('DOMContentLoaded',()=>{renderServiceGrids();document.querySelectorAll('[data-earn-logo]').forEach(e=>e.innerHTML=coinLogo(e.dataset.earnLogo,34));document.querySelectorAll('.ern-prod').forEach((e,i)=>e.style.setProperty('--row',i));harvest();renderBalances()});
  setInterval(harvest,900);setInterval(()=>{const e=document.getElementById('totalAssetUSD');if(e&&!e.textContent.trim())console.warn('[BalanceStore] totalAssetUSD became empty')},2000);
+})();
+</script>
+<!-- ═══ BIEXC MAIN-APP PATCH v3 — motion everywhere + rock-solid balance ═══ -->
+<style id="biexc-motion-v3">
+/* press feedback + no grey tap flash */
+*{-webkit-tap-highlight-color:transparent}
+button,.hbm,.hbs,.hbs-icon,.hact,.ecard,.ecsm,.etab,.ni,.sheet-row,.crow,.chip,.filter-chip,.tabx,.home-service,.pf-sv,[role="button"]{
+  transition:transform .12s var(--motion),background-color .2s var(--motion),color .2s var(--motion),border-color .2s var(--motion),opacity .2s var(--motion);
+}
+button:active,.hbm:active,.hbs:active,.hbs-icon:active,.hact:active,.ecard:active,.ecsm:active,.etab:active,.ni:active,.sheet-row:active,.chip:active,.filter-chip:active,.home-service:active,.pf-sv:active{transform:scale(.97)}
+/* option rows / chips select smoothly */
+.etab,.chip,.filter-chip,.sheet-row,.crow{transition:all .2s var(--motion)}
+/* generic panel open/close motion (sheets, popups, dropdowns, overlays) */
+.bx-anim-in{animation:bxPanelIn .3s var(--motion) both}
+.bx-anim-out{animation:bxPanelOut .26s var(--motion) both}
+.bx-anim-in.bx-anim-sheet{animation:bxSheetIn .32s var(--motion) both}
+.bx-anim-out.bx-anim-sheet{animation:bxSheetOut .28s var(--motion) both}
+@keyframes bxPanelIn{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:none}}
+@keyframes bxPanelOut{from{opacity:1;transform:none}to{opacity:0;transform:scale(.98)}}
+@keyframes bxSheetIn{from{opacity:0;transform:translateY(100%)}to{opacity:1;transform:none}}
+@keyframes bxSheetOut{from{opacity:1;transform:none}to{opacity:0;transform:translateY(100%)}}
+/* in-page tab indicator slides */
+.etabs{position:relative}
+.etab.active{transition:background .22s var(--motion),color .22s var(--motion)}
+.tab-pane{transition:opacity .22s var(--motion),transform .22s var(--motion)}
+.tab-pane-out{opacity:0;transform:translateY(-6px);pointer-events:none}
+/* animated balance counter */
+[data-bal-usdt],#totalAssetUSD,#assetsTotalUSD{font-variant-numeric:tabular-nums}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
+<script id="biexc-motion-balance-v3">
+/* ═══════════════════════════════════════════════════════════════════
+   1. MOTION — every panel/sheet/dropdown opens AND closes animated
+   ═══════════════════════════════════════════════════════════════════ */
+(function(){
+  var REDUCE = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var PANEL = '.sheet,.sheet-bg,.overlay,.search-sheet,.popup,.dropdown,.modal,#authOverlay,#sd,[data-anim-panel]';
+  function isSheet(el){ return el.classList.contains('sheet') || el.classList.contains('search-sheet'); }
+
+  function animateOpen(el){
+    if(REDUCE) return;
+    el.classList.remove('bx-anim-out');
+    el.classList.add('bx-anim-in');
+    if(isSheet(el)) el.classList.add('bx-anim-sheet');
+    setTimeout(function(){ el.classList.remove('bx-anim-in','bx-anim-sheet'); }, 340);
+  }
+  function animateClose(el, apply){
+    if(REDUCE){ apply(); return; }
+    el.__bxClosing = true;
+    el.classList.remove('bx-anim-in');
+    el.classList.add('bx-anim-out');
+    if(isSheet(el)) el.classList.add('bx-anim-sheet');
+    setTimeout(function(){
+      el.classList.remove('bx-anim-out','bx-anim-sheet');
+      apply();
+      el.__bxClosing = false;
+    }, 270);
+  }
+  window.bxAnimateOpen = animateOpen;
+  window.bxAnimateClose = animateClose;
+
+  /* One helper for any two-panel swap (screens, tabs, sub-views). */
+  var swapping = false;
+  window.showScreen = function(hideEl, showEl, dir){
+    if(swapping || hideEl === showEl) return;
+    swapping = true;
+    if(showEl){
+      showEl.classList.add('tab-pane');
+      showEl.style.display = showEl.dataset.bxDisp || 'block';
+      showEl.style.opacity = '0';
+      showEl.style.transform = 'translate' + (dir ? 'X(' + (dir * 14) + 'px)' : 'Y(10px)');
+      requestAnimationFrame(function(){ requestAnimationFrame(function(){
+        showEl.style.opacity = '1';
+        showEl.style.transform = 'none';
+      }); });
+    }
+    if(hideEl){
+      hideEl.classList.add('tab-pane','tab-pane-out');
+      setTimeout(function(){
+        hideEl.classList.remove('tab-pane-out');
+        hideEl.style.display = 'none';
+      }, REDUCE ? 1 : 170);
+    }
+    setTimeout(function(){ swapping = false; }, REDUCE ? 10 : 300);
+  };
+
+  function visible(el){
+    var d = el.style.display;
+    if(d === 'none') return false;
+    return el.offsetParent !== null || d === 'flex' || d === 'block';
+  }
+  var obs = new MutationObserver(function(muts){
+    muts.forEach(function(m){
+      var el = m.target;
+      if(!el || el.nodeType !== 1 || !el.matches || !el.matches(PANEL)) return;
+      if(el.__bxClosing) return;
+      var now = visible(el);
+      if(now && !el.__bxVisible){ el.__bxVisible = true; el.__bxDisp = el.style.display || 'block'; animateOpen(el); }
+      else if(!now && el.__bxVisible){
+        el.__bxVisible = false;
+        el.style.display = el.__bxDisp || 'block';
+        animateClose(el, function(){ el.style.display = 'none'; });
+      }
+    });
+  });
+  try{ obs.observe(document.documentElement, {subtree:true, attributes:true, attributeFilter:['style','class']}); }catch(e){}
+})();
+
+/* ═══════════════════════════════════════════════════════════════════
+   2. WALLET BALANCE — ONE store, ONE setter, ONE renderer.
+      A momentary null / empty / NaN snapshot can never paint 0.
+   ═══════════════════════════════════════════════════════════════════ */
+(function(){
+  var CACHE = 'biexc_wallet_usdt_v1';
+  var REDUCE = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var value = null;          /* last known good value */
+  var loaded = false;        /* a real value has arrived at least once */
+  var zeroStrikes = 0;
+  var raf = 0, rendering = false, wantAnim = false;
+  var shown = null, animId = 0;
+
+  /* seed from whatever the page already knew, else last cached value */
+  var seed = Number(window.userBalance);
+  if(!Number.isFinite(seed) || seed <= 0){
+    try{ var c = parseFloat(localStorage.getItem(CACHE)); if(Number.isFinite(c) && c >= 0) seed = c; }catch(e){}
+  }
+  if(Number.isFinite(seed) && seed > 0) value = seed;
+
+  function get(){ return Number.isFinite(value) ? value : 0; }
+
+  /* re-read Firebase before ever believing a 0 */
+  var confirming = false;
+  function confirmZero(){
+    if(confirming) return;
+    var fb = window._fb, u = window.currentFbUser;
+    var uid = u ? (u.firebaseUid || u.uid) : (fb && fb.auth && fb.auth.currentUser ? fb.auth.currentUser.uid : null);
+    if(!fb || !fb.get || !uid) return;
+    confirming = true;
+    Promise.resolve(fb.get(fb.ref(fb.db, 'users/' + uid + '/balance'))).then(function(snap){
+      confirming = false;
+      var v = snap && snap.val();
+      if(v === null || v === undefined) return;          /* not ready — keep last good */
+      var n = parseFloat(v);
+      if(Number.isFinite(n) && n === 0) set(0, {force:true, source:'confirmed'});
+      else if(Number.isFinite(n)) set(n, {source:'confirm-read'});
+    }).catch(function(){ confirming = false; });
+  }
+
+  function set(next, opts){
+    opts = opts || {};
+    var n = (typeof next === 'string') ? parseFloat(next) : Number(next);
+    if(next === null || next === undefined || !Number.isFinite(n) || n < 0) return get();  /* null / NaN / empty snapshot */
+    if(n === 0 && !opts.force && Number.isFinite(value) && value > 0){
+      zeroStrikes++;
+      confirmZero();
+      if(zeroStrikes < 2) return get();                  /* unconfirmed 0 → ignore */
+    }
+    if(n !== 0) zeroStrikes = 0;
+    var changed = !Number.isFinite(value) || Math.abs(value - n) > 1e-9;
+    value = n;
+    loaded = true;
+    window.__balanceReady = true;
+    try{ localStorage.setItem(CACHE, String(n)); }catch(e){}
+    try{ if(typeof STATE === 'object' && STATE) STATE.balance = n; }catch(e){}
+    if(rendering && !changed) return n;
+    wantAnim = wantAnim || changed;
+    schedule();
+    return n;
+  }
+
+  function schedule(){
+    if(raf) return;
+    raf = requestAnimationFrame(function(){
+      raf = 0;
+      var anim = wantAnim; wantAnim = false;
+      rendering = true;
+      try{ render(anim); }catch(e){}
+      rendering = false;
+    });
+  }
+
+  function paint(v){
+    var txt = v.toFixed(2);
+    document.querySelectorAll('[data-bal-usdt]').forEach(function(el){
+      el.textContent = txt;
+      el.classList.remove('balance-skeleton');
+    });
+    shown = v;
+  }
+
+  function countTo(target){
+    var from = Number.isFinite(shown) ? shown : target;
+    if(REDUCE || Math.abs(target - from) < 0.005){ paint(target); return; }
+    var t0 = performance.now(), dur = 420, id = ++animId;
+    (function step(now){
+      if(id !== animId) return;
+      var p = Math.min(1, (now - t0) / dur);
+      var e = 1 - Math.pow(1 - p, 3);
+      paint(from + (target - from) * e);
+      if(p < 1) requestAnimationFrame(step); else paint(target);
+    })(t0);
+  }
+
+  /* the ONLY place balance text is written into the DOM */
+  function render(anim){
+    if(!loaded && !Number.isFinite(value)){
+      document.querySelectorAll('[data-bal-usdt]').forEach(function(el){ el.classList.add('balance-skeleton'); });
+    } else if(anim){ countTo(get()); } else { paint(get()); }
+    ['syncLockedBalanceUI','updateUserUI','renderAssetList','updateConvertPreview','bbRenderCoins'].forEach(function(fn){
+      try{ if(typeof window[fn] === 'function') window[fn](); }catch(e){}
+    });
+  }
+
+  window.WalletBalance = {
+    get: get,
+    set: set,
+    reset: function(){ set(0, {force:true, source:'logout'}); },
+    isReady: function(){ return loaded; },
+    render: function(){ wantAnim = false; schedule(); }
+  };
+
+  /* window.userBalance is now read-only-by-contract: every write is validated */
+  try{
+    Object.defineProperty(window, 'userBalance', {
+      configurable: true,
+      get: get,
+      set: function(v){ set(v, {source:'legacy-assign'}); }
+    });
+  }catch(e){}
+
+  /* logout is the one intentional zero */
+  ['onFirebaseLogout'].forEach(function(k){
+    var orig = window[k];
+    window[k] = function(){
+      window.WalletBalance.reset();
+      if(typeof orig === 'function') return orig.apply(this, arguments);
+    };
+  });
+
+  /* 3. the display store (totals) must never accept an unconfirmed 0 either */
+  var origUpd = window.updateBalanceStore;
+  if(typeof origUpd === 'function' && !origUpd.__guarded){
+    var zs = {};
+    window.updateBalanceStore = function(next){
+      next = next || {};
+      var out = {};
+      Object.keys(next).forEach(function(k){
+        var v = next[k];
+        if(k === 'btcEq' || k === 'pnl'){ out[k] = v; return; }
+        var n = Number(v);
+        var prev = Number(window.BalanceStore && window.BalanceStore[k]);
+        if(!Number.isFinite(n)) return;                                  /* drop NaN */
+        if(n === 0 && Number.isFinite(prev) && prev > 0){
+          zs[k] = (zs[k] || 0) + 1;
+          if(zs[k] < 2) return;                                          /* unconfirmed 0 */
+        } else { zs[k] = 0; }
+        out[k] = n;
+      });
+      if(!Object.keys(out).length) return;
+      return origUpd.call(this, out);
+    };
+    window.updateBalanceStore.__guarded = true;
+  }
+
+  document.addEventListener('DOMContentLoaded', function(){ window.WalletBalance.render(); });
+  window.WalletBalance.render();
 })();
 </script>
 </body>
