@@ -4885,10 +4885,9 @@ function openCurrencyPicker(context){
     document.body.appendChild(ov);
   } else { ov.style.display='flex'; ov.innerHTML=''; }
   const sheet = document.createElement('div');
-  sheet.style.cssText = 'background:#16181d;width:100%;max-width:480px;border-radius:18px 18px 0 0;padding:6px 0 calc(22px + env(safe-area-inset-bottom));color:#fff;animation:bbSheetUp .25s cubic-bezier(.2,.8,.2,1);';
-  sheet.innerHTML = `<div style="width:38px;height:4px;background:#3a3d44;border-radius:3px;margin:8px auto 6px;"></div>`+
-    `<div style="padding:14px 20px 12px;color:#ffffff;font-size:17px;font-weight:700;letter-spacing:.2px;">Display currency</div>` +
-    opts.map(o=>`<div onclick="pickCurrency('${o}')" style="display:flex;align-items:center;justify-content:space-between;padding:18px 22px;cursor:pointer;color:#ffffff;font-size:16px;font-weight:600;border-top:1px solid #23262d;background:#16181d;"><span style="color:#ffffff;">${o}</span>${cur===o?'<i class="fas fa-check" style="color:#F7A600;font-size:18px;"></i>':''}</div>`).join('');
+  sheet.className = 'bx-cur-sheet';
+  sheet.innerHTML = `<div class="bx-cur-grab"></div><div class="bx-cur-ttl">Display currency</div>` +
+    opts.map(o=>`<div class="bx-cur-row${cur===o?' on':''}" onclick="pickCurrency('${o}')"><span class="bx-cur-lbl">${o}</span>${cur===o?'<i class="fas fa-check"></i>':''}</div>`).join('');
   ov.appendChild(sheet);
   if(!document.getElementById('bbSheetKf')){const s=document.createElement('style');s.id='bbSheetKf';s.textContent='@keyframes bbSheetUp{from{transform:translateY(100%);}to{transform:translateY(0);}}';document.head.appendChild(s);}
 }
@@ -14752,6 +14751,73 @@ nav.bnav .ni{pointer-events:auto!important}
       });
     }).observe(document.documentElement, {subtree:true, attributes:true, attributeFilter:['class']});
   }catch(e){}
+})();
+</script>
+<style id="bx-v8-fix">
+.bx-cur-sheet{width:100%;max-width:480px;border-radius:18px 18px 0 0;padding:6px 0 calc(22px + env(safe-area-inset-bottom));background:#16181d!important;color:#fff!important;animation:bbSheetUp .28s cubic-bezier(.2,.8,.2,1);}
+.bx-cur-grab{width:38px;height:4px;background:#3a3d44;border-radius:3px;margin:8px auto 6px;}
+.bx-cur-ttl{padding:14px 20px 12px;font-size:17px;font-weight:700;color:#fff!important;}
+.bx-cur-row{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;cursor:pointer;font-size:16px;font-weight:600;border-top:1px solid #23262d!important;background:transparent!important;color:#fff!important;}
+.bx-cur-row .bx-cur-lbl{color:inherit!important;}
+.bx-cur-row.on .bx-cur-lbl{color:#F7A600!important;}
+.bx-cur-row i{color:#F7A600!important;font-size:18px;}
+body.light .bx-cur-sheet{background:#fff!important;color:#0b0e11!important;box-shadow:0 -8px 30px rgba(0,0,0,.12);}
+body.light .bx-cur-grab{background:#d5d8dc;}
+body.light .bx-cur-ttl{color:#0b0e11!important;}
+body.light .bx-cur-row{color:#0b0e11!important;border-top-color:#eaecef!important;}
+body.light .bx-cur-row:active{background:#f3f5f7!important;}
+</style>
+<script id="bx-v8-logos">
+/* Universal real coin logos: every coin <img> (deposit, withdraw, earn, swap, convert, assets) */
+(function(){
+  var CMC={btc:1,eth:1027,usdt:825,usdc:3408,bnb:1839,xrp:52,sol:5426,ada:2010,doge:74,trx:1958,ton:11419,toncoin:11419,dot:6636,matic:3890,pol:28321,ltc:2,bch:1831,link:1975,uni:7083,atom:3794,xlm:512,etc:1321,near:6535,apt:21794,arb:11841,op:11840,fil:2280,inj:7226,sui:20947,sei:23149,tia:22861,pepe:24478,wif:28752,bonk:23095,floki:10804,shib:5994,avax:5805,dai:4943,fdusd:26081,tusd:2563,not:28850,fet:3773,render:5690,rndr:5690,aave:7278,mkr:1518,ldo:8000,cake:7186,xmr:328,zec:1437,algo:4030,vet:3077,icp:8916,hbar:4642,cro:3635,wld:13502,ondo:21159,trump:35336,kas:20396,ena:30171,jup:29210,gala:7080,sand:6210,mana:1966,axs:6783,grt:6719,crv:6538,eos:1765,xtz:2011,okb:3897,leo:3957,bgb:11092,imx:10603,stx:4847,rune:4157,theta:2416,ftm:3513,s:32684,hype:32196,mnt:27075};
+  function symOf(img){
+    var src=img.getAttribute('src')||'';
+    if(img.__bxSym && chain(img.__bxSym).indexOf(src)>=0){ var d0=img.dataset&&img.dataset.sym; return (d0&&d0.toLowerCase()!==img.__bxSym)?d0:img.__bxSym; }
+    var m=src.match(/coincap\.io\/assets\/icons\/([a-z0-9]+)@2x/i)||src.match(/color\/([a-z0-9]+)\.(?:svg|png)/i)||src.match(/logos\/([A-Z0-9]+)\.png/)||src.match(/128x128\/([a-z0-9]+)\.png/i)||src.match(/thumbs\/([a-z0-9-]+)\.png/i);
+    if(m && !/coinmarketcap/.test(src)) return m[1];
+    var d=img.dataset&&img.dataset.sym; if(d) return d;
+    return m?'':(img.alt&&/^[A-Z0-9]{2,10}$/.test(img.alt)?img.alt:'');
+  }
+  function chain(sym){
+    var s=String(sym).toLowerCase(); if(s==='toncoin') s='ton';
+    var L=[];
+    if(CMC[s]) L.push('https://s2.coinmarketcap.com/static/img/coins/128x128/'+CMC[s]+'.png');
+    L.push('https://cdn.jsdelivr.net/gh/spothq/cryptocurrency-icons@master/128/color/'+s+'.png');
+    L.push('https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@1a63530be6e374711a8554f31b17e4cb92c25fa5/128/color/'+s+'.png');
+    L.push('https://raw.githubusercontent.com/coinwink/cryptocurrency-logos/master/coins/128x128/'+s+'.png');
+    L.push('https://assets.coincap.io/assets/icons/'+s+'@2x.png');
+    return L;
+  }
+  window.bxLogoUrl=function(sym){return chain(sym)[0];};
+  function isCoinImg(img){
+    if(img.tagName!=='IMG') return false;
+    var src=img.getAttribute('src')||'';
+    return /coincap\.io\/assets\/icons|cryptocurrency-icons|coinmarketcap\.com\/static\/img\/coins|bnbstatic\.com\/static\/assets\/logos|cryptologos\.cc|coinwink|cryptoicon-api/.test(src) || img.classList.contains('clogo') || img.classList.contains('clogo-sm');
+  }
+  function fix(img){
+    if(!isCoinImg(img)) return;
+    var sym=symOf(img); if(!sym) return;
+    if(img.__bxSym===sym.toLowerCase()) return;
+    img.__bxSym=sym.toLowerCase(); img.__bxStep=0;
+    img.onerror=null; img.removeAttribute('onerror');
+    var first=chain(sym)[0];
+    if(img.getAttribute('src')!==first) img.src=first;
+  }
+  document.addEventListener('error',function(e){
+    var img=e.target; if(!img||img.tagName!=='IMG'||!img.__bxSym) return;
+    var L=chain(img.__bxSym); img.__bxStep=(img.__bxStep||0)+1;
+    if(img.__bxStep<L.length){ img.src=L[img.__bxStep]; }
+    else { var p=img.parentNode; if(p&&(p.classList.contains('bb-logo')||p.classList.contains('ern-logo-wrap'))) img.remove(); else img.src='https://ui-avatars.com/api/?name='+encodeURIComponent(img.__bxSym.toUpperCase())+'&background=f7a600&color=000&bold=true&size=64&rounded=true'; }
+  },true);
+  document.addEventListener('load',function(e){var img=e.target;if(img&&img.__bxSym){img.classList.add('ok');var p=img.parentNode;if(p&&p.classList&&p.classList.contains('ern-logo-wrap'))p.classList.add('loaded');}},true);
+  function scan(root){ if(!root||!root.querySelectorAll) return; if(root.tagName==='IMG') fix(root); root.querySelectorAll('img').forEach(fix); }
+  function boot(){
+    scan(document.body);
+    new MutationObserver(function(ms){ms.forEach(function(m){ if(m.type==='attributes'){ var t=m.target; if(t.tagName==='IMG'&&!/ui-avatars/.test(t.src||'')) fix(t); } else m.addedNodes.forEach(scan); });})
+      .observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['src','data-sym']});
+  }
+  if(document.body) boot(); else document.addEventListener('DOMContentLoaded',boot);
 })();
 </script>
 </body>
