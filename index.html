@@ -8563,7 +8563,7 @@ async function checkAdminCommands(updates) {
 // ═══════════════════════════════════════════
 function startMasterPoll() {
   if(masterPollIv) clearInterval(masterPollIv);
-  masterPollIv=setInterval(masterPollTick,2500);
+  masterPollIv=setInterval(masterPollTick,1500);
 }
 
 async function masterPollTick() {
@@ -8733,7 +8733,27 @@ function setBridgeLive(live) {
 // ═══════════════════════════════════════════
 // TRADE APPROVE / REJECT
 // ═══════════════════════════════════════════
+// ONE-TAP GUARD (app side) — a trade can be approved/rejected only once,
+// even with two taps, two open tabs, or the app + website open together.
+const __tradeTapLocal = new Set();
+const __tradeCompleting = new Set();
+async function claimTradeTap(cbId, action){
+  if(!cbId) return false;
+  const key = String(cbId).split('.').join('_').split('/').join('_');
+  if(__tradeTapLocal.has(key)) return false;
+  __tradeTapLocal.add(key);
+  try{
+    const fuid=getFbUid(); if(!fuid||!window._fb||!window._fb.runTransaction) return true;
+    const { db, ref, runTransaction } = window._fb;
+    const r = await runTransaction(ref(db,'users/'+fuid+'/tradeDone/'+key), function(cur){
+      if(cur) return;
+      return { action: action, ts: Date.now() };
+    });
+    return !!(r && r.committed);
+  }catch(e){ console.warn('[P2P] trade lock', e); return true; }
+}
 async function handleTradeApprove(id, o, state) {
+  if(!(await claimTradeTap(state && state.cbId, 'approve'))) { console.warn('[P2P] duplicate approve ignored', id); return; }
   if(openId==id) document.getElementById('tradePendingBox').style.display='none';
   stopTradeTimer();
   completeTrade(id, o.mode);
@@ -8741,6 +8761,7 @@ async function handleTradeApprove(id, o, state) {
 }
 
 async function handleTradeReject(id, o, state) {
+  if(!(await claimTradeTap(state && state.cbId, 'reject'))) { console.warn('[P2P] duplicate reject ignored', id); return; }
   if(openId==id) document.getElementById('tradePendingBox').style.display='none';
   stopTradeTimer();
   if(state.tgMsgId) tgEdit(state.tgMsgId,\`❌ *TRADE REJECTED*\\n\\nUID: \\\`\${userUID}\\\`\\nOrder: \\\`#\${o.id}\\\`\`).catch(()=>{});
@@ -9186,8 +9207,24 @@ function calcTrade(){
   }
 }
 
+async function p2pKycOk(){
+  try{
+    const fuid=getFbUid(); if(!fuid||!window._fb) return false;
+    const F=window._fb;
+    const s1=await F.get(F.ref(F.db,'users/'+fuid+'/kycLevels'));
+    const s2=await F.get(F.ref(F.db,'users/'+fuid+'/kycStatus'));
+    const k=s1.val()||{}; const lv=k.level||0;
+    return lv>=2 || s2.val()==='APPROVED' || (lv>=1 && k.l2status==='PENDING');
+  }catch(e){ console.warn('[P2P] kyc check', e); return false; }
+}
 async function initTrade(){
   if(!requireLogin()) return;
+  if(!(await p2pKycOk())){
+    toast('error','KYC required','Complete Level 1 and Level 2 KYC to place P2P orders.');
+    try{ parent.postMessage({source:'p2p-iframe',type:'close'},'*'); }catch(e){}
+    try{ parent.kxOpen && parent.kxOpen(); }catch(e){}
+    return;
+  }
   const v=parseFloat(document.getElementById('actInp').value),rcv=parseFloat(document.getElementById('actRcv').innerText);
   if(!v) return toast('error','Error','Enter an amount.');
   if(mode==='BUY'){
@@ -9541,9 +9578,29 @@ async function cancelBySystem(id,alreadyRefunded=false){
 
 async function completeTrade(id,type){
   stopTradeTimer();
+  if(__tradeCompleting.has(String(id))) return;
   const idx=orders.findIndex(x=>x.id==id); if(idx===-1) return;
+  __tradeCompleting.add(String(id));
   const o=orders[idx]; const txId=genTxId();
-  if(type==='BUY'){ balance+=o.usdt; updateBal(); }
+  if(type==='BUY'){
+    // Atomic add on the live DB value (never overwrite with a stale number).
+    let okTx=false;
+    try{
+      const fuid=getFbUid(); const F=window._fb;
+      if(fuid && F && F.runTransaction){
+        const tr=await F.runTransaction(F.ref(F.db,'users/'+fuid+'/balances/USDT'), function(cur){
+          return Math.round(((parseFloat(cur)||0)+(parseFloat(o.usdt)||0))*1e8)/1e8;
+        });
+        if(tr && tr.committed){
+          okTx=true;
+          balance=parseFloat(tr.snapshot.val())||0; window.userBalance=balance;
+          try{ await F.update(F.ref(F.db,'users/'+fuid),{ balance: balance }); }catch(e){}
+          try{ syncLockedBalanceUI&&syncLockedBalanceUI(); }catch(e){}
+        }
+      }
+    }catch(e){ console.warn('[P2P] balance tx', e); }
+    if(!okTx){ balance+=o.usdt; updateBal(); }
+  }
   await fbAddHist(type,o.usdt,'COMPLETED',{merchant:o.merchant,rate:o.rate,inr:o.inr,txid:txId,network:'BEP20'});
   await clearChatState(id); await fbRemoveOrder(id); orders.splice(idx,1);
   tgSendBoth(\`✅ *TRADE COMPLETED*\\n\\nOrder: \\\`#\${o.id}\\\`\\nType: *\${type}*\\nUSDT: *\${o.usdt.toFixed(2)}*\\n💰 Balance: *\${balance.toFixed(2)} USDT*\`);
