@@ -15487,6 +15487,9 @@ body.light #bxq{--a-bg:#f4f5f6;--a-card:#fff;--a-card2:#ebedf0;--a-line:#dfe2e7;
 @keyframes bxqShake{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
 #bxq .a-mail{width:62px;height:62px;border-radius:14px;background:var(--a-card);border:1px solid var(--a-line);display:flex;align-items:center;justify-content:center;font-size:25px;color:var(--a-acc);margin:24px 0 4px;box-shadow:inset 4px 0 0 var(--a-acc)}
 #bxq .a-resend{text-align:center;font-size:13px;color:var(--a-sub);margin-top:16px}
+#bxq .a-cc{position:absolute;left:40px;bottom:0;height:52px;display:flex;align-items:center;font-weight:800;font-size:15px;color:var(--a-tx);pointer-events:none}
+#bxq .a-in.a-ph{padding-left:78px;letter-spacing:.04em;font-weight:700}
+#bxq .a-meth{margin-bottom:14px}#bxq .a-meth button{display:flex;align-items:center;justify-content:center;gap:7px}#bxq .a-meth .fa-whatsapp{color:#25d366;font-size:15px}
 #bxq .a-trust{display:flex;justify-content:center;gap:14px;margin-top:22px;font-size:11.5px;color:var(--a-sub);flex-wrap:wrap;padding-bottom:8px}
 #bxq .a-trust span{display:flex;align-items:center;gap:6px}
 #bxq .a-trust i{color:var(--a-acc)}
@@ -15497,53 +15500,66 @@ body.light #bxq{--a-bg:#f4f5f6;--a-card:#fff;--a-card2:#ebedf0;--a-line:#dfe2e7;
 <script id="bxq-js">
 (function(){
   var $=function(i){return document.getElementById(i)};
-  var A={mode:'signin',view:'main',email:'',pass:'',name:'',timer:null,left:0,busy:false};
+  var A={mode:'signin',view:'main',method:'email',email:'',phone:'',pass:'',name:'',timer:null,left:0,busy:false};
   var API=function(){return String(window.__BACKEND_URL__||'').replace(/\/$/,'')};
-  var ERR={bad_email:'Enter a valid email address.',weak_password:'Password must be at least 8 characters.',email_exists:'An account with this email already exists. Sign in instead (or use Google if you signed up with Google).',invalid_credentials:'Wrong email or password.',too_soon:'Please wait before requesting another code.',rate_limited:'Too many attempts. Try again in an hour.',send_failed:'Could not send the email. Try again shortly.',not_configured:'Email verification is not set up on the server yet.',no_code:'Request a new code.',expired:'This code has expired. Request a new one.',invalid_code:'Incorrect code.',too_many_tries:'Too many wrong tries. Request a new code.',verify_failed:'Verification failed. Try again.',network:'Server is waking up or unreachable. Please try again in a few seconds.'};
+  var ERR={bad_email:'Enter a valid email address.',weak_password:'Password must be at least 8 characters.',email_exists:'An account with this email already exists. Sign in instead (or use Google if you signed up with Google).',invalid_credentials:'Wrong email or password.',too_soon:'Please wait before requesting another code.',rate_limited:'Too many attempts. Try again in an hour.',send_failed:'Could not send the email. Try again shortly.',not_configured:'Email verification is not set up on the server yet.',no_code:'Request a new code.',expired:'This code has expired. Request a new one.',invalid_code:'Incorrect code.',too_many_tries:'Too many wrong tries. Request a new code.',verify_failed:'Verification failed. Try again.',bad_phone:'Enter a valid 10-digit mobile number.',whatsapp_not_linked:'WhatsApp OTP is temporarily unavailable. Please use Email for now.',not_on_whatsapp:'This number is not on WhatsApp. Use a WhatsApp number or Email.',no_account:'No BIEXC account found with this email.',network:'Server is waking up or unreachable. Please try again in a few seconds.'};
   function esc(s){return String(s||'').replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
   function post(path,body){var c=new AbortController();var t=setTimeout(function(){c.abort()},45000);return fetch(API()+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:c.signal}).then(function(r){return r.json()}).catch(function(){return{ok:false,error:'network'}}).finally(function(){clearTimeout(t)})}
   function msg(t,cls){var m=$('bxqMsg');if(!m)return;if(!t){m.className='a-msg';return}m.className='a-msg show '+(cls||'err');m.innerHTML='<i class="fas '+(cls==='ok'?'fa-circle-check':'fa-circle-exclamation')+'" style="margin-top:2px"></i><div>'+esc(t)+'</div>'}
   function head(back){return '<div class="a-top">'+(back?'<button class="a-ib" onclick="bxqGo(\'main\')" aria-label="Back"><i class="fas fa-arrow-left"></i></button>':'<span></span>')+'<button class="a-ib" onclick="closeAuth()" aria-label="Close"><i class="fas fa-xmark"></i></button></div>'}
-  var trust='<div class="a-trust"><span><i class="fas fa-shield-halved"></i>Encrypted</span><span><i class="fas fa-envelope-circle-check"></i>Email OTP protected</span><span><i class="fas fa-headset"></i>24×7 Support</span></div>';
+  var trust='<div class="a-trust"><span><i class="fas fa-shield-halved"></i>Encrypted</span><span><i class="fas fa-envelope-circle-check"></i>Email &amp; WhatsApp OTP</span><span><i class="fas fa-headset"></i>24×7 Support</span></div>';
   function field(id,label,type,ico,ph,val,extra){return '<div class="a-f"><label for="'+id+'">'+label+'</label><i class="fas '+ico+' ico"></i><input class="a-in" id="'+id+'" type="'+type+'" placeholder="'+ph+'" value="'+esc(val)+'" '+(extra||'')+'>'+(type==='password'?'<button type="button" class="eye" onclick="bxqEye(\''+id+'\',this)" aria-label="Show password"><i class="fas fa-eye"></i></button>':'')+'</div>'}
   function render(){
-    var w=$('bxqWrap'),up=A.mode==='signup';
+    var w=$('bxqWrap'),up=A.mode==='signup',ph=A.method==='phone';
     if(A.view==='main'){
       w.innerHTML=head(false)+'<div class="a-logo"><div class="a-mark">B</div><div class="a-brand">BIEXC</div></div>'+
       '<h1>'+(up?'Create your account':'Welcome back')+'</h1><p class="a-sub">'+(up?'Join India\'s fastest USDT/INR P2P, Spot &amp; Futures exchange.':'Sign in to trade Futures, Spot &amp; P2P.')+'</p>'+
       '<div class="a-tabs"><button class="'+(up?'':'on')+'" onclick="bxqMode(\'signin\')">Sign In</button><button class="'+(up?'on':'')+'" onclick="bxqMode(\'signup\')">Sign Up</button></div>'+
       (up&&A.ref&&A.refName?'<div class="a-refbanner"><i class="fas fa-gift"></i><div>Invited by <b>'+esc(A.refName)+'</b> — get <b>$15 cashback</b> after KYC and your first $50 deposit.</div></div>':'')+
       '<button class="a-g" id="bxqG" onclick="bxqGoogle()"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="">Continue with Google</button>'+
-      '<div class="a-or">OR WITH EMAIL</div>'+
+      '<div class="a-or">OR CONTINUE WITH</div>'+
+      '<div class="a-tabs a-meth"><button class="'+(ph?'':'on')+'" onclick="bxqMeth(\'email\')"><i class="fas fa-envelope"></i> Email</button><button class="'+(ph?'on':'')+'" onclick="bxqMeth(\'phone\')"><i class="fab fa-whatsapp"></i> Mobile</button></div>'+
       (up?field('bxqName','Full name','text','fa-user','Your full name',A.name,'maxlength="60" autocomplete="name"'):'')+
+      (ph?'<div class="a-f"><label for="bxqPhone">Mobile number <span style="font-weight:500">(WhatsApp)</span></label><i class="fas fa-mobile-screen ico"></i><span class="a-cc">+91</span><input class="a-in a-ph" id="bxqPhone" type="tel" inputmode="numeric" maxlength="10" placeholder="98765 43210" value="'+esc(A.phone)+'" autocomplete="tel-national"></div><div class="a-hint" style="margin:-4px 0 10px"><i class="fab fa-whatsapp" style="color:#25d366"></i> A 6-digit code will be sent on WhatsApp</div>':
       field('bxqEmail','Email','email','fa-envelope','you@example.com',A.email,'autocomplete="email" maxlength="254" inputmode="email"')+
-      field('bxqPass','Password','password','fa-lock',up?'Min. 8 characters':'Your password','', up?'autocomplete="new-password" maxlength="128"':'autocomplete="current-password" maxlength="128"')+
-      (up?'<div class="a-meter" id="bxqMeter"><i></i><i></i><i></i><i></i></div><div class="a-hint" id="bxqPh">Use 8+ characters with letters &amp; numbers</div><div style="height:10px"></div>'+field('bxqPass2','Confirm password','password','fa-lock','Re-enter password','','autocomplete="new-password" maxlength="128"')+
-        '<div class="a-f" style="margin-top:4px"><label for="bxqRef">Invite code <span style="font-weight:500">(optional)</span></label><i class="fas fa-ticket ico"></i><input class="a-in" id="bxqRef" type="text" placeholder="e.g. BX7K2M9Q" value="'+esc(A.ref||'')+'" maxlength="16" autocomplete="off" autocapitalize="characters" style="text-transform:uppercase;letter-spacing:.06em;font-weight:700">'+(A.refLocked?'<span class="a-reftag">From link</span>':'')+'</div><div class="a-ref" id="bxqRefMsg"></div>'+
+      field('bxqPass','Password','password','fa-lock',up?'Min. 8 characters':'Your password','', up?'autocomplete="new-password" maxlength="128"':'autocomplete="current-password" maxlength="128"'))+
+      (up&&!ph?'<div class="a-meter" id="bxqMeter"><i></i><i></i><i></i><i></i></div><div class="a-hint" id="bxqPh">Use 8+ characters with letters &amp; numbers</div><div style="height:10px"></div>'+field('bxqPass2','Confirm password','password','fa-lock','Re-enter password','','autocomplete="new-password" maxlength="128"'):'')+
+      (up?'<div class="a-f" style="margin-top:4px"><label for="bxqRef">Invite code <span style="font-weight:500">(optional)</span></label><i class="fas fa-ticket ico"></i><input class="a-in" id="bxqRef" type="text" placeholder="e.g. BX7K2M9Q" value="'+esc(A.ref||'')+'" maxlength="16" autocomplete="off" autocapitalize="characters" style="text-transform:uppercase;letter-spacing:.06em;font-weight:700">'+(A.refLocked?'<span class="a-reftag">From link</span>':'')+'</div><div class="a-ref" id="bxqRefMsg"></div>'+
         '<label class="a-terms"><input type="checkbox" id="bxqTerms"> I agree to the Terms of Service and Privacy Policy, and confirm I am 18+.</label>'
-        :'<div style="text-align:right;margin:-4px 0 6px"><button class="a-link" onclick="bxqGo(\'reset\')">Forgot password?</button></div>')+
-      '<button class="a-btn" id="bxqSubmit" onclick="bxqSubmit()">'+(up?'Create Account':'Sign In')+' <i class="fas fa-arrow-right"></i></button><div class="a-msg" id="bxqMsg"></div>'+trust;
-      if(up){$('bxqPass').addEventListener('input',meter);var ri=$('bxqRef');ri.addEventListener('input',function(){A.ref=ri.value.toUpperCase().replace(/[^A-Z0-9]/g,'');if(ri.value!==A.ref)ri.value=A.ref;A.refOk=null;clearTimeout(A.refT);A.refT=setTimeout(refCheck,450)});if(A.ref)refCheck()}
+        :'')+(!up&&!ph?'<div style="text-align:right;margin:-4px 0 6px"><button class="a-link" onclick="bxqGo(\'reset\')">Forgot password?</button></div>':'')+
+      '<button class="a-btn" id="bxqSubmit" onclick="bxqSubmit()">'+(ph?'Send WhatsApp Code':(up?'Create Account':'Sign In'))+' <i class="fas fa-arrow-right"></i></button><div class="a-msg" id="bxqMsg"></div>'+trust;
+      if(ph){var pi=$('bxqPhone');pi.addEventListener('input',function(){var d=pi.value.replace(/\D/g,'');if(d.length>10&&d.indexOf('91')===0)d=d.slice(2);d=d.slice(0,10);if(pi.value!==d)pi.value=d;A.phone=d})}
+      if(up&&!ph)$('bxqPass').addEventListener('input',meter);
+      if(up){var ri=$('bxqRef');ri.addEventListener('input',function(){A.ref=ri.value.toUpperCase().replace(/[^A-Z0-9]/g,'');if(ri.value!==A.ref)ri.value=A.ref;A.refOk=null;clearTimeout(A.refT);A.refT=setTimeout(refCheck,450)});if(A.ref)refCheck()}
       w.querySelectorAll('.a-in').forEach(function(i){i.addEventListener('keydown',function(e){if(e.key==='Enter')window.bxqSubmit()})});
     } else if(A.view==='otp'){
-      w.innerHTML=head(true)+'<div class="a-mail"><i class="fas fa-envelope-open-text"></i></div><h1>Check your email</h1><p class="a-sub">We sent a 6-digit code to <b style="color:var(--a-tx)">'+esc(A.email)+'</b>. Enter it below to '+(A.mode==='signup'?'create your account':'sign in')+'.</p>'+
+      w.innerHTML=head(true)+(A.method==='phone'?'<div class="a-mail" style="color:#25d366;box-shadow:inset 4px 0 0 #25d366"><i class="fab fa-whatsapp"></i></div><h1>Check WhatsApp</h1><p class="a-sub">We sent a 6-digit code on WhatsApp to <b style="color:var(--a-tx)">+91 '+esc(A.phone)+'</b>.':'<div class="a-mail"><i class="fas fa-envelope-open-text"></i></div><h1>Check your email</h1><p class="a-sub">We sent a 6-digit code to <b style="color:var(--a-tx)">'+esc(A.email)+'</b>.')+' Enter it below to '+(A.mode==='signup'?'create your account':'sign in')+'.</p>'+
       '<div class="a-otp" id="bxqOtp">'+[0,1,2,3,4,5].map(function(i){return '<input inputmode="numeric" maxlength="1" autocomplete="'+(i===0?'one-time-code':'off')+'" aria-label="Digit '+(i+1)+'">'}).join('')+'</div>'+
       '<button class="a-btn" id="bxqVerify" onclick="bxqVerify()" disabled>Verify &amp; Continue</button><div class="a-msg" id="bxqMsg"></div>'+
-      '<div class="a-resend" id="bxqResend"></div><div class="a-resend">Wrong email? <button class="a-link" onclick="bxqGo(\'main\')">Change</button></div><div class="a-resend" style="font-size:12px">Can\'t find it? Check your Spam / Promotions folder.</div>';
+      '<div class="a-resend" id="bxqResend"></div><div class="a-resend">Wrong '+(A.method==='phone'?'number':'email')+'? <button class="a-link" onclick="bxqGo(\'main\')">Change</button></div><div class="a-resend" style="font-size:12px">'+(A.method==='phone'?'Code comes from the BIEXC WhatsApp number.':'Can\'t find it? Check your Spam / Promotions folder.')+'</div>';
       otpWire();tickResend();
     } else if(A.view==='reset'){
-      w.innerHTML=head(true)+'<div class="a-mail"><i class="fas fa-key"></i></div><h1>Reset password</h1><p class="a-sub">Enter your account email and we\'ll send you a reset link.</p>'+field('bxqREmail','Email','email','fa-envelope','you@example.com',A.email,'autocomplete="email"')+'<button class="a-btn" id="bxqRBtn" onclick="bxqReset()">Send Reset Link</button><div class="a-msg" id="bxqMsg"></div>';
+      w.innerHTML=head(true)+'<div class="a-mail"><i class="fas fa-key"></i></div><h1>Reset password</h1><p class="a-sub">Enter your account email and we\'ll send you a reset link.</p>'+field('bxqREmail','Email','email','fa-envelope','you@example.com',A.email,'autocomplete="email"')+'<button class="a-btn" id="bxqRBtn" onclick="bxqReset()">Send Reset Code</button><div class="a-msg" id="bxqMsg"></div><div class="a-resend">Signed up with mobile? <button class="a-link" onclick="A_toPhone()">Login with WhatsApp code</button></div>';
+      $('bxqREmail').addEventListener('keydown',function(e){if(e.key==='Enter')window.bxqReset()});
+    } else if(A.view==='reset2'){
+      w.innerHTML=head(true)+'<div class="a-mail"><i class="fas fa-key"></i></div><h1>Set new password</h1><p class="a-sub">Enter the 6-digit code sent to <b style="color:var(--a-tx)">'+esc(A.email)+'</b> and choose a new password.</p>'+
+      '<div class="a-otp" id="bxqOtp">'+[0,1,2,3,4,5].map(function(i){return '<input inputmode="numeric" maxlength="1" autocomplete="'+(i===0?'one-time-code':'off')+'" aria-label="Digit '+(i+1)+'">'}).join('')+'</div>'+
+      field('bxqNP','New password','password','fa-lock','Min. 8 characters','','autocomplete="new-password" maxlength="128"')+'<div class="a-meter" id="bxqMeter"><i></i><i></i><i></i><i></i></div><div class="a-hint" id="bxqPh">Use 8+ characters with letters &amp; numbers</div><div style="height:10px"></div>'+
+      field('bxqNP2','Confirm new password','password','fa-lock','Re-enter password','','autocomplete="new-password" maxlength="128"')+
+      '<button class="a-btn" id="bxqVerify" onclick="bxqResetDone()">Change Password &amp; Sign In</button><div class="a-msg" id="bxqMsg"></div>'+
+      '<div class="a-resend" id="bxqResend"></div><div class="a-resend" style="font-size:12px">Can\'t find it? Check your Spam / Promotions folder.</div>';
+      otpWire();tickResend();$('bxqNP').addEventListener('input',function(){meter('bxqNP')});
     }
   }
   function refCheck(){var el=$('bxqRefMsg');var c=A.ref||'';if(!el)return;if(!c){el.className='a-ref';el.textContent='';A.refOk=null;return}if(c.length<4){el.className='a-ref';el.textContent='';return}el.className='a-ref';el.innerHTML='<i class="fas fa-spinner fa-spin"></i> Checking code…';
     fetch(API()+'/api/referral/check?code='+encodeURIComponent(c)).then(function(r){return r.json()}).then(function(j){if(c!==A.ref)return;if(j&&j.valid){A.refOk=true;A.refName=j.name;el.className='a-ref ok';el.innerHTML='<i class="fas fa-circle-check"></i> Valid code — invited by '+esc(j.name)}else if(j&&j.ok){A.refOk=false;el.className='a-ref err';el.innerHTML='<i class="fas fa-circle-exclamation"></i> This invite code does not exist'}else{A.refOk=null;el.className='a-ref';el.textContent=''}}).catch(function(){A.refOk=null;el.className='a-ref';el.textContent=''})}
   window.bxqSetRef=function(code,name){A.ref=String(code||'').toUpperCase().replace(/[^A-Z0-9]/g,'');A.refLocked=!!A.ref;if(name)A.refName=name};
   function saveRef(){try{if(A.ref)localStorage.setItem('biexc_pending_ref',A.ref)}catch(e){}}
-  function meter(){var p=$('bxqPass').value,s=0;if(p.length>=8)s++;if(/[A-Z]/.test(p)&&/[a-z]/.test(p))s++;if(/\d/.test(p))s++;if(/[^A-Za-z0-9]/.test(p)||p.length>=12)s++;var col=['#ff5a5f','#ff9f43','#f7c600','#20c77a'];[].forEach.call($('bxqMeter').children,function(b,i){b.style.background=i<s?col[s-1]:''});$('bxqPh').textContent=['Too short','Weak','Fair','Good','Strong'][s]+' password'}
+  function meter(id){var p=$(typeof id==='string'?id:'bxqPass').value,s=0;if(p.length>=8)s++;if(/[A-Z]/.test(p)&&/[a-z]/.test(p))s++;if(/\d/.test(p))s++;if(/[^A-Za-z0-9]/.test(p)||p.length>=12)s++;var col=['#ff5a5f','#ff9f43','#f7c600','#20c77a'];[].forEach.call($('bxqMeter').children,function(b,i){b.style.background=i<s?col[s-1]:''});$('bxqPh').textContent=['Too short','Weak','Fair','Good','Strong'][s]+' password'}
   function otpWire(){
     var box=$('bxqOtp'),ins=[].slice.call(box.querySelectorAll('input'));
     function val(){return ins.map(function(i){return i.value}).join('')}
-    function upd(){box.classList.remove('bad');$('bxqVerify').disabled=val().length!==6;if(val().length===6)window.bxqVerify()}
+    function upd(){box.classList.remove('bad');if(A.view==='reset2')return;$('bxqVerify').disabled=val().length!==6;if(val().length===6)window.bxqVerify()}
     ins.forEach(function(inp,i){
       inp.addEventListener('input',function(){var d=inp.value.replace(/\D/g,'');if(d.length>1){d.split('').slice(0,6-i).forEach(function(c,j){ins[i+j].value=c});(ins[Math.min(5,i+d.length)]).focus()}else{inp.value=d;if(d&&i<5)ins[i+1].focus()}upd()});
       inp.addEventListener('keydown',function(e){if(e.key==='Backspace'&&!inp.value&&i>0){ins[i-1].value='';ins[i-1].focus();upd()}});
@@ -15556,10 +15572,26 @@ body.light #bxq{--a-bg:#f4f5f6;--a-card:#fff;--a-card2:#ebedf0;--a-line:#dfe2e7;
   function setBusy(id,on,label){var b=$(id);if(!b)return;b.disabled=on;if(on){b.dataset.l=b.innerHTML;b.innerHTML='<i class="fas fa-spinner fa-spin"></i> '+(label||'Please wait…')}else if(b.dataset.l)b.innerHTML=b.dataset.l}
 
   window.bxqMode=function(m){A.mode=m;A.view='main';render()};
+  window.bxqMeth=function(m){A.method=m;A.view='main';msg('');render()};
+  window.A_toPhone=function(){A.method='phone';A.mode='signin';A.view='main';render()};
   window.bxqGo=function(v){A.view=v;render()};
   window.bxqEye=function(id,b){var i=$(id);i.type=i.type==='password'?'text':'password';b.innerHTML='<i class="fas '+(i.type==='password'?'fa-eye':'fa-eye-slash')+'"></i>'};
   window.bxqSubmit=function(){
     if(A.busy)return;var up=A.mode==='signup';
+    if(A.method==='phone'){
+      if(up)A.name=String($('bxqName').value||'').trim();
+      if(up&&A.name.length<2)return msg('Enter your full name.');
+      A.phone=String($('bxqPhone').value||'').replace(/\D/g,'').slice(-10);
+      if(!/^[6-9]\d{9}$/.test(A.phone))return msg(ERR.bad_phone);
+      if(up){if(!$('bxqTerms').checked)return msg('Please accept the Terms to continue.');if(A.ref&&A.refOk===false)return msg('Invite code is not valid. Fix it or leave it empty.');saveRef()}
+      msg('');A.busy=true;setBusy('bxqSubmit',true,'Sending code…');
+      return post('/api/otp/send',{phone:'91'+A.phone}).then(function(r){
+        A.busy=false;setBusy('bxqSubmit',false);
+        if(r&&r.ok){A.left=r.waitSec||60;A.view='otp';render();return}
+        if(r&&r.error==='too_soon'&&A.lastPhone===A.phone){A.left=r.waitSec||60;A.view='otp';render();return}
+        msg(ERR[r&&r.error]||ERR.send_failed);
+      }).then(function(){A.lastPhone=A.phone});
+    }
     A.email=String($('bxqEmail').value||'').trim().toLowerCase();A.pass=$('bxqPass').value||'';if(up)A.name=String($('bxqName').value||'').trim();
     if(up&&A.name.length<2)return msg('Enter your full name.');
     if(!/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(A.email))return msg(ERR.bad_email);
@@ -15574,6 +15606,8 @@ body.light #bxq{--a-bg:#f4f5f6;--a-card:#fff;--a-card2:#ebedf0;--a-line:#dfe2e7;
     }).then(function(){A.lastEmail=A.email});
   };
   window.bxqResend=function(){
+    if(A.view==='reset2')return post('/api/password-reset/send',{email:A.email}).then(function(r){if(r&&r.ok){A.left=r.waitSec||60;tickResend();msg('A new code has been sent.','ok')}else{if(r&&r.waitSec){A.left=r.waitSec;tickResend()}msg(ERR[r&&r.error]||ERR.send_failed)}});
+    if(A.method==='phone')return post('/api/otp/send',{phone:'91'+A.phone}).then(function(r){if(r&&r.ok){A.left=r.waitSec||60;tickResend();msg('A new code has been sent on WhatsApp.','ok')}else{if(r&&r.waitSec){A.left=r.waitSec;tickResend()}msg(ERR[r&&r.error]||ERR.send_failed)}});
     post('/api/email-otp/send',{email:A.email,password:A.pass,name:A.name,purpose:A.mode==='signup'?'signup':'login'}).then(function(r){
       if(r&&r.ok){A.left=r.waitSec||60;tickResend();msg('A new code has been sent.','ok')}else{if(r&&r.waitSec){A.left=r.waitSec;tickResend()}msg(ERR[r&&r.error]||ERR.send_failed)}
     });
@@ -15581,7 +15615,7 @@ body.light #bxq{--a-bg:#f4f5f6;--a-card:#fff;--a-card2:#ebedf0;--a-line:#dfe2e7;
   window.bxqVerify=function(){
     if(A.busy)return;var code=A.otpVal?A.otpVal():'';if(code.length!==6)return;
     A.busy=true;setBusy('bxqVerify',true,'Verifying…');msg('');
-    post('/api/email-otp/verify',{email:A.email,code:code,purpose:A.mode==='signup'?'signup':'login'}).then(function(r){
+    (A.method==='phone'?post('/api/otp/verify',{phone:'91'+A.phone,code:code,name:A.mode==='signup'?A.name:''}):post('/api/email-otp/verify',{email:A.email,code:code,purpose:A.mode==='signup'?'signup':'login'})).then(function(r){
       if(!r||!r.ok){A.busy=false;setBusy('bxqVerify',false);var b=$('bxqOtp');if(b){b.classList.add('bad');b.querySelectorAll('input').forEach(function(i){i.value=''});b.querySelector('input').focus()}$('bxqVerify').disabled=true;
         return msg((ERR[r&&r.error]||ERR.verify_failed)+(r&&r.left!=null?' '+r.left+' tries left.':''))}
       var fb=window._fb;if(!fb||!fb.signInWithCustomToken){A.busy=false;setBusy('bxqVerify',false);return msg('Login system loading — try again.')}
@@ -15599,10 +15633,28 @@ body.light #bxq{--a-bg:#f4f5f6;--a-card:#fff;--a-card2:#ebedf0;--a-line:#dfe2e7;
       .catch(function(e){setBusy('bxqG',false);var c=e&&e.code||'';if(c==='auth/popup-closed-by-user'||c==='auth/cancelled-popup-request')return;msg(c==='auth/popup-blocked'?'Popup blocked — allow popups and try again.':'Google sign-in failed. Try again.')});
   };
   window.bxqReset=function(){
-    var e=String($('bxqREmail').value||'').trim();if(!/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(e))return msg(ERR.bad_email);
-    var fb=window._fb;if(!fb)return msg('Login system loading — try again.');
-    setBusy('bxqRBtn',true,'Sending…');
-    fb.sendPasswordResetEmail(fb.auth,e).then(function(){setBusy('bxqRBtn',false);msg('If an account exists for this email, a reset link has been sent.','ok')}).catch(function(){setBusy('bxqRBtn',false);msg('If an account exists for this email, a reset link has been sent.','ok')});
+    if(A.busy)return;
+    var e=String($('bxqREmail').value||'').trim().toLowerCase();if(!/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(e))return msg(ERR.bad_email);
+    A.email=e;A.busy=true;setBusy('bxqRBtn',true,'Sending code…');msg('');
+    post('/api/password-reset/send',{email:e}).then(function(r){
+      A.busy=false;setBusy('bxqRBtn',false);
+      if(r&&(r.ok||(r.error==='too_soon'&&A.lastReset===e))){A.lastReset=e;A.left=r.waitSec||60;A.view='reset2';render();return}
+      msg(ERR[r&&r.error]||ERR.send_failed);
+    });
+  };
+  window.bxqResetDone=function(){
+    if(A.busy)return;var code=A.otpVal?A.otpVal():'';
+    if(code.length!==6)return msg('Enter the 6-digit code from the email.');
+    var p=$('bxqNP').value||'';if(p.length<8)return msg(ERR.weak_password);if(p!==$('bxqNP2').value)return msg('Passwords do not match.');
+    A.busy=true;setBusy('bxqVerify',true,'Changing…');msg('');
+    post('/api/password-reset/confirm',{email:A.email,code:code,password:p}).then(function(r){
+      if(!r||!r.ok){A.busy=false;setBusy('bxqVerify',false);if(r&&/code|expired|tries/.test(r.error||'')){var b=$('bxqOtp');b.classList.add('bad');b.querySelectorAll('input').forEach(function(i){i.value=''})}
+        return msg((ERR[r&&r.error]||ERR.verify_failed)+(r&&r.left!=null?' '+r.left+' tries left.':''))}
+      var fb=window._fb;
+      var back=function(){A.busy=false;A.view='main';A.mode='signin';A.method='email';render();msg('Password changed. Sign in with your new password.','ok')};
+      if(!fb||!fb.signInWithCustomToken)return back();
+      fb.signInWithCustomToken(fb.auth,r.token).then(function(){A.busy=false;closeA();try{window.toast&&window.toast('Password changed ✓')}catch(e){}afterLogin()}).catch(back);
+    });
   };
   function afterLogin(){var p=window.__kxPending;window.__kxPending=null;if(typeof p==='function')setTimeout(function(){try{p()}catch(e){}},700)}
   function closeA(){var o=$('bxq');o.classList.remove('show');document.body.style.overflow='';clearInterval(A.timer);try{var old=$('authOverlay');old&&old.classList.remove('show')}catch(e){}}
