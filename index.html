@@ -768,6 +768,76 @@ body.dark .ptr-mark{color:#3a3d44;}
 @keyframes ptrSweep{0%{clip-path:inset(0 100% 0 0);}50%{clip-path:inset(0 0 0 0);}100%{clip-path:inset(0 0 0 100%);}}
 html,body{overscroll-behavior-y:contain;}
 </style>
+<script id="bx-format">
+/* BIEXC — one place for every amount shown in the app.
+   Display only: the database keeps full precision. Values are cut (floored), never rounded up. */
+(function(){
+  var STABLE={USDT:1,USDC:1,DAI:1,BUSD:1,FDUSD:1,TUSD:1,USDD:1,USDP:1,PYUSD:1,USDE:1,INR:1,USD:1};
+  var SIX={BTC:1,WBTC:1};
+  var FIVE={ETH:1,BNB:1,SOL:1,LTC:1,BCH:1,ETC:1,AVAX:1,LINK:1,DOT:1,ATOM:1,TON:1,UNI:1,AAVE:1,XMR:1,MKR:1,COMP:1,WETH:1};
+  function dec(coin){
+    var c=String(coin||'USDT').toUpperCase().replace(/[^A-Z0-9]/g,'');
+    if(STABLE[c]) return 2;
+    if(SIX[c]) return 6;
+    if(FIVE[c]) return 5;
+    return 4; // DOGE, SHIB, TRX, XRP, ADA and every other coin
+  }
+  function cut(v,d){
+    var n=Number(v);
+    if(!isFinite(n)) n=0;
+    var neg=n<0; n=Math.abs(n);
+    // string maths → no 0.1+0.2 style errors
+    var s=n.toFixed(Math.min(20,d+6));
+    var p=s.split('.');
+    var frac=((p[1]||'')+'000000000000').slice(0,d);
+    var out=d>0?p[0]+'.'+frac:p[0];
+    if(neg && /[1-9]/.test(out)) out='-'+out;
+    return out;
+  }
+  function group(s){
+    var neg=s[0]==='-'; if(neg) s=s.slice(1);
+    var p=s.split('.');
+    p[0]=p[0].replace(/\B(?=(\d{3})+(?!\d))/g,',');
+    return (neg?'-':'')+p.join('.');
+  }
+  window.coinDecimals=dec;
+  window.formatAmount=function(value,coin,opts){
+    opts=opts||{};
+    var d=opts.decimals!=null?opts.decimals:dec(coin);
+    var s=cut(value,d);
+    return opts.group===false?s:group(s);
+  };
+  /* Block extra digits while typing in amount boxes. */
+  function coinFor(el){
+    if(el.dataset && el.dataset.coin) return el.dataset.coin;
+    var id=el.id||'';
+    try{
+      if(id==='bbWitAmt') return (window._bbCoin&&window._bbCoin.sym)||'USDT';
+      if(id==='witAmt'||id==='depAmt'||id==='ernSubAmt') return (id==='ernSubAmt'&&document.getElementById('ernSubSym'))?document.getElementById('ernSubSym').textContent:'USDT';
+      if(id==='cv-from-amt'){var f=document.getElementById('cv-from');return f?f.value:null}
+      if(id==='cv-to-amt'){var t=document.getElementById('cv-to');return t?t.value:null}
+    }catch(e){}
+    return null;
+  }
+  document.addEventListener('input',function(e){
+    var el=e.target; if(!el||el.tagName!=='INPUT') return;
+    var coin=coinFor(el); if(!coin) return;
+    var v=String(el.value||''); var i=v.indexOf('.'); if(i<0) return;
+    var d=dec(coin);
+    if(v.length-i-1>d){ el.value=d?v.slice(0,i+1+d):v.slice(0,i); }
+  },true);
+})();
+</script>
+<style id="bx-motion">
+:root{--bx-ease:cubic-bezier(.22,.8,.3,1)}
+html,body{-webkit-tap-highlight-color:transparent}
+button,a,[onclick],.crow,.qab,.hbm,.hbs,.ni,.bb-hitem,.hist-card,.acct-item,.pfh-row,input,select,label{touch-action:manipulation}
+button:active,.ibt:active,.qab:active,.crow:active,.qab:active,.bb-hitem:active,.hist-card:active{transform:scale(.97);opacity:.85;transition:transform .06s,opacity .06s}
+.screen.screen-entering.screen-entered{transition:transform .24s var(--bx-ease),opacity .24s var(--bx-ease)!important}
+.bx-skel{border-radius:10px;background:linear-gradient(90deg,rgba(128,128,128,.10) 25%,rgba(128,128,128,.22) 37%,rgba(128,128,128,.10) 63%);background-size:400% 100%;animation:bxSk 1.3s ease infinite}
+@keyframes bxSk{0%{background-position:100% 50%}100%{background-position:0 50%}}
+@media (prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+</style>
 </head>
 <body>
 <div id="__diag" style="position:fixed;top:0;left:0;right:0;z-index:99999;background:#400;color:#fff;font:12px monospace;padding:8px;display:none;white-space:pre-wrap;max-height:50vh;overflow:auto"></div>
@@ -2602,6 +2672,7 @@ function bbBal(sym){
     : (parseFloat((window.balances||{})[String(sym||'').toUpperCase()]) || 0);
 }
 function bbFmtBal(n){
+  if(window.formatAmount) return formatAmount(n||0, (window._bbCoin&&_bbCoin.sym)||'USDT');
   if(!n) return '0';
   if(n<0.001) return n.toFixed(8).replace(/0+$/,'').replace(/\.$/,'');
   if(n<1) return n.toFixed(6).replace(/0+$/,'').replace(/\.$/,'');
@@ -2769,7 +2840,7 @@ function bbOpenWit(){
   const _feeCoin = _price>0 ? (_fee/_price) : (_bbCoin.sym==='USDT'?_fee:0);
   document.getElementById('bbWitFee').textContent = _fee;
   document.querySelectorAll('.bbWitSymX').forEach(e=>e.textContent=_bbCoin.sym);
-  const _fmt = (n)=> n ? (+n).toFixed(6).replace(/0+$/,'').replace(/\.$/,'') : '0';
+  const _fmt = (n)=> formatAmount(n||0, _bbCoin.sym);
   amtEl.oninput = ()=>{
     const v = parseFloat(amtEl.value)||0;
     document.getElementById('bbWitRecv').textContent = _fmt(v);
@@ -2896,7 +2967,7 @@ function bbRenderHist(){
     const coin = h.coin || 'USDT';
     const sign = isWit ? '-' : '+';
     return `<div class="bb-hitem" onclick="bbShowHistDetail(window._bbHistView[${idx}])"><div><div class="hl">${coin}</div><div class="hs">${time}</div></div>
-      <div class="hr"><div class="ha">${sign}${h.amt}</div><div class="hst" style="color:${stCol}">${stLbl}</div></div></div>`;
+      <div class="hr"><div class="ha">${sign}${formatAmount(h.amt,coin)}</div><div class="hst" style="color:${stCol}">${stLbl}</div></div></div>`;
   }).join('');
 }
 function bbExplorer(){
@@ -2960,7 +3031,7 @@ function bbShowHistDetail(h){
   const ok = (h.status==='SUCCESS'||h.status==='APPROVED'||h.status==='COMPLETED'||h.status==='Succeeded');
   const rej = (h.status==='REJECTED'||h.status==='FAILED'||h.status==='CANCELLED');
   document.getElementById('bbDtlTitle').textContent = isWit?'Withdrawal Details':'Deposit Details';
-  document.getElementById('bbDtlQty').textContent = h.amt||'0';
+  document.getElementById('bbDtlQty').textContent = formatAmount(h.amt||0, h.coin||'USDT');
   document.getElementById('bbDtlSym').textContent = h.coin||'USDT';
   const usdEl = document.getElementById('bbDtlUsd');
   if(usdEl){
@@ -4683,7 +4754,7 @@ function closePositionPartial(id, qtyClose, exitPrice, reason){
   const newBal = Math.max(0, rawNewBal);
   writeBalance(newBal);
   STATE.orders.unshift({id:Date.now(), sym:pos.sym, coin:pos.coin, side:pos.side==='Long'?'Sell':'Buy', type:'Perp Close', price:exit, qty:closedQty, value:closedQty*exit, ts:Date.now(), status:'Filled', pnl});
-  if(ratio>=0.999) STATE.positions.splice(idx,1);
+  if(ratio>=0.999){ STATE.positions.splice(idx,1); try{ window.bxCountTrade && window.bxCountTrade('fut_'+pos.id); }catch(e){} }
   else {
     pos.qty -= closedQty;
     pos.margin -= marginPortion;
@@ -4800,7 +4871,7 @@ function renderOrderTabs(){
     const rows = [['USDT', STATE.balance]].concat(Object.entries(STATE.coins).filter(([,v])=>v>0));
     wrap.innerHTML = rows.map(([c,v])=>`
       <div style="padding:10px 14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;">
-        <span style="font-weight:600;">${c}</span><span>${(+v).toFixed(6)}</span>
+        <span style="font-weight:600;">${c}</span><span>${formatAmount(v,c)}</span>
       </div>`).join('') || '<div class="empty">No assets</div>';
   }
 }
@@ -4877,7 +4948,7 @@ async function renderAssetList(){
         <img class="clogo" style="width:34px;height:34px;" src="https://assets.coincap.io/assets/icons/${c.toLowerCase()}@2x.png" data-sym="${c}" onerror="logoFallback(this,1)" alt="${c}">
         <div><div class="cname2">${c}</div><div class="cchg" style="color:${chgTxt?chgColor:'var(--text2)'};">${chgTxt||'—'}</div></div>
       </div>
-      <div class="camts"><div class="ca">${(+v).toFixed(6)}</div><div class="cu">${usd.toFixed(2)} USD</div></div>
+      <div class="camts"><div class="ca">${formatAmount(v,c)}</div><div class="cu">${formatAmount(usd,'USD')} USD</div></div>
     </div>`;
   }).join('');
   wrap.innerHTML = html;
@@ -5109,7 +5180,7 @@ function updateConvertPreview(src){
   const f = $('cv-from').value, t = $('cv-to').value;
   const fromEl = $('cv-from-amt'), toEl = $('cv-to-amt');
   const pf = getCoinUsdPrice(f), pt = getCoinUsdPrice(t);
-  const balEl = $('cv-from-bal'); if(balEl) balEl.textContent = 'Avail: '+getCoinAvail(f).toFixed(6)+' '+f;
+  const balEl = $('cv-from-bal'); if(balEl) balEl.textContent = 'Avail: '+formatAmount(getCoinAvail(f),f)+' '+f;
   if(!pf||!pt){ $('cv-rate').textContent='--'; return; }
   const rate = pf/pt;
   $('cv-rate').textContent = `1 ${f} ≈ ${rate.toFixed(8)} ${t}`;
@@ -5144,7 +5215,7 @@ async function openHistorySheet(){
   if(!screen || !list) return;
   screen.classList.add('show');
   screen.style.zIndex = '10050';
-  list.innerHTML = '<div style="text-align:center;color:#666;padding:60px 0;">Loading…</div>';
+  list.innerHTML = '<div style="padding:14px">'+Array(7).join('<div class="bx-skel" style="height:54px;margin-bottom:10px"></div>')+'</div>';
   try{ await bbLoadHistFromFb(); }catch(e){}
   const _f=document.getElementById('txhFrom'), _t=document.getElementById('txhTo'), _s=document.getElementById('txhStatus');
   if(_f) _f.value=''; if(_t) _t.value=''; if(_s) _s.value='ALL';
@@ -5183,7 +5254,7 @@ async function renderPfHistMini(){
     const time = h.date || (h.ts? new Date(h.ts).toLocaleString('en-IN',{hour12:false}).replace(',',''): '');
     return `<div class="pfh-row">
       <div><div class="l1">${isWit?'Withdraw':'Deposit'}</div><div class="l2">${time}</div></div>
-      <div><div class="r1" style="color:${isWit?'#f6465d':'var(--green)'}">${isWit?'-':'+'}${h.amt} ${h.coin||'USDT'}</div>
+      <div><div class="r1" style="color:${isWit?'#f6465d':'var(--green)'}">${isWit?'-':'+'}${formatAmount(h.amt,h.coin||'USDT')} ${h.coin||'USDT'}</div>
       <div class="r2">${ok?'Completed':rej?'Rejected':'Pending'}</div></div></div>`;
   }).join('');
 }
@@ -5254,7 +5325,7 @@ function renderTxHistory(){
     const ttl = _txhTab==='ALL' ? `${isWit?'Withdraw':'Deposit'} · ${coin}` : coin;
     return `<div class="bb-hitem" onclick="bbShowHistDetail(window._txhView[${idx}])">
       <div><div class="hl">${ttl}</div><div class="hs">${time}</div></div>
-      <div class="hr"><div class="ha" style="color:${isWit?'#f6465d':'var(--green)'}">${isWit?'-':'+'}${h.amt} ${coin}</div><div class="hst" style="color:${stCol}">${stLbl}</div></div></div>`;
+      <div class="hr"><div class="ha" style="color:${isWit?'#f6465d':'var(--green)'}">${isWit?'-':'+'}${formatAmount(h.amt,coin)} ${coin}</div><div class="hst" style="color:${stCol}">${stLbl}</div></div></div>`;
   }).join('');
 }
 
@@ -8988,7 +9059,7 @@ function openHistDetail(hid){
     if(h.rate) rows.push(hdRowText('Rate','₹'+h.rate+' / USDT'));
     if(h.inr) rows.push(hdRowText('Amount (INR)','₹'+Number(h.inr).toLocaleString()));
   }
-  const amtDisplay=prefix+parseFloat(h.amt).toFixed(2)+' USDT';
+  const amtDisplay=prefix+(Math.floor((parseFloat(h.amt)||0)*100+1e-7)/100).toFixed(2)+' USDT';
   rows.push(hdRowRaw('Amount',\`<span class="hd-val" style="color:\${amtColor};font-family:'Inter',sans-serif;">\${escHtml(amtDisplay)}</span>\`));
   if(isWit) rows.push(hdRowText('Network Fee',(h.fee||'0.01')+' USDT'));
   rows.push(hdRowText('Wallet','Spot Wallet'));
@@ -9605,6 +9676,7 @@ async function completeTrade(id,type){
   await clearChatState(id); await fbRemoveOrder(id); orders.splice(idx,1);
   tgSendBoth(\`✅ *TRADE COMPLETED*\\n\\nOrder: \\\`#\${o.id}\\\`\\nType: *\${type}*\\nUSDT: *\${o.usdt.toFixed(2)}*\\n💰 Balance: *\${balance.toFixed(2)} USDT*\`);
   emailTradeComplete(type, o.usdt, o.inr, o.merchant);
+  try{ parent.postMessage({source:'p2p-iframe',type:'tradeDone',id:String(o.id)},'*'); }catch(e){}
   showAlert('success','TRADE COMPLETE',o.usdt.toFixed(2)+' USDT settled successfully.'); exitDeal();
 }
 
@@ -10127,7 +10199,7 @@ body.p2p-light .hist-fchip.on{background:#0b0e11;color:#fff;border-color:#0b0e11
         '<div class="hist-mid"><div class="hist-type">' + name + '</div>' +
         '<div class="hist-meta">' + (esc(meta) || dateShort) + '</div></div>' +
         '<div class="hist-right"><div class="hist-amt" style="color:' + color + ';">' + prefix +
-        (parseFloat(h.amt) || 0).toFixed(2) + ' <span style="font-size:9px;opacity:.5;">USDT</span></div>' +
+        (window.formatAmount ? formatAmount(h.amt,'USDT') : (parseFloat(h.amt) || 0).toFixed(2)) + ' <span style="font-size:9px;opacity:.5;">USDT</span></div>' +
         '<div class="hist-pill ' + sl + '"><div class="hist-pill-dot" style="' + dot + '"></div>' +
         String(h.status || '').toUpperCase() + '</div></div></div>';
     });
@@ -10997,6 +11069,7 @@ function cdRender(){
       }
     }
     await logSpotHistory(side, coin, qty, price, fee, notional);
+    try{ window.bxCountTrade && window.bxCountTrade('spot_'+Date.now()+'_'+coin); }catch(e){}
     try{ STATE.orders.unshift({id:Date.now(),sym:coin+'USDT',coin,side,type:'Spot Market',price,qty,value:notional,fee,ts:Date.now(),status:'Filled'}); saveState(STATE);}catch(e){}
     return { qty, price, fee, notional };
   }
@@ -12775,6 +12848,7 @@ body.light [style*="background:#181a20"]{color:#0b0e11 !important}
 window.fmtMoney = function(n, d){
   n = parseFloat(n); if(!isFinite(n)) n = 0;
   if(d==null) d = 2;
+  if(window.formatAmount) return formatAmount(n,'USDT',{decimals:d});
   var f=window.__bxNF||(window.__bxNF={}); f=f[d]||(f[d]=new Intl.NumberFormat('en-US',{minimumFractionDigits:d,maximumFractionDigits:d}));
   return f.format(n);
 };
@@ -13155,7 +13229,7 @@ img.clogo,img.clogo-sm,img[data-sym]{content-visibility:auto;}
         html+='<div class="acct-sec">Coins in Wallet</div>';
         html+=cRows.map(function(r){
           return '<div class="acct-item" onclick="openCoinDetail(\''+r[0]+'\')">'+
-            '<div class="ai-l"><div class="ai-t">'+r[0]+'</div><div class="ai-v">'+(+r[1]).toFixed(6)+' &nbsp;·&nbsp; '+fmt(r[2])+' USD</div></div>'+
+            '<div class="ai-l"><div class="ai-t">'+r[0]+'</div><div class="ai-v">'+formatAmount(r[1],r[0])+' &nbsp;·&nbsp; '+fmt(r[2])+' USD</div></div>'+
             '<span class="ai-a">→</span></div>';
         }).join('');
       }
@@ -14136,7 +14210,8 @@ body.light #biexcPromo{background:#f3f5f7}
     try{ return window.fmtMoney(n, d==null?2:d); }
     catch(e){ return NUM(n).toFixed(d==null?2:d); }
   }
-  function fmtQty(n){
+  function fmtQty(n,c){
+    if(c && window.formatAmount) return formatAmount(NUM(n),c);
     n = NUM(n);
     if(!n) return '0';
     if(n < 1) return n.toFixed(8).replace(/0+$/,'').replace(/\.$/,'');
@@ -14436,14 +14511,14 @@ body.light #biexcPromo{background:#f3f5f7}
           elAmt = row.querySelector('.ca'),
           elUsd = row.querySelector('.cu'),
           elLk  = row.querySelector('.wc-lock');
-      var amtTxt = mask ? '*****' : fmtQty(r.free);
+      var amtTxt = mask ? '*****' : fmtQty(r.free,r.sym);
       var usdTxt = mask ? '*****' : (fmt(r.usd)+' USD');
       if(elChg){ if(elChg.textContent !== chgTxt) elChg.textContent = chgTxt; elChg.style.color = chgCol; }
       if(elAmt && elAmt.textContent !== amtTxt) elAmt.textContent = amtTxt;
       if(elUsd && elUsd.textContent !== usdTxt) elUsd.textContent = usdTxt;
       if(elLk){
         if(r.locked > 0){
-          var lkTxt = 'Locked '+(mask?'*****':fmtQty(r.locked));
+          var lkTxt = 'Locked '+(mask?'*****':fmtQty(r.locked,r.sym));
           if(elLk.textContent !== lkTxt) elLk.textContent = lkTxt;
           elLk.style.display = '';
         } else { elLk.style.display = 'none'; }
@@ -14493,7 +14568,7 @@ body.light #biexcPromo{background:#f3f5f7}
       html += held.map(function(r){
         return '<div class="acct-item" onclick="openCoinDetail(\''+r.sym+'\')">'+
           '<div class="ai-l"><div class="ai-t">'+r.sym+'</div><div class="ai-v">'+
-          (mask ? '*****' : fmtQty(r.free)+' &nbsp;·&nbsp; '+fmt(r.usd)+' USD')+'</div></div>'+
+          (mask ? '*****' : fmtQty(r.free,r.sym)+' &nbsp;·&nbsp; '+fmt(r.usd)+' USD')+'</div></div>'+
           '<span class="ai-a">\u2192</span></div>';
       }).join('');
     }
@@ -15852,6 +15927,236 @@ body.light #bxq{--a-bg:#f4f5f6;--a-card:#fff;--a-card2:#ebedf0;--a-line:#dfe2e7;
   };
   // live refresh while the screen is open
   setInterval(function(){var s=$('refScr');if(document.hidden||!s||!s.classList.contains('open'))return;load().then(function(){render();if($('refHist').classList.contains('open'))renderHist()})},20000);
+})();
+</script>
+<style id="bx-rewards-css">
+.bxr-card{margin:14px 0 6px;padding:14px;border-radius:14px;background:linear-gradient(135deg,rgba(247,166,0,.14),rgba(247,166,0,.04));border:1px solid rgba(247,166,0,.35);color:var(--text,#fff)}
+.bxr-card .t{display:flex;align-items:center;justify-content:space-between;font-size:13px;font-weight:700}
+.bxr-card .a{font-size:24px;font-weight:800;margin:6px 0 2px}
+.bxr-card .s{font-size:12px;color:var(--text2,#9aa0a6)}
+.bxr-bar{height:6px;border-radius:6px;background:rgba(128,128,128,.25);overflow:hidden;margin:10px 0 8px}
+.bxr-bar i{display:block;height:100%;background:linear-gradient(90deg,#f7a600,#ffcc4d);border-radius:6px;transition:width .5s var(--bx-ease,ease)}
+.bxr-btn{height:36px;padding:0 14px;border:none;border-radius:10px;background:#f7a600;color:#111;font-weight:800;font-size:13px;cursor:pointer}
+.bxr-badge{font-size:11px;font-weight:800;padding:4px 9px;border-radius:999px}
+.bxr-badge.lock{background:rgba(247,166,0,.16);color:#f7a600}.bxr-badge.ok{background:rgba(32,199,122,.16);color:#20c77a}
+.bxr-ban{display:flex;align-items:center;gap:10px;margin:12px 0 4px;padding:11px 12px;border-radius:12px;background:rgba(247,166,0,.12);border:1px solid rgba(247,166,0,.3);font-size:13px;font-weight:700;cursor:pointer;color:var(--text,#fff)}
+.bxr-ban .ic{font-size:20px}.bxr-ban .tx{flex:1}.bxr-ban .tx small{display:block;font-weight:500;color:var(--text2,#9aa0a6);font-size:11px;margin-top:2px}
+.bxr-ban .go{color:#f7a600;font-weight:800}
+#bxRw{position:fixed;inset:0;z-index:10060;background:var(--bg,#0b0e11);color:var(--text,#fff);display:none;flex-direction:column;transform:translate3d(100%,0,0);transition:transform .24s var(--bx-ease,ease);will-change:transform}
+body.light #bxRw{background:#fff;color:#121417}
+#bxRw.show{display:flex}#bxRw.in{transform:translate3d(0,0,0)}
+#bxRw .hd{display:flex;align-items:center;gap:10px;padding:14px;font-weight:800;font-size:16px;border-bottom:1px solid rgba(128,128,128,.18)}
+#bxRw .hd button{width:36px;height:36px;border:none;border-radius:10px;background:rgba(128,128,128,.14);color:inherit;font-size:16px}
+#bxRw .bd{flex:1;overflow:auto;padding:16px;-webkit-overflow-scrolling:touch}
+#bxRw .hero{text-align:center;padding:22px 14px;border-radius:18px;background:radial-gradient(circle at 50% 0,rgba(247,166,0,.28),rgba(247,166,0,.04) 70%);border:1px solid rgba(247,166,0,.3)}
+#bxRw .hero .amt{font-size:40px;font-weight:900;margin:8px 0}
+#bxRw .sec{margin-top:18px;font-size:13px;font-weight:800}
+#bxRw .rule{margin-top:8px;padding:12px;border-radius:12px;background:rgba(128,128,128,.08);font-size:13px;line-height:1.55;color:var(--text2,#9aa0a6)}
+#bxRw .lg{display:flex;justify-content:space-between;gap:10px;padding:11px 0;border-bottom:1px solid rgba(128,128,128,.14);font-size:13px}
+#bxRw .lg small{display:block;color:var(--text2,#9aa0a6);font-size:11px;margin-top:2px}
+#bxPop{position:fixed;inset:0;z-index:2147483300;display:none;align-items:center;justify-content:center;flex-direction:column;background:radial-gradient(circle at 50% 40%,rgba(247,166,0,.32),rgba(0,0,0,0) 60%),rgba(8,10,14,.92);color:#fff;text-align:center;padding:24px;overflow:hidden}
+body.light #bxPop{background:radial-gradient(circle at 50% 40%,rgba(247,166,0,.32),rgba(255,255,255,0) 60%),rgba(247,248,250,.96);color:#121417}
+#bxPop.show{display:flex;animation:bxPf .3s ease both}
+#bxPop .coin{width:110px;height:110px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffe08a,#f7a600 60%,#b87700);display:flex;align-items:center;justify-content:center;font-size:44px;font-weight:900;color:#4a3000;box-shadow:0 14px 40px rgba(247,166,0,.5);animation:bxCoin .8s cubic-bezier(.2,1.5,.4,1) both}
+#bxPop h2{font-size:26px;font-weight:900;margin:22px 0 6px;animation:bxUp .5s .3s both}
+#bxPop .big{font-size:44px;font-weight:900;color:#f7a600;animation:bxUp .5s .45s both}
+#bxPop p{font-size:14px;opacity:.8;max-width:320px;margin:8px 0 22px;animation:bxUp .5s .55s both}
+#bxPop button{height:50px;min-width:220px;border:none;border-radius:14px;background:linear-gradient(135deg,#f7a600,#ffcc4d);color:#111;font-weight:800;font-size:15px;cursor:pointer;animation:bxUp .5s .65s both}
+#bxPop i.cf{position:absolute;top:-20px;width:8px;height:14px;border-radius:2px;animation:bxCf linear forwards}
+#bxPop i.cb{position:absolute;left:50%;top:42%;width:18px;height:18px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffe08a,#f7a600);animation:bxBurst .9s ease-out forwards}
+@keyframes bxPf{from{opacity:0}to{opacity:1}}
+@keyframes bxCoin{from{transform:scale(0) rotateY(180deg)}to{transform:none}}
+@keyframes bxUp{from{transform:translateY(16px);opacity:0}to{transform:none;opacity:1}}
+@keyframes bxCf{to{transform:translateY(110vh) rotate(720deg)}}
+@keyframes bxBurst{to{transform:translate(var(--dx),var(--dy)) scale(.4);opacity:0}}
+.bxr-pf{margin:4px 16px 10px}.bxr-pf .bxr-ban{margin:8px 0;padding:13px 14px;border-radius:14px;background:linear-gradient(135deg,rgba(247,166,0,.20),rgba(247,166,0,.05));box-shadow:0 6px 18px rgba(247,166,0,.12)}.bxr-pf .bxr-ban .ic{width:38px;height:38px;border-radius:12px;background:rgba(247,166,0,.18);display:flex;align-items:center;justify-content:center}
+.kx-bonus-cta{margin:0 0 14px;padding:12px;border-radius:12px;background:rgba(247,166,0,.12);border:1px solid rgba(247,166,0,.35);font-size:13px;font-weight:800;display:flex;gap:10px;align-items:center}
+</style>
+<div id="bxRw" role="dialog" aria-label="Rewards"><div class="hd"><button onclick="bxRwClose()" aria-label="Back"><i class="fas fa-arrow-left"></i></button><span>Bonus &amp; Rewards</span></div><div class="bd" id="bxRwBody"></div></div>
+<div id="bxPop" role="dialog" aria-modal="true"></div>
+<script id="bx-rewards">
+(function(){
+  var WELCOME=10, KYC_BONUS=10, NEED_TRADES=3;
+  var BONUS_START=Date.UTC(2026,9,3); // only accounts created from this date get the welcome bonus
+  var $=function(i){return document.getElementById(i)};
+  var S={fuid:null,b:null,user:null,unsubs:[]};
+  window.__bxBonus=S;
+  var F=function(){return window._fb};
+  var fmt=function(v){return window.formatAmount?window.formatAmount(v,'USDT'):(+v||0).toFixed(2)};
+  function fuidNow(){try{var u=F()&&F().auth&&F().auth.currentUser;if(u&&u.uid)return u.uid;var c=window.currentFbUser;return c?(c.firebaseUid||null):null}catch(e){return null}}
+  function kycDone(){var u=S.user||{};var k=u.kycLevels||{};return (k.level||0)>=2||u.kycStatus==='APPROVED'}
+  function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+
+  /* ---------- money: single claim on users/{fuid}/bonus, then credit main USDT ---------- */
+  async function creditUSDT(fuid,amt){
+    var fb=F();
+    var tr=await fb.runTransaction(fb.ref(fb.db,'users/'+fuid+'/balances/USDT'),function(cur){return Math.round(((parseFloat(cur)||0)+amt)*1e8)/1e8});
+    if(tr&&tr.committed){var nb=parseFloat(tr.snapshot.val())||0;try{await fb.update(fb.ref(fb.db,'users/'+fuid),{balance:nb})}catch(e){}window.userBalance=nb;try{window.syncLockedBalanceUI&&syncLockedBalanceUI()}catch(e){}try{window.renderAssetList&&renderAssetList()}catch(e){}}
+  }
+  async function addHist(fuid,type,amt,note){
+    var fb=F();var hid='h_bonus_'+type.toLowerCase()+'_'+Date.now();
+    try{await fb.set(fb.ref(fb.db,'users/'+fuid+'/history/'+hid),{hid:hid,ts:Date.now(),date:new Date().toLocaleString('en-IN',{hour12:false}).replace(',',''),type:type,coin:'USDT',amt:amt,status:'COMPLETED',note:note})}catch(e){}
+  }
+  function logKey(){return 'l'+Date.now()+Math.random().toString(36).slice(2,5)}
+  async function tx(fuid,fn){
+    var fb=F(); var r=fb.ref(fb.db,'users/'+fuid+'/bonus');
+    try{await fb.get(r)}catch(e){}
+    var res=null;
+    var t=await fb.runTransaction(r,function(cur){res=null;var b=cur||{};var out=fn(b);if(out===undefined)return;res=out.res;return out.b});
+    return t&&t.committed?res:null;
+  }
+
+  async function grantWelcome(){
+    var fuid=S.fuid,u=S.user; if(!fuid||!u) return;
+    if(!(u.createdAt>=BONUS_START)) return;
+    if(S.b&&S.b.welcomeGranted) return;
+    await tx(fuid,function(b){
+      if(b.welcomeGranted) return;
+      b.welcomeGranted=true;b.welcomeAmt=WELCOME;b.welcomeStatus='LOCKED';b.welcomeAt=Date.now();
+      b.tradesCompleted=b.tradesCompleted||0;b.log=b.log||{};
+      b.log[logKey()]={type:'GRANTED',text:'$'+WELCOME+' Welcome Bonus received (locked)',ts:Date.now()};
+      return {b:b,res:true};
+    });
+  }
+  async function tryUnlock(){
+    var fuid=S.fuid; if(!fuid) return;
+    var ok=await tx(fuid,function(b){
+      if(!b.welcomeGranted||b.welcomeStatus!=='LOCKED'||(b.tradesCompleted||0)<NEED_TRADES) return;
+      b.welcomeStatus='UNLOCKED';b.unlockedAt=Date.now();b.unlockedBy='app';
+      b.log=b.log||{};b.log[logKey()]={type:'UNLOCKED',text:'Unlocked — $'+(b.welcomeAmt||WELCOME)+' moved to main balance',ts:Date.now()};
+      return {b:b,res:b.welcomeAmt||WELCOME};
+    });
+    if(ok){await creditUSDT(fuid,ok);await addHist(fuid,'WELCOME_BONUS',ok,'Welcome Bonus unlocked after '+NEED_TRADES+' trades');}
+  }
+  async function grantKyc(){
+    var fuid=S.fuid; if(!fuid||!kycDone()) return;
+    if(S.b&&S.b.kycGranted) return;
+    var ok=await tx(fuid,function(b){
+      if(b.kycGranted) return;
+      b.kycGranted=true;b.kycAmt=KYC_BONUS;b.kycAt=Date.now();b.kycBy='app';
+      b.log=b.log||{};b.log[logKey()]={type:'KYC',text:'$'+KYC_BONUS+' KYC Bonus added to main balance',ts:Date.now()};
+      return {b:b,res:KYC_BONUS};
+    });
+    if(ok){await creditUSDT(fuid,ok);await addHist(fuid,'KYC_BONUS',ok,'KYC Bonus');}
+  }
+  /* Called once per finished trade (spot fill, futures close, completed P2P order). */
+  window.bxCountTrade=async function(id){
+    var fuid=fuidNow(); if(!fuid) return;
+    if(S.fuid!==fuid) await attach(fuid);
+    var key=String(id||Date.now()).replace(/[.#$\[\]\/]/g,'_').slice(0,80);
+    var n=await tx(fuid,function(b){
+      if(!b.welcomeGranted||b.welcomeStatus!=='LOCKED') return;
+      b.trades=b.trades||{}; if(b.trades[key]) return;
+      b.trades[key]=Date.now(); b.tradesCompleted=(b.tradesCompleted||0)+1;
+      b.log=b.log||{};b.log[logKey()]={type:'TRADE',text:'Trade completed ('+Math.min(b.tradesCompleted,NEED_TRADES)+'/'+NEED_TRADES+')',ts:Date.now()};
+      return {b:b,res:b.tradesCompleted};
+    });
+    if(n){ if(n>=NEED_TRADES) await tryUnlock(); else try{window.toast&&toast('🎁 Bonus progress: '+n+'/'+NEED_TRADES+' trades')}catch(e){} }
+  };
+
+  /* ---------- live state ---------- */
+  async function attach(fuid){
+    S.unsubs.forEach(function(f){try{f()}catch(e){}});S.unsubs=[];
+    S.fuid=fuid;S.b=null;S.user=null;
+    var fb=F(); if(!fb||!fuid) return paint();
+    try{var s=await fb.get(fb.ref(fb.db,'users/'+fuid));if(S.fuid!==fuid)return;var v=s.val()||{};S.user={createdAt:v.createdAt,kycLevels:v.kycLevels?{level:v.kycLevels.level||0}:{},kycStatus:v.kycStatus||null};S.b=v.bonus||null}catch(e){}
+    S.unsubs.push(fb.onValue(fb.ref(fb.db,'users/'+fuid+'/bonus'),function(s){if(S.fuid!==fuid)return;S.b=s.val()||null;paint();checkPopups()}));
+    S.unsubs.push(fb.onValue(fb.ref(fb.db,'users/'+fuid+'/kycLevels/level'),function(s){if(S.fuid!==fuid||!S.user)return;S.user.kycLevels={level:s.val()||0};paint();grantKyc()}));
+    S.unsubs.push(fb.onValue(fb.ref(fb.db,'users/'+fuid+'/kycStatus'),function(s){if(S.fuid!==fuid||!S.user)return;S.user.kycStatus=s.val()||null;paint();grantKyc()}));
+    paint();
+    await grantWelcome(); await grantKyc();
+    if(S.b&&S.b.welcomeStatus==='LOCKED'&&(S.b.tradesCompleted||0)>=NEED_TRADES) await tryUnlock();
+  }
+  setInterval(function(){if(document.hidden)return;var f=fuidNow();if(f!==S.fuid){if(f)attach(f);else{S.unsubs.forEach(function(x){try{x()}catch(e){}});S.unsubs=[];S.fuid=null;S.b=null;S.user=null;paint()}}},1500);
+
+  /* ---------- popups ---------- */
+  function burst(el){
+    var cols=['#f7a600','#ffcc4d','#20c77a','#3b82f6','#ff5a5f','#fff'];
+    for(var i=0;i<46;i++){var c=document.createElement('i');c.className='cf';c.style.left=(Math.random()*100)+'%';c.style.background=cols[i%cols.length];c.style.animationDuration=(1.6+Math.random()*1.4)+'s';c.style.animationDelay=(Math.random()*.5)+'s';el.appendChild(c)}
+    for(var j=0;j<14;j++){var b=document.createElement('i');b.className='cb';var a=j/14*Math.PI*2,r=110+Math.random()*60;b.style.setProperty('--dx',Math.cos(a)*r+'px');b.style.setProperty('--dy',Math.sin(a)*r+'px');el.appendChild(b)}
+  }
+  function countUp(el,to){var t0=performance.now();(function st(t){var p=Math.min(1,(t-t0)/900);el.textContent='$'+fmt(to*(1-Math.pow(1-p,3)));if(p<1)requestAnimationFrame(st)})(t0)}
+  var popBusy=false;
+  function showPop(title,amt,text,flag){
+    if(popBusy) return; var w=$('kxWel'); if(w&&w.classList.contains('show')){setTimeout(function(){checkPopups()},1200);return}
+    popBusy=true;
+    var p=$('bxPop');
+    p.innerHTML='<div class="coin">$</div><h2>'+esc(title)+'</h2><div class="big" id="bxPopAmt">$0.00</div><p>'+esc(text)+'</p><button id="bxPopOk">Awesome</button>';
+    burst(p);p.classList.add('show');
+    setTimeout(function(){countUp($('bxPopAmt'),amt)},450);
+    try{navigator.vibrate&&navigator.vibrate([30,40,30])}catch(e){}
+    $('bxPopOk').onclick=function(){p.classList.remove('show');p.innerHTML='';popBusy=false;
+      var u={};u[flag]=true;try{F().update(F().ref(F().db,'users/'+S.fuid+'/bonus'),u)}catch(e){}
+      setTimeout(checkPopups,400)};
+  }
+  function checkPopups(){
+    var b=S.b; if(!b||!S.fuid) return;
+    if(b.kycGranted&&!b.kycPopupShown) return showPop('$'+(b.kycAmt||KYC_BONUS)+' Bonus Received!',b.kycAmt||KYC_BONUS,'Your KYC is complete. The bonus is now in your main balance — use it right away.','kycPopupShown');
+    if(b.welcomeStatus==='UNLOCKED'&&!b.unlockPopupShown) return showPop('Welcome Bonus Unlocked!',b.welcomeAmt||WELCOME,'You completed '+NEED_TRADES+' trades. The bonus has moved to your main balance.','unlockPopupShown');
+  }
+
+  /* ---------- UI: Assets card, Home banner, KYC CTA, Bonus page ---------- */
+  function slot(id,anchorSel,where){
+    var el=$(id); if(el) return el;
+    var a=document.querySelector(anchorSel); if(!a) return null;
+    el=document.createElement('div');el.id=id;
+    if(where==='before') a.parentNode.insertBefore(el,a); else a.parentNode.insertBefore(el,a.nextSibling);
+    return el;
+  }
+  function setHTML(el,h){if(el&&el.__h!==h){el.__h=h;el.innerHTML=h}}
+  function paint(){
+    var b=S.b, on=!!S.fuid;
+    var has=on&&b&&b.welcomeGranted, st=has?b.welcomeStatus:null, n=has?Math.min(b.tradesCompleted||0,NEED_TRADES):0;
+    var amt=has?(b.welcomeAmt||WELCOME):WELCOME;
+    // Assets — Reward Balance (not part of Total Assets)
+    var ac=slot('bxRwCard','#sc-assets .atabs','before');
+    if(ac){
+      if(!has) setHTML(ac,'');
+      else setHTML(ac,'<div class="bxr-card"><div class="t"><span>🎁 Reward Balance</span><span class="bxr-badge '+(st==='UNLOCKED'?'ok">Unlocked ✅':'lock">Locked 🔒')+'</span></div>'+
+        '<div class="a">'+(st==='UNLOCKED'?'0.00':fmt(amt))+' <span style="font-size:13px;color:var(--text2)">USDT</span></div>'+
+        '<div class="s">'+(st==='UNLOCKED'?'$'+fmt(amt)+' moved to your main balance':'Trades completed: '+n+' / '+NEED_TRADES+' · not counted in Total Assets')+'</div>'+
+        '<div class="bxr-bar"><i style="width:'+(st==='UNLOCKED'?100:n/NEED_TRADES*100)+'%"></i></div>'+
+        '<button class="bxr-btn" onclick="bxRwOpen()">View Rewards</button></div>');
+    }
+    // Home + Assets banners
+    var hb=null;
+    var ab=slot('bxPfBan','#sd .pf-user','after');
+    var ban='';
+    if(on&&S.user&&!kycDone()&&!(b&&b.kycGranted)) ban='<div class="bxr-ban" onclick="try{closeSideDrawer()}catch(e){};bxKycGo()"><span class="ic">🪪</span><span class="tx">Complete KYC and get $'+KYC_BONUS+' bonus<small>Added straight to your main balance</small></span><span class="go">Verify ›</span></div>';
+    if(has&&st==='LOCKED') ban+='<div class="bxr-ban" onclick="bxRwOpen()"><span class="ic">🎁</span><span class="tx">$'+fmt(amt)+' Welcome Bonus<small>Complete '+NEED_TRADES+' trades to unlock · '+n+'/'+NEED_TRADES+' done</small></span><span class="go">View ›</span></div>';
+    setHTML(ab,ban?'<div class="bxr-pf">'+ban+'</div>':'');
+    // KYC overlay CTA
+    var kb=$('kxBody');
+    if(kb){var c=kb.querySelector('.kx-bonus-cta');var want=false&&on&&S.user&&!kycDone()&&!(b&&b.kycGranted);
+      if(want&&!c){c=document.createElement('div');c.className='kx-bonus-cta';c.innerHTML='<span style="font-size:20px">🎁</span><span>Complete KYC and get $'+KYC_BONUS+' bonus — added to your main balance</span>';kb.insertBefore(c,kb.firstChild)}
+      else if(!want&&c) c.remove();}
+    if($('bxRw')&&$('bxRw').classList.contains('show')) paintPage();
+  }
+  try{var kb0=$('kxBody');if(kb0)new MutationObserver(function(){if(!kb0.querySelector('.kx-bonus-cta'))paint()}).observe(kb0,{childList:true})}catch(e){}
+  window.bxKycGo=function(){try{if(typeof window.kxOpen==='function')return kxOpen()}catch(e){}};
+
+  function paintPage(){
+    var b=S.b||{}, has=!!b.welcomeGranted, st=b.welcomeStatus, n=Math.min(b.tradesCompleted||0,NEED_TRADES), amt=b.welcomeAmt||WELCOME;
+    var logs=Object.keys(b.log||{}).map(function(k){return b.log[k]}).sort(function(x,y){return (y.ts||0)-(x.ts||0)});
+    var h='';
+    if(!S.fuid) h='<div class="rule">Sign in to see your rewards.</div>';
+    else if(!has) h='<div class="hero"><div class="s">Welcome Bonus</div><div class="amt">—</div><div class="s">The $'+WELCOME+' welcome bonus is for new accounts only.</div></div>';
+    else h='<div class="hero"><span class="bxr-badge '+(st==='UNLOCKED'?'ok">Unlocked ✅':'lock">Locked 🔒')+'</span><div class="amt">$'+fmt(amt)+'</div>'+
+      '<div style="font-weight:700;font-size:13px">'+(st==='UNLOCKED'?'Moved to your main balance':'Complete '+NEED_TRADES+' trades to unlock')+'</div>'+
+      '<div class="bxr-bar" style="margin:14px 0 6px"><i style="width:'+(st==='UNLOCKED'?100:n/NEED_TRADES*100)+'%"></i></div><div class="s">'+(st==='UNLOCKED'?NEED_TRADES:n)+'/'+NEED_TRADES+' trades</div></div>';
+    h+='<div class="sec">How it works</div><div class="rule">• New accounts get a <b>$'+WELCOME+' Welcome Bonus</b>. It stays locked in your Reward Balance.<br>• Complete <b>'+NEED_TRADES+' trades</b> (Spot, Futures close or a completed P2P order). Cancelled or failed orders do not count.<br>• On the '+NEED_TRADES+'rd trade the bonus unlocks and moves to your main balance automatically.<br>• Complete KYC to get a separate <b>$'+KYC_BONUS+' KYC Bonus</b>, added to your main balance straight away.</div>';
+    if(S.fuid){h+='<div class="sec">KYC Bonus</div><div class="rule">'+(b.kycGranted?'✅ $'+fmt(b.kycAmt||KYC_BONUS)+' received in main balance':'<span onclick="bxRwClose();bxKycGo()" style="color:#f7a600;font-weight:800;cursor:pointer">Complete KYC and get $'+KYC_BONUS+' bonus ›</span>')+'</div>';}
+    if(logs.length){h+='<div class="sec">Bonus history</div>'+logs.map(function(l){return '<div class="lg"><div>'+esc(l.text)+'<small>'+new Date(l.ts||0).toLocaleString('en-IN',{hour12:false})+'</small></div><div>'+(l.type==='UNLOCKED'||l.type==='KYC'?'✅':l.type==='GRANTED'?'🎁':'📈')+'</div></div>'}).join('')}
+    setHTML($('bxRwBody'),h);
+  }
+  window.bxRwOpen=function(){var p=$('bxRw');paintPage();p.classList.add('show');requestAnimationFrame(function(){requestAnimationFrame(function(){p.classList.add('in')})});try{history.pushState({bxRw:1},'')}catch(e){}};
+  window.bxRwClose=function(fromPop){var p=$('bxRw');if(!p.classList.contains('show'))return false;p.classList.remove('in');setTimeout(function(){p.classList.remove('show')},250);if(!fromPop){try{if(history.state&&history.state.bxRw)history.back()}catch(e){}}return true};
+  window.addEventListener('popstate',function(){var p=$('bxRw');if(p&&p.classList.contains('show'))bxRwClose(true)});
+  // Android back (app wrapper) closes the Rewards page first
+  (function wrapBack(tries){var _bb=window.bxBack;if(typeof _bb==='function'&&!_bb.__bxRw){var w=function(){if(bxRwClose())return;return _bb.apply(this,arguments)};w.__bxRw=1;window.bxBack=w;return}if(tries<30)setTimeout(function(){wrapBack(tries+1)},1000)})(0);
+
+  /* P2P completed order → counts as a trade */
+  window.addEventListener('message',function(e){var d=e.data;if(d&&d.source==='p2p-iframe'&&d.type==='tradeDone')window.bxCountTrade('p2p_'+d.id)});
 })();
 </script>
 </body>
