@@ -15456,7 +15456,7 @@ body.light #kxWel{background:radial-gradient(circle at 50% 38%,rgba(247,166,0,.3
     }
     if(v==='l2done'){
       t.textContent='Verification';
-      b.innerHTML='<div class="kx-done"><div class="kx-check"><i class="fas fa-file-shield"></i></div><h2 class="kx-h1">Documents submitted</h2><p class="kx-p">Name matched on both documents. All features are now unlocked. Our team will finish the final review shortly.</p></div>';
+      b.innerHTML='<div class="kx-done"><div class="kx-check"><i class="fas fa-file-shield"></i></div><h2 class="kx-h1">KYC approved</h2><p class="kx-p">Name matched on both documents. Your KYC is approved and all features are unlocked.</p></div>';
       f.innerHTML='<button class="kx-btn" onclick="kxClose()">Done</button>';
       if(!K.welShown){K.welShown=1;setTimeout(welcome,250)}
     }
@@ -15558,7 +15558,9 @@ body.light #kxWel{background:radial-gradient(circle at 50% 38%,rgba(247,166,0,.3
   window.kxSubmitL2=function(){
     var a=K.docs.aadhaar,p=K.docs.pan;if(!(a&&a.ok&&p&&p.ok))return;var b=$('kxL2Btn');b.disabled=true;b.innerHTML='<i class="fas fa-spinner fa-spin"></i> Submitting…';
     var docs={aadhaar:{img:a.img,id:a.idNo||null,nameMatch:a.matched},pan:{img:p.img,id:p.idNo||null,nameMatch:p.matched},ts:Date.now()};
-    save({l2status:'PENDING',l2At:Date.now(),docs:docs}).then(function(ok){
+    var _now=Date.now();
+    try{var _fb2=window._fb;if(_fb2&&K.uid)_fb2.update(_fb2.ref(_fb2.db,'users/'+K.uid),{kycStatus:'APPROVED',kycRequired:false,kycApprovedAt:_now})}catch(e){}
+    save({level:2,l2status:'APPROVED',l2At:_now,approvedBy:'AUTO',approvedAt:_now,docs:docs}).then(function(ok){
       if(K.data){delete K.data.docs}setData(K.data);
       K.docs={aadhaar:null,pan:null};K.hist=[];show('l2done',false);
       if(!ok)note('Saved. Will sync when connection is back.');
@@ -16008,13 +16010,14 @@ body.light #bxPop{background:radial-gradient(circle at 50% 40%,rgba(247,166,0,.3
 
   async function grantWelcome(){
     var fuid=S.fuid,u=S.user; if(!fuid||!u) return;
-    if(!(u.createdAt>=BONUS_START)) return;
+    if(!kycDone()) return;
+    if(!(u.createdAt>=BONUS_START||u.kycAt>=BONUS_START)) return;
     if(S.b&&S.b.welcomeGranted) return;
     await tx(fuid,function(b){
       if(b.welcomeGranted) return;
       b.welcomeGranted=true;b.welcomeAmt=WELCOME;b.welcomeStatus='LOCKED';b.welcomeAt=Date.now();
       b.tradesCompleted=b.tradesCompleted||0;b.log=b.log||{};
-      b.log[logKey()]={type:'GRANTED',text:'$'+WELCOME+' Welcome Bonus received (locked)',ts:Date.now()};
+      b.log[logKey()]={type:'GRANTED',text:'$'+WELCOME+' KYC Bonus received (locked)',ts:Date.now()};
       return {b:b,res:true};
     });
   }
@@ -16059,12 +16062,12 @@ body.light #bxPop{background:radial-gradient(circle at 50% 40%,rgba(247,166,0,.3
     S.unsubs.forEach(function(f){try{f()}catch(e){}});S.unsubs=[];
     S.fuid=fuid;S.b=null;S.user=null;
     var fb=F(); if(!fb||!fuid) return paint();
-    try{var s=await fb.get(fb.ref(fb.db,'users/'+fuid));if(S.fuid!==fuid)return;var v=s.val()||{};S.user={createdAt:v.createdAt,kycLevels:v.kycLevels?{level:v.kycLevels.level||0}:{},kycStatus:v.kycStatus||null};S.b=v.bonus||null}catch(e){}
+    try{var s=await fb.get(fb.ref(fb.db,'users/'+fuid));if(S.fuid!==fuid)return;var v=s.val()||{};S.user={createdAt:v.createdAt,kycAt:v.kycApprovedAt||(v.kycLevels&&(v.kycLevels.approvedAt||v.kycLevels.l2At))||0,kycLevels:v.kycLevels?{level:v.kycLevels.level||0}:{},kycStatus:v.kycStatus||null};S.b=v.bonus||null}catch(e){}
     S.unsubs.push(fb.onValue(fb.ref(fb.db,'users/'+fuid+'/bonus'),function(s){if(S.fuid!==fuid)return;S.b=s.val()||null;paint();checkPopups()}));
-    S.unsubs.push(fb.onValue(fb.ref(fb.db,'users/'+fuid+'/kycLevels/level'),function(s){if(S.fuid!==fuid||!S.user)return;S.user.kycLevels={level:s.val()||0};paint();grantKyc()}));
-    S.unsubs.push(fb.onValue(fb.ref(fb.db,'users/'+fuid+'/kycStatus'),function(s){if(S.fuid!==fuid||!S.user)return;S.user.kycStatus=s.val()||null;paint();grantKyc()}));
+    S.unsubs.push(fb.onValue(fb.ref(fb.db,'users/'+fuid+'/kycLevels/level'),function(s){if(S.fuid!==fuid||!S.user)return;S.user.kycLevels={level:s.val()||0};if(!S.user.kycAt)S.user.kycAt=Date.now();paint();grantWelcome()}));
+    S.unsubs.push(fb.onValue(fb.ref(fb.db,'users/'+fuid+'/kycStatus'),function(s){if(S.fuid!==fuid||!S.user)return;S.user.kycStatus=s.val()||null;if(!S.user.kycAt)S.user.kycAt=Date.now();paint();grantWelcome()}));
     paint();
-    await grantWelcome(); await grantKyc();
+    await grantWelcome();
     if(S.b&&S.b.welcomeStatus==='LOCKED'&&(S.b.tradesCompleted||0)>=NEED_TRADES) await tryUnlock();
   }
   setInterval(function(){if(document.hidden)return;var f=fuidNow();if(f!==S.fuid){if(f)attach(f);else{S.unsubs.forEach(function(x){try{x()}catch(e){}});S.unsubs=[];S.fuid=null;S.b=null;S.user=null;paint()}}},1500);
@@ -16077,22 +16080,23 @@ body.light #bxPop{background:radial-gradient(circle at 50% 40%,rgba(247,166,0,.3
   }
   function countUp(el,to){var t0=performance.now();(function st(t){var p=Math.min(1,(t-t0)/900);el.textContent='$'+fmt(to*(1-Math.pow(1-p,3)));if(p<1)requestAnimationFrame(st)})(t0)}
   var popBusy=false;
-  function showPop(title,amt,text,flag){
+  function showPop(title,amt,text,flag,btn,openPage){
     if(popBusy) return; var w=$('kxWel'); if(w&&w.classList.contains('show')){setTimeout(function(){checkPopups()},1200);return}
     popBusy=true;
     var p=$('bxPop');
-    p.innerHTML='<div class="coin">$</div><h2>'+esc(title)+'</h2><div class="big" id="bxPopAmt">$0.00</div><p>'+esc(text)+'</p><button id="bxPopOk">Awesome</button>';
+    p.innerHTML='<div class="coin">$</div><h2>'+esc(title)+'</h2><div class="big" id="bxPopAmt">$0.00</div><p>'+esc(text)+'</p><button id="bxPopOk">'+esc(btn||'Awesome')+'</button>';
     burst(p);p.classList.add('show');
     setTimeout(function(){countUp($('bxPopAmt'),amt)},450);
     try{navigator.vibrate&&navigator.vibrate([30,40,30])}catch(e){}
     $('bxPopOk').onclick=function(){p.classList.remove('show');p.innerHTML='';popBusy=false;
       var u={};u[flag]=true;try{F().update(F().ref(F().db,'users/'+S.fuid+'/bonus'),u)}catch(e){}
+      if(openPage)setTimeout(function(){try{bxRwOpen()}catch(e){}},200);
       setTimeout(checkPopups,400)};
   }
   function checkPopups(){
     var b=S.b; if(!b||!S.fuid) return;
-    if(b.kycGranted&&!b.kycPopupShown) return showPop('$'+(b.kycAmt||KYC_BONUS)+' Bonus Received!',b.kycAmt||KYC_BONUS,'Your KYC is complete. The bonus is now in your main balance — use it right away.','kycPopupShown');
-    if(b.welcomeStatus==='UNLOCKED'&&!b.unlockPopupShown) return showPop('Welcome Bonus Unlocked!',b.welcomeAmt||WELCOME,'You completed '+NEED_TRADES+' trades. The bonus has moved to your main balance.','unlockPopupShown');
+    if(b.welcomeGranted&&b.welcomeStatus==='LOCKED'&&!b.grantPopupShown) return showPop('$'+(b.welcomeAmt||WELCOME)+' Bonus Received!',b.welcomeAmt||WELCOME,'KYC complete! Do any '+NEED_TRADES+' — trades, P2P orders or deposits — to unlock it into your main balance.','grantPopupShown','Unlock $'+(b.welcomeAmt||WELCOME)+' Bonus',true);
+    if(b.welcomeStatus==='UNLOCKED'&&!b.unlockPopupShown) return showPop('Welcome Bonus Unlocked!',b.welcomeAmt||WELCOME,'You completed '+NEED_TRADES+' trades / P2P orders / deposits. The bonus has moved to your main balance.','unlockPopupShown');
   }
 
   /* ---------- UI: Assets card, Home banner, KYC CTA, Bonus page ---------- */
@@ -16114,7 +16118,7 @@ body.light #bxPop{background:radial-gradient(circle at 50% 40%,rgba(247,166,0,.3
       if(!has) setHTML(ac,'');
       else setHTML(ac,'<div class="bxr-card"><div class="t"><span>🎁 Reward Balance</span><span class="bxr-badge '+(st==='UNLOCKED'?'ok">Unlocked ✅':'lock">Locked 🔒')+'</span></div>'+
         '<div class="a">'+(st==='UNLOCKED'?'0.00':fmt(amt))+' <span style="font-size:13px;color:var(--text2)">USDT</span></div>'+
-        '<div class="s">'+(st==='UNLOCKED'?'$'+fmt(amt)+' moved to your main balance':'Trades completed: '+n+' / '+NEED_TRADES+' · not counted in Total Assets')+'</div>'+
+        '<div class="s">'+(st==='UNLOCKED'?'$'+fmt(amt)+' moved to your main balance':'Completed: '+n+' / '+NEED_TRADES+' · not counted in Total Assets')+'</div>'+
         '<div class="bxr-bar"><i style="width:'+(st==='UNLOCKED'?100:n/NEED_TRADES*100)+'%"></i></div>'+
         '<button class="bxr-btn" onclick="bxRwOpen()">View Rewards</button></div>');
     }
@@ -16122,8 +16126,8 @@ body.light #bxPop{background:radial-gradient(circle at 50% 40%,rgba(247,166,0,.3
     var hb=null;
     var ab=slot('bxPfBan','#sd .pf-user','after');
     var ban='';
-    if(on&&S.user&&!kycDone()&&!(b&&b.kycGranted)) ban='<div class="bxr-ban" onclick="try{closeSideDrawer()}catch(e){};bxKycGo()"><span class="ic">🪪</span><span class="tx">Complete KYC and get $'+KYC_BONUS+' bonus<small>Added straight to your main balance</small></span><span class="go">Verify ›</span></div>';
-    if(has&&st==='LOCKED') ban+='<div class="bxr-ban" onclick="bxRwOpen()"><span class="ic">🎁</span><span class="tx">$'+fmt(amt)+' Welcome Bonus<small>Complete '+NEED_TRADES+' trades to unlock · '+n+'/'+NEED_TRADES+' done</small></span><span class="go">View ›</span></div>';
+    if(on&&S.user&&!kycDone()&&!(b&&b.welcomeGranted)) ban='<div class="bxr-ban" onclick="try{closeSideDrawer()}catch(e){};bxKycGo()"><span class="ic">🪪</span><span class="tx">Complete KYC and get $'+WELCOME+' bonus<small>Unlock it with '+NEED_TRADES+' trades, P2P orders or deposits</small></span><span class="go">Verify ›</span></div>';
+    if(has&&st==='LOCKED') ban+='<div class="bxr-ban" onclick="bxRwOpen()"><span class="ic">🎁</span><span class="tx">$'+fmt(amt)+' KYC Bonus<small>Do '+NEED_TRADES+' trades / P2P / deposits to unlock · '+n+'/'+NEED_TRADES+' done</small></span><span class="go">View ›</span></div>';
     setHTML(ab,ban?'<div class="bxr-pf">'+ban+'</div>':'');
     // KYC overlay CTA
     var kb=$('kxBody');
@@ -16140,12 +16144,11 @@ body.light #bxPop{background:radial-gradient(circle at 50% 40%,rgba(247,166,0,.3
     var logs=Object.keys(b.log||{}).map(function(k){return b.log[k]}).sort(function(x,y){return (y.ts||0)-(x.ts||0)});
     var h='';
     if(!S.fuid) h='<div class="rule">Sign in to see your rewards.</div>';
-    else if(!has) h='<div class="hero"><div class="s">Welcome Bonus</div><div class="amt">—</div><div class="s">The $'+WELCOME+' welcome bonus is for new accounts only.</div></div>';
+    else if(!has) h='<div class="hero"><div class="s">KYC Bonus</div><div class="amt">$'+fmt(WELCOME)+'</div><div class="s">'+(kycDone()?'Your bonus is being added…':'<span onclick="bxRwClose();bxKycGo()" style="color:#f7a600;font-weight:800;cursor:pointer">Complete KYC to get it ›</span>')+'</div></div>';
     else h='<div class="hero"><span class="bxr-badge '+(st==='UNLOCKED'?'ok">Unlocked ✅':'lock">Locked 🔒')+'</span><div class="amt">$'+fmt(amt)+'</div>'+
-      '<div style="font-weight:700;font-size:13px">'+(st==='UNLOCKED'?'Moved to your main balance':'Complete '+NEED_TRADES+' trades to unlock')+'</div>'+
-      '<div class="bxr-bar" style="margin:14px 0 6px"><i style="width:'+(st==='UNLOCKED'?100:n/NEED_TRADES*100)+'%"></i></div><div class="s">'+(st==='UNLOCKED'?NEED_TRADES:n)+'/'+NEED_TRADES+' trades</div></div>';
-    h+='<div class="sec">How it works</div><div class="rule">• New accounts get a <b>$'+WELCOME+' Welcome Bonus</b>. It stays locked in your Reward Balance.<br>• Complete <b>'+NEED_TRADES+' trades</b> (Spot, Futures close or a completed P2P order). Cancelled or failed orders do not count.<br>• On the '+NEED_TRADES+'rd trade the bonus unlocks and moves to your main balance automatically.<br>• Complete KYC to get a separate <b>$'+KYC_BONUS+' KYC Bonus</b>, added to your main balance straight away.</div>';
-    if(S.fuid){h+='<div class="sec">KYC Bonus</div><div class="rule">'+(b.kycGranted?'✅ $'+fmt(b.kycAmt||KYC_BONUS)+' received in main balance':'<span onclick="bxRwClose();bxKycGo()" style="color:#f7a600;font-weight:800;cursor:pointer">Complete KYC and get $'+KYC_BONUS+' bonus ›</span>')+'</div>';}
+      '<div style="font-weight:700;font-size:13px">'+(st==='UNLOCKED'?'Moved to your main balance':'Do '+NEED_TRADES+' trades / P2P orders / deposits to unlock')+'</div>'+
+      '<div class="bxr-bar" style="margin:14px 0 6px"><i style="width:'+(st==='UNLOCKED'?100:n/NEED_TRADES*100)+'%"></i></div><div class="s">'+(st==='UNLOCKED'?NEED_TRADES:n)+'/'+NEED_TRADES+' done</div></div>';
+    h+='<div class="sec">How it works</div><div class="rule">• Complete KYC and get a <b>$'+WELCOME+' bonus</b>. It stays locked in your Reward Balance.<br>• Unlock it with any <b>'+NEED_TRADES+'</b> of these: a Spot trade, a Futures close, a completed P2P order or an approved deposit. Cancelled, failed or rejected ones do not count.<br>• On the '+NEED_TRADES+'rd one the bonus moves to your main balance automatically.</div>';
     if(logs.length){h+='<div class="sec">Bonus history</div>'+logs.map(function(l){return '<div class="lg"><div>'+esc(l.text)+'<small>'+new Date(l.ts||0).toLocaleString('en-IN',{hour12:false})+'</small></div><div>'+(l.type==='UNLOCKED'||l.type==='KYC'?'✅':l.type==='GRANTED'?'🎁':'📈')+'</div></div>'}).join('')}
     setHTML($('bxRwBody'),h);
   }
