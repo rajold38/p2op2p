@@ -1575,7 +1575,7 @@ body.light #sc-earn .ern-sh-btns .can{border-color:#d8dde3;color:#0b0e11;}
   <div class="pf-top">
     <button class="pf-back" onclick="closeSideDrawer()"><i class="fas fa-arrow-left"></i></button>
     <div class="pf-ticons">
-      <i class="fas fa-headphones" title="Support" onclick="window.open('https://t.me/biexc10','_blank')"></i>
+      <i class="fas fa-headphones" title="Support" onclick="bxSupOpen()"></i>
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round" style="cursor:pointer" onclick="window.open('https://t.me/BIEXCin','_blank')"><polygon points="12,2 22,8.5 22,15.5 12,22 2,15.5 2,8.5"/></svg>
       <i class="fas fa-address-book" onclick="window.open('https://www.instagram.com/biexc.in','_blank')"></i>
     </div>
@@ -3284,6 +3284,10 @@ window.onFirebaseUser = async function(fbUser) {
       await set(userRef, userData);
     } else {
       userData = snap.val();
+      if (!userData.uid) {
+        userData.uid = 'U' + Date.now().toString(36).toUpperCase().slice(-5) + Math.random().toString(36).slice(2,4).toUpperCase();
+        try { await update(userRef, { uid: userData.uid, firebaseUid: uid }); } catch(e) {}
+      }
       if (fbUser.photoURL && fbUser.photoURL !== userData.avatarUrl) {
         await update(userRef, { avatarUrl: fbUser.photoURL });
         userData.avatarUrl = fbUser.photoURL;
@@ -7414,7 +7418,7 @@ body{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-r
       <a class="sb-item sb-item-tg" href="https://t.me/BIEXCin" target="_blank" rel="noopener"><i class="fab fa-telegram"></i><div><div class="sb-item-label">Telegram Channel</div><div class="sb-item-sub">@BIEXCin · Updates &amp; News</div></div></a>
       <a class="sb-item sb-item-ig" href="https://www.instagram.com/biexc.in?igsh=MTRlN2R1dnRhMWhsNQ==" target="_blank" rel="noopener"><i class="fab fa-instagram"></i><div><div class="sb-item-label">Instagram</div><div class="sb-item-sub">@biexc.in · Follow Us</div></div></a>
       <div class="sb-section">Support</div>
-      <a class="sb-item sb-item-support" href="https://t.me/biexc10" target="_blank" rel="noopener"><i class="fas fa-headset"></i><div><div class="sb-item-label">Customer Care</div><div class="sb-item-sub">t.me/biexc10 · Live Support</div></div></a>
+      <a class="sb-item sb-item-support" href="javascript:void(0)" onclick="try{(parent.bxSupOpen||window.bxSupOpen)()}catch(e){}"><i class="fas fa-headset"></i><div><div class="sb-item-label">Customer Care</div><div class="sb-item-sub">24/7 in-app live chat</div></div></a>
       <div class="sb-section">Account</div>
       <div class="sb-item" onclick="copyUID()"><i class="fas fa-fingerprint" style="color:var(--y);"></i><div><div class="sb-item-label">Your UID</div><div class="sb-item-sub" id="sbUidCopy">Tap to copy</div></div></div>
     </div>
@@ -8010,6 +8014,10 @@ window.onFirebaseUser = async function(fbUser) {
       await set(userRef, userData);
     } else {
       userData = snap.val();
+      if (!userData.uid) {
+        userData.uid = genUID();
+        try { await update(userRef, { uid: userData.uid, firebaseUid: uid }); } catch(e) {}
+      }
       if (fbUser.photoURL && fbUser.photoURL !== userData.avatarUrl) {
         await update(userRef, { avatarUrl: fbUser.photoURL, name: fbUser.displayName || userData.name });
         userData.avatarUrl = fbUser.photoURL;
@@ -9161,23 +9169,36 @@ function renderGrid(){
   }
 }
 
-// Delegated click handler so Buy/Sell on ad-cards always works (even after re-render or repeated opens)
+// Ad-card Buy/Sell: fires on the FIRST tap. Data is captured on pointerdown, so a
+// list re-render between finger-down and finger-up can never swallow the tap.
 if(!window.__adCardDelegated){
   window.__adCardDelegated = true;
-  document.addEventListener('click', function(ev){
-    const card = ev.target && ev.target.closest && ev.target.closest('.ad-card');
-    if(!card) return;
-    const name = card.getAttribute('data-name');
-    const rate = parseFloat(card.getAttribute('data-rate'));
-    const min  = parseFloat(card.getAttribute('data-min'));
-    const max  = parseFloat(card.getAttribute('data-max'));
-    if(!name || !Number.isFinite(rate) || !Number.isFinite(min) || !Number.isFinite(max)){
+  var __adDown=null, __adLast=0;
+  var __adData=function(card){return {name:card.getAttribute('data-name'),rate:parseFloat(card.getAttribute('data-rate')),min:parseFloat(card.getAttribute('data-min')),max:parseFloat(card.getAttribute('data-max'))};};
+  var __adFire=function(d){
+    var now=Date.now(); if(now-__adLast<700) return; __adLast=now;
+    if(!d.name || !Number.isFinite(d.rate) || !Number.isFinite(d.min) || !Number.isFinite(d.max)){
       toast('error','Offer Unavailable','This offer could not be loaded. Please refresh and try again.');
       return;
     }
-    try { prepTrade(name, rate, min, max); } catch(e){ console.error('prepTrade error', e); }
+    try { prepTrade(d.name, d.rate, d.min, d.max); } catch(e){ console.error('prepTrade error', e); }
+  };
+  document.addEventListener('pointerdown', function(ev){
+    var card = ev.target && ev.target.closest && ev.target.closest('.ad-card');
+    __adDown = card ? {x:ev.clientX,y:ev.clientY,t:Date.now(),d:__adData(card)} : null;
+  }, {capture:true, passive:true});
+  document.addEventListener('pointerup', function(ev){
+    var s=__adDown; __adDown=null; if(!s) return;
+    if(Math.abs(ev.clientX-s.x)>10 || Math.abs(ev.clientY-s.y)>10 || Date.now()-s.t>900) return;
+    __adFire(s.d);
+  }, {capture:true, passive:true});
+  document.addEventListener('pointercancel', function(){ __adDown=null; }, true);
+  document.addEventListener('click', function(ev){
+    var card = ev.target && ev.target.closest && ev.target.closest('.ad-card');
+    if(card) __adFire(__adData(card));
   });
 }
+
 
 
 
@@ -10059,14 +10080,17 @@ body.p2p-light .hist-fchip.on{background:#0b0e11;color:#fff;border-color:#0b0e11
     if(isSheet(el)) el.classList.add('p2p-anim-sheet');
     setTimeout(function(){ el.classList.remove('p2p-anim-in','p2p-anim-sheet'); }, 340);
   }
-  function animateClose(el, apply){
+  function animateClose(el, apply0){
+    var apply=function(){ if(el.classList.contains('show')){ el.style.display=''; el.__p2pVisible=true; return; } apply0(); };
     if(REDUCE){ apply(); return; }
     el.__p2pClosing = true;
+    el.style.pointerEvents = 'none';
     el.classList.remove('p2p-anim-in');
     el.classList.add('p2p-anim-out');
     if(isSheet(el)) el.classList.add('p2p-anim-sheet');
     setTimeout(function(){
       el.classList.remove('p2p-anim-out','p2p-anim-sheet');
+      el.style.pointerEvents = '';
       apply();
       el.__p2pClosing = false;
     }, 270);
@@ -10075,6 +10099,7 @@ body.p2p-light .hist-fchip.on{background:#0b0e11;color:#fff;border-color:#0b0e11
   window.p2pAnimateClose = animateClose;
 
   function visible(el){
+    if(el.classList.contains('show')) return true;
     var d = el.style.display;
     if(d === 'none') return false;
     return el.offsetParent !== null || d === 'flex' || d === 'block';
@@ -13740,7 +13765,7 @@ body.light.on-p2p::before,body.light.on-p2p::after{display:none!important;conten
 </style>
 <script id="biexc-enhancements-v2">
 (function(){
- const SERVICES=[['Deposit','fa-arrow-down','openDeposit()'],['Withdraw','fa-arrow-up','openWithdraw()'],['Convert','fa-right-left','openConvert()'],['Markets','fa-chart-line',"go('markets')"],['Futures','fa-bolt',"go('trade')"],['Spot','fa-chart-simple',"go('trade')"],['P2P Trading','fa-people-arrows','openP2P()'],['Earn','fa-percent',"go('earn')"],['History','fa-clock-rotate-left','openHistorySheet()'],['Rewards Hub','fa-gift','openRewards()'],['Refer & Earn','fa-user-plus','openRefer()'],['Support','fa-headset',"window.open('https://t.me/biexc10','_blank')"]];
+ const SERVICES=[['Deposit','fa-arrow-down','openDeposit()'],['Withdraw','fa-arrow-up','openWithdraw()'],['Convert','fa-right-left','openConvert()'],['Markets','fa-chart-line',"go('markets')"],['Futures','fa-bolt',"go('trade')"],['Spot','fa-chart-simple',"go('trade')"],['P2P Trading','fa-people-arrows','openP2P()'],['Earn','fa-percent',"go('earn')"],['History','fa-clock-rotate-left','openHistorySheet()'],['Rewards Hub','fa-gift','openRewards()'],['Refer & Earn','fa-user-plus','openRefer()'],['Support','fa-headset',"bxSupOpen()"]];
  function serviceHTML(home){return SERVICES.map((x,i)=>`<button class="${home?'home-service':'pf-sv'}" style="--delay:${i*30}ms" onclick="${home?'':"closeSideDrawer();"}${x[2]}"><i class="fas ${x[1]}"></i><span class="${home?'':'pn'}">${x[0]}</span></button>`).join('')}
  window.renderServiceGrids=function(){const h=document.getElementById('homeServicesGrid'),p=document.getElementById('pfMoreGrid');if(h)h.innerHTML=serviceHTML(true);if(p)p.innerHTML=serviceHTML(false)};
  window.toggleHomeServices=function(){const g=document.getElementById('homeServicesGrid'),b=document.getElementById('homeMoreBtn'),l=document.getElementById('homeMoreLabel');if(!g)return;const o=!g.classList.contains('open');g.classList.toggle('open',o);g.setAttribute('aria-hidden',String(!o));b&&b.classList.toggle('open',o);if(l)l.textContent=o?'Less':'More'};
@@ -15462,7 +15487,7 @@ body.light #kxWel{background:radial-gradient(circle at 50% 38%,rgba(247,166,0,.3
       var d=Object.assign({},(K.data&&K.data.basic)||{},K.l1);K.l1=d;
       b.innerHTML='<div class="kx-steps"><i class="on"></i><i></i></div><h3 class="kx-sh">Personal details</h3><p class="kx-ss">Enter details exactly as on your Aadhaar / PAN.</p>'+
         '<div class="kx-f"><label>Full name</label><input class="kx-in" id="kxName" maxlength="60" autocomplete="name" placeholder="e.g. Rahul Kumar Sharma" value="'+esc(d.name)+'"><div class="kx-hint" id="kxNameH">Same as on your ID documents</div></div>'+
-        '<div class="kx-f"><label>Mobile number</label><div style="position:relative"><span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-weight:700;font-size:15px;color:var(--kx-sub)">+91</span><input class="kx-in" id="kxPhone" inputmode="numeric" maxlength="10" autocomplete="tel-national" placeholder="10-digit mobile number" style="padding-left:52px" value="'+esc(d.phone)+'"></div><div class="kx-hint" id="kxPhoneH">Used for account security alerts</div></div>'+
+        '<div class="kx-f"><label>Mobile number</label><div style="position:relative"><span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-weight:700;font-size:15px;color:var(--kx-sub)">+91</span><input class="kx-in" id="kxPhone" inputmode="numeric" maxlength="10" autocomplete="tel-national" placeholder="10-digit mobile number" style="padding-left:52px" value="'+esc(d.phone)+'"></div><div class="kx-hint" id="kxPhoneH">Used for account security alerts</div><div id="kxOtpBox"></div></div>'+
         '<div class="kx-f"><label>Date of birth</label><input class="kx-in" id="kxDob" type="date" value="'+esc(d.dob)+'" max="'+new Date().toISOString().slice(0,10)+'"><div id="kxAgeH"></div></div>'+
         '<div class="kx-f"><label>Profession</label><div class="kx-chips" id="kxProf">'+PROF.map(function(p){return '<button type="button" class="kx-chip'+(d.profession===p[0]?' on':'')+'" data-v="'+p[0]+'"><i class="fas '+p[1]+'"></i>'+p[0]+'</button>'}).join('')+'</div></div>'+
         '<div class="kx-f"><label>Address</label><textarea class="kx-in" id="kxAddr" maxlength="200" placeholder="House no., street, area / locality">'+esc(d.address)+'</textarea></div>'+
@@ -15473,7 +15498,7 @@ body.light #kxWel{background:radial-gradient(circle at 50% 38%,rgba(247,166,0,.3
       $('kxProf').onclick=function(e){var c=e.target.closest('.kx-chip');if(!c)return;K.l1.profession=c.getAttribute('data-v');[].forEach.call(this.children,function(x){x.classList.toggle('on',x===c)});l1Check()};
       ['kxName','kxPhone','kxDob','kxAddr','kxCity','kxPin','kxState','kxAgree'].forEach(function(id){var e=$(id);e.addEventListener('input',l1Check);e.addEventListener('change',l1Check)});
       $('kxPin').addEventListener('input',function(){this.value=this.value.replace(/\D/g,'').slice(0,6)});
-      $('kxPhone').addEventListener('input',function(){this.value=this.value.replace(/\D/g,'').replace(/^(91|0)(?=\d{10})/,'').slice(0,10)});
+      $('kxPhone').addEventListener('input',function(){this.value=this.value.replace(/\D/g,'').replace(/^(91|0)(?=\d{10})/,'').slice(0,10)});kxOtpInit();K.otpKey='';
       $('kxName').addEventListener('input',function(){var p=this.selectionStart;this.value=this.value.replace(/[^A-Za-z .']/g,'');try{this.setSelectionRange(p,p)}catch(e){}});
       l1Check();return;
     }
@@ -15522,17 +15547,59 @@ body.light #kxWel{background:radial-gradient(circle at 50% 38%,rgba(247,166,0,.3
   function ageOf(dob){if(!dob)return null;var d=new Date(dob+'T00:00:00');if(isNaN(d))return null;var n=new Date(),a=n.getFullYear()-d.getFullYear();var m=n.getMonth()-d.getMonth();if(m<0||(m===0&&n.getDate()<d.getDate()))a--;return a}
   function l1Read(){var g=function(id){var e=$(id);return e?String(e.value||'').trim():''};var d=K.l1;d.name=g('kxName').replace(/\s+/g,' ');d.phone=g('kxPhone');d.dob=g('kxDob');d.address=g('kxAddr');d.city=g('kxCity');d.pin=g('kxPin');d.state=g('kxState');d.agree=!!($('kxAgree')&&$('kxAgree').checked);d.age=ageOf(d.dob);return d}
   function l1Check(){
-    var d=l1Read(),ok=true;
+    var d=l1Read(),ok=true;kxOtpPaint(d.phone);
     var parts=d.name.split(' ').filter(function(x){return x.length>=2});
     var nh=$('kxNameH');if(d.name&&parts.length<2){nh.className='kx-hint err';nh.textContent='Enter first and last name';ok=false}else{nh.className='kx-hint';nh.textContent='Same as on your ID documents';if(!parts.length)ok=false}
-    var ph=$('kxPhoneH');if(d.phone&&!/^[6-9]\d{9}$/.test(d.phone)){ph.className='kx-hint err';ph.textContent='Enter a valid 10-digit Indian mobile number';ok=false}else{ph.className='kx-hint';ph.textContent='Used for account security alerts';if(!d.phone)ok=false}
+    var ph=$('kxPhoneH');if(d.phone&&!/^[6-9]\d{9}$/.test(d.phone)){ph.className='kx-hint err';ph.textContent='Enter a valid 10-digit Indian mobile number';ok=false}else{ph.className='kx-hint';ph.textContent='Used for account security alerts';if(!d.phone)ok=false;else if(K.phoneOk!==d.phone){ok=false;ph.textContent='Confirm this number with the OTP sent on WhatsApp'}}
     var ah=$('kxAgeH');if(d.dob){if(d.age==null||d.age<18){ah.innerHTML='<div class="kx-hint err">You must be at least 18 years old</div>';ok=false}else if(d.age>100){ah.innerHTML='<div class="kx-hint err">Enter a valid date of birth</div>';ok=false}else ah.innerHTML='<span class="kx-age"><i class="fas fa-circle-check"></i>Age: '+d.age+' years</span>'}else{ah.innerHTML='';ok=false}
     if(!d.profession||d.address.length<6||d.city.length<2||!/^[1-9]\d{5}$/.test(d.pin)||!d.state||!d.agree)ok=false;
     $('kxL1Btn').disabled=!ok;return ok;
   }
+  /* ---------- Level 1: mobile OTP (WhatsApp) ---------- */
+  K.phoneOk=K.phoneOk||'';K.otpTo='';K.otpLeft=0;K.otpKey='';
+  function kxApiBase(){return String(window.__BACKEND_URL__||'').replace(/\/$/,'')}
+  async function kxApi(path,body){var u=window._fb&&window._fb.auth&&window._fb.auth.currentUser;if(!u)throw new Error('Please log in again');body.idToken=await u.getIdToken();
+    var c=new AbortController();var t=setTimeout(function(){c.abort()},30000);
+    try{var r=await fetch(kxApiBase()+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:c.signal});return await r.json()}finally{clearTimeout(t)}}
+  var OTPERR={whatsapp_not_linked:'Mobile OTP service is temporarily unavailable. Please try again in a few minutes.',not_on_whatsapp:'This number is not on WhatsApp. Use a WhatsApp number.',bad_phone:'Enter a valid 10-digit mobile number',rate_limited:'Too many codes requested. Try again in an hour.',auth:'Session expired — please log in again',invalid_code:'Wrong code',expired:'Code expired — tap Resend',no_code:'Request a new code',too_many_tries:'Too many wrong tries — request a new code',send_failed:'Could not send the code. Try again.'};
+  function kxOtpInit(){
+    try{var fuid=window._fb.auth.currentUser.uid;window._fb.get(window._fb.ref(window._fb.db,'users/'+fuid+'/kycPhone')).then(function(s){var v=s.val();if(v&&v.verified&&v.phone){K.phoneOk=String(v.phone).replace(/\D/g,'').slice(-10);K.otpKey='';try{l1Check()}catch(e){}}})}catch(e){}
+  }
+  function kxOtpPaint(ph){
+    var box=$('kxOtpBox');if(!box)return;
+    var valid=/^[6-9]\d{9}$/.test(ph||'');
+    var key=!valid?'none':K.phoneOk===ph?'ok':K.otpTo===ph?'code':'send';
+    if(key==='code'){var rs=$('kxOtpRs');if(rs)rs.textContent=K.otpLeft>0?'Resend in '+K.otpLeft+'s':'Resend code';if(rs)rs.disabled=K.otpLeft>0}
+    if(key===K.otpKey)return;K.otpKey=key;
+    if(key==='none'){box.innerHTML='';return}
+    if(key==='ok'){box.innerHTML='<div class="kx-otp ok"><i class="fas fa-circle-check"></i> Mobile number verified</div>';return}
+    if(key==='send'){box.innerHTML='<button type="button" class="kx-otp-btn" id="kxOtpSend" onclick="kxOtpSend()"><i class="fab fa-whatsapp"></i> Send OTP on WhatsApp</button><div class="kx-hint" id="kxOtpE"></div>';return}
+    box.innerHTML='<div class="kx-otp"><div style="font-size:12.5px;color:var(--kx-sub);margin-bottom:8px">Enter the 6-digit code sent on WhatsApp to +91 '+ph.slice(0,2)+'******'+ph.slice(-2)+'</div><div style="display:flex;gap:8px"><input class="kx-in" id="kxOtpC" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="6-digit code" style="flex:1;letter-spacing:4px;font-weight:700"><button type="button" class="kx-otp-btn" id="kxOtpV" style="width:auto;padding:0 16px" onclick="kxOtpVerify()">Verify</button></div><div class="kx-hint" id="kxOtpE"></div><button type="button" class="kx-otp-link" id="kxOtpRs" onclick="kxOtpSend()" disabled>Resend in '+K.otpLeft+'s</button></div>';
+    var ci=$('kxOtpC');ci.addEventListener('input',function(){this.value=this.value.replace(/\D/g,'').slice(0,6);if(this.value.length===6)kxOtpVerify()});setTimeout(function(){try{ci.focus()}catch(e){}},50);
+  }
+  function otpErr(m){var e=$('kxOtpE');if(e){e.className='kx-hint err';e.textContent=m}}
+  function otpTick(){clearInterval(K.otpIv);K.otpIv=setInterval(function(){K.otpLeft--;if(K.otpLeft<=0){K.otpLeft=0;clearInterval(K.otpIv)}var rs=$('kxOtpRs');if(rs){rs.textContent=K.otpLeft>0?'Resend in '+K.otpLeft+'s':'Resend code';rs.disabled=K.otpLeft>0}},1000)}
+  window.kxOtpSend=async function(){
+    var ph=(l1Read().phone||'');if(!/^[6-9]\d{9}$/.test(ph))return;
+    var b=$('kxOtpSend')||$('kxOtpRs');if(b){b.disabled=true;b.innerHTML='<i class="fas fa-spinner fa-spin"></i> Sending…'}
+    try{var j=await kxApi('/api/kyc-otp/send',{phone:ph});
+      if(j&&j.ok){K.otpTo=ph;K.otpLeft=j.waitSec||45;K.otpKey='';kxOtpPaint(ph);otpTick();note('Code sent on WhatsApp')}
+      else{if(j&&j.waitSec){K.otpTo=ph;K.otpLeft=j.waitSec;K.otpKey='';kxOtpPaint(ph);otpTick()}K.otpKey='';if(!(j&&j.waitSec))kxOtpPaint(ph);otpErr((OTPERR[j&&j.error]||'Could not send the code')+(j&&j.waitSec?' — wait '+j.waitSec+'s':''))}
+    }catch(e){K.otpKey='';kxOtpPaint(ph);otpErr(e.name==='AbortError'?'Network slow — try again':(e.message||'Could not send the code'))}
+  };
+  window.kxOtpVerify=async function(){
+    var ph=l1Read().phone,c=($('kxOtpC')||{}).value||'';if(c.length!==6)return otpErr('Enter the 6-digit code');
+    var b=$('kxOtpV');if(b){if(b.disabled)return;b.disabled=true;b.innerHTML='<i class="fas fa-spinner fa-spin"></i>'}
+    try{var j=await kxApi('/api/kyc-otp/verify',{phone:ph,code:c});
+      if(j&&j.ok){K.phoneOk=ph;K.otpTo='';clearInterval(K.otpIv);K.otpKey='';l1Check();note('Mobile number verified ✓')}
+      else{otpErr((OTPERR[j&&j.error]||'Verification failed')+(j&&j.left!=null?' · '+j.left+' tries left':''));if(j&&/expired|no_code|too_many/.test(j.error)){K.otpTo='';K.otpKey='';setTimeout(function(){kxOtpPaint(ph);otpErr(OTPERR[j.error])},10)}}
+    }catch(e){otpErr('Network slow — try again')}
+    finally{if(b){b.disabled=false;b.textContent='Verify'}}
+  };
   window.kxSubmitL1=function(){
     if(!l1Check())return;var d=K.l1,btn=$('kxL1Btn');btn.disabled=true;btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Verifying…';
-    var basic={name:d.name.replace(/\b\w/g,function(c){return c.toUpperCase()}),phone:'+91'+d.phone,dob:d.dob,age:d.age,profession:d.profession,address:d.address,city:d.city,state:d.state,pin:d.pin,ts:Date.now()};
+    if(K.phoneOk!==d.phone){btn.disabled=false;btn.textContent='Continue to Level 2';return}
+    var basic={name:d.name.replace(/\b\w/g,function(c){return c.toUpperCase()}),phone:'+91'+d.phone,phoneVerified:true,dob:d.dob,age:d.age,profession:d.profession,address:d.address,city:d.city,state:d.state,pin:d.pin,ts:Date.now()};
     save({level:Math.max(1,level()),basic:basic,l1At:Date.now()}).then(function(){K.l1={};K.hist=[];show('l1done',false);note('Level 1 complete ✓')});
   };
 
@@ -16285,6 +16352,23 @@ body.light #uc{background:#fff;color:#121417}
 #ucS .sh{position:absolute;left:0;right:0;bottom:0;max-height:88vh;overflow:auto;background:#121418;color:#fff;border-radius:20px 20px 0 0;padding:18px 16px 26px;transform:translate3d(0,100%,0);transition:transform .24s cubic-bezier(.22,.8,.3,1)}
 body.light #ucS .sh{background:#fff;color:#121417}
 #ucS.in .sh{transform:none}
+#ucS .avp h3{justify-content:space-between}
+#ucS .avp-pv{width:84px;height:84px;border-radius:50%;margin:4px auto 14px;overflow:hidden;background:#2b2f36;display:grid;place-items:center;font-size:32px;font-weight:800;color:#F7A600;box-shadow:0 0 0 3px rgba(247,166,0,.5)}
+#ucS .avp-pv img{width:100%;height:100%;object-fit:cover}
+#ucS .avp-tabs{display:flex;gap:18px;overflow-x:auto;border-bottom:1px solid rgba(127,127,127,.2);margin:0 -16px 12px;padding:0 16px;scrollbar-width:none}
+#ucS .avp-tabs::-webkit-scrollbar{display:none}
+#ucS .avp-tabs span{white-space:nowrap;padding:10px 0;font-weight:700;font-size:14.5px;opacity:.5;cursor:pointer;border-bottom:2px solid transparent}
+#ucS .avp-tabs span.on{opacity:1;border-color:currentColor}
+#ucS .avp-g{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;max-height:46vh;overflow-y:auto;padding:4px 2px 8px}
+#ucS .avp-g button{aspect-ratio:1;border-radius:50%;border:0;padding:0;background:#24272d;overflow:hidden;cursor:pointer;box-shadow:0 0 0 2px transparent;transition:box-shadow .15s,transform .12s}
+body.light #ucS .avp-g button,body.light #ucS .avp-pv{background:#eef0f3}
+#ucS .avp-g button.an{padding:14%}
+#ucS .avp-g button img{width:100%;height:100%;object-fit:cover;display:block}
+#ucS .avp-g button.on{box-shadow:0 0 0 3px #F7A600}
+#ucS .avp-g button:active{transform:scale(.94)}
+#ucS .avp-f{display:flex;flex-direction:column;gap:0;margin-top:6px}
+#ucS .avp-f .btn:disabled{opacity:.45}
+
 #ucS h3{margin:0 0 6px;font-size:18px;font-weight:800;display:flex;justify-content:space-between;align-items:center}
 #ucS h3 i{cursor:pointer;opacity:.6}
 #ucS p.d{margin:0 0 14px;font-size:13px;opacity:.6;line-height:1.45}
@@ -16400,7 +16484,7 @@ body.bx-rev{--green:#f6465d;--red:#20b26c}
       h+=row('far fa-circle-user',t('pic'),av?'<img class="mini" src="'+esc(av)+'">':'','ucPickAvatar()')+
         row('far fa-id-card',t('nick'),esc(nick()),"ucOpen2('nick')")+
         row('far fa-envelope',t('email'),e?esc(mask(e))+(U.auth&&U.auth.emailVerified?' <span style="color:#20c77a">✓</span>':''):'—',"ucOpen2('email')",e&&!(U.auth&&U.auth.emailVerified)?'<span class="hint">Verify now</span>':'')+
-        row('fas fa-mobile-screen',t('phone'),phone()?esc(mask(phone())):'Add',"ucOpen2('phone')")+
+        row('fas fa-mobile-screen',t('phone'),phone()?esc(mask(phone()))+' <i class="fas fa-lock" style="opacity:.45;font-size:11px"></i>':'Add via KYC',"ucOpen2('phone')")+
         '<div class="row" onclick="ucCopyUid()"><span class="ic"><i class="far fa-id-badge"></i></span><span class="lb">'+t('uid')+'</span><span class="vl">'+esc(uid())+' <i class="far fa-copy"></i></span></div>'+
         row('fas fa-user-shield',t('kyc'),k[0],'ucKyc()',kycDone()?'':'<span class="hint">Complete KYC &amp; get $10 bonus</span>')+
         row('fas fa-crown',t('vip'),v.lv?'VIP '+v.lv:'Non-VIP',"ucOpen2('vip')")+
@@ -16428,8 +16512,8 @@ body.bx-rev{--green:#f6465d;--red:#20b26c}
         '<div class="row"><span class="ic"><i class="fas fa-palette"></i></span><span class="lb">Price colours</span>'+seg([['gu','<b style="color:#20b26c">▲</b> Green up'],['ru','<b style="color:#f6465d">▲</b> Red up']],pref('color','gu'),'ucSetColor')+'</div>'+
         swRow('fas fa-hand-pointer','Haptics',pref('haptics','1')==='1',"ucToggle('haptics')");
     }else{
-      h+=row('fas fa-headset','Help Center / 24x7 Support','Telegram',"window.open('https://t.me/biexc10','_blank')")+
-        row('fas fa-bug','Report a problem','',"window.open('https://t.me/biexc10','_blank')")+
+      h+=row('fas fa-headset','Help Center / 24x7 Support','Live chat',"bxSupOpen()")+
+        row('fas fa-bug','Report a problem','',"bxSupOpen('problem')")+
         row('fas fa-circle-info','About BIEXC','',"window.open('https://biexc.com/about.html','_blank')")+
         row('far fa-file-lines','Terms of Service','',"window.open('https://biexc.com/terms','_blank')")+
         row('fas fa-user-secret','Privacy Policy','',"window.open('https://biexc.com/privacy','_blank')")+
@@ -16477,8 +16561,8 @@ body.bx-rev{--green:#f6465d;--red:#20b26c}
   window.ucOpen2=function(k){
     var p=U.prof;
     if(k==='nick'){sheet(head('Nickname','3–20 characters. Letters, numbers, space, _ and . only.')+inp('ucNk','Nickname','text','maxlength="20" value="'+esc(p.nickname||nick())+'"')+'<div class="err" id="ucNkE"></div><button class="btn" onclick="ucSaveNick()">Save</button>');return}
-    if(k==='email'){var e=email(),v=U.auth&&U.auth.emailVerified;sheet(head('Email','Your sign-in email. It cannot be changed here.')+'<div class="in2"><input value="'+esc(e||'No email on this account')+'" readonly></div><div class="'+(v?'okm':'err')+'" style="margin-top:8px">'+(e?(v?'✓ Verified':'Not verified yet'):'')+'</div>'+(e&&!v?'<button class="btn" onclick="ucVerifyEmail(this)">Verify now</button>':''));return}
-    if(k==='phone'){sheet(head('Phone','Used for WhatsApp login codes and support.')+'<div class="in2"><span style="opacity:.6">+91</span><input id="ucPh" inputmode="numeric" maxlength="10" placeholder="10-digit mobile" value="'+esc(String(phone()).replace(/\D/g,'').slice(-10))+'"></div><div class="err" id="ucPhE"></div><button class="btn" onclick="ucSavePhone()">Save</button>');return}
+    if(k==='email'){var e=email(),v=U.auth&&U.auth.emailVerified;sheet(head('Email','Your sign-in email. For your security it cannot be changed.')+'<div class="in2"><input value="'+esc(e||'No email on this account')+'" readonly></div><div class="'+(v?'okm':'err')+'" style="margin-top:8px">'+(e?(v?'✓ Verified':'Not verified yet'):'')+'</div>'+(e&&!v?'<button class="btn" onclick="ucVerifyEmail(this)">Verify now</button>':''));return}
+    if(k==='phone'){var pv=phone();sheet(head('Mobile number',pv?'Linked to your account. For your security it cannot be changed.':'Your mobile number is added and confirmed by OTP during KYC Level 1.')+'<div class="in2"><span style="opacity:.6"><i class="fas fa-lock"></i></span><input value="'+esc(pv?String(pv):'Not added yet')+'" readonly></div>'+(pv?'<div class="okm" style="margin-top:8px">✓ Locked</div>':'<button class="btn" onclick="ucSClose();setTimeout(function(){try{kxOpen()}catch(e){}},200)">Add via KYC</button>'));return}
     if(k==='vip'){var vv=vip(),next=[5e4,1e5,2e5,5e5,1e6][Math.min(vv.lv,4)];sheet(head('VIP level',vv.lv?'You are VIP '+vv.lv:'You are Non-VIP')+'<div style="font-size:13px;opacity:.7">Approved deposits: <b>'+(window.formatAmount?formatAmount(vv.dep,'USDT'):vv.dep)+' USDT</b> / '+next.toLocaleString('en-US')+' for '+(vv.lv>=5?'max level':'VIP '+(vv.lv+1))+'</div><div class="bar" style="height:7px"><i style="width:'+Math.min(100,vv.dep/next*100)+'%;background:#F7A600"></i></div><table style="margin-top:14px"><tr><th>Level</th><th>Deposits</th><th>Spot fee</th></tr>'+[['VIP 1','50,000','0.09%'],['VIP 2','100,000','0.08%'],['VIP 3','200,000','0.07%'],['VIP 4','500,000','0.06%'],['VIP 5','1,000,000','0.05%']].map(function(r){return '<tr><td>'+r.join('</td><td>')+'</td></tr>'}).join('')+'</table>');return}
     if(k==='fee'){sheet(head('My Fee Rates','Your current trading fees.')+'<table><tr><th>Market</th><th>Maker</th><th>Taker</th></tr><tr><td>Spot</td><td>0.10%</td><td>0.10%</td></tr><tr><td>Futures</td><td>0.02%</td><td>0.055%</td></tr><tr><td>P2P</td><td>0%</td><td>0%</td></tr></table>');return}
     if(k==='pw'){sheet(head('Login Password','At least 8 characters with a number.')+'<label>Current password</label>'+inp('ucP0','Current password','password')+'<label>New password</label>'+inp('ucP1','New password','password','oninput="ucPwMeter()"')+'<div class="bar"><i id="ucPwB" style="width:0"></i></div><label>Confirm new password</label>'+inp('ucP2','Re-enter new password','password')+'<div class="err" id="ucPwE"></div><button class="btn" onclick="ucSavePw(this)">Update password</button><button class="btn g" onclick="ucResetMail(this)">Send reset email instead</button>');return}
@@ -16542,7 +16626,31 @@ body.bx-rev{--green:#f6465d;--red:#20b26c}
 
   /* ---------- avatar: pick → circle crop → save ---------- */
   var CR={img:null,z:1,x:0,y:0};
-  window.ucPickAvatar=function(){var f=$('ucFile');f.value='';f.click()};
+  /* ---------- profile picture picker (avatars + own photo) ---------- */
+  var AVP={tab:'def',sel:null};
+  var TWE='https://cdn.jsdelivr.net/gh/jdecked/twemoji@15.1.0/assets/svg/';
+  var AV_SETS={
+    def:{n:'Default',l:['Felix','Aneka','Max','Zoe','Leo','Mia','Arjun','Kabir','Riya','Sana','Dev','Ishan','Kiara','Vihaan','Neha','Rohan','Tara','Aarav','Meera','Kunal','Anaya','Yash','Diya','Reyansh'].map(function(s){return 'https://api.dicebear.com/9.x/avataaars/svg?seed='+s+'&mouth=smile,default,twinkle&eyes=default,happy,wink&eyebrows=default,raisedExcitedNatural,defaultNatural&backgroundColor=2b2f36,3a3f47,f7a600&radius=50'})},
+    toon:{n:'Cartoon',l:['Bear','Cookie','Shadow','Pepper','Sky','Milo','Luna','Oscar','Coco','Ruby','Jasper','Nala','Bandit','Ginger','Simba','Willow','Ziggy','Zara','Rocky','Bella'].map(function(s){return 'https://api.dicebear.com/9.x/adventurer/svg?seed='+s+'&backgroundColor=2b2f36,ffd5dc,c0aede,b6e3f4&radius=50'})},
+    ani:{n:'Animal Avatar',l:['1f981','1f42f','1f43c','1f98a','1f428','1f438','1f435','1f436','1f431','1f43b','1f430','1f984','1f432','1f989','1f43a','1f427','1f419','1f988','1f433','1f985','1f41d','1f996','1f99c','1f42e'].map(function(c){return TWE+c+'.svg'})},
+    bot:{n:'Robots',l:['A1','B2','C3','D4','E5','F6','G7','H8','I9','J10','K11','L12','M13','N14','O15','P16'].map(function(s){return 'https://api.dicebear.com/9.x/bottts/svg?seed='+s+'&backgroundColor=2b2f36,f7a600&radius=50'})},
+    emo:{n:'Emoji',l:['Happy','Cool','Wink','Star','Fire','Moon','Sun','Cloud','Gold','Rich','Bull','Bear','Rocket','Diamond','Coin','Lucky'].map(function(s){return 'https://api.dicebear.com/9.x/fun-emoji/svg?seed='+s+'&radius=50'})}
+  };
+  function avpPaint(){
+    var cur=AVP.sel||avatar();var set=AV_SETS[AVP.tab];
+    sheet('<div class="avp">'+head('Profile Picture','')+
+      '<div class="avp-pv">'+(cur?'<img src="'+esc(cur)+'" alt="">':'<span>'+esc((nick()[0]||'U').toUpperCase())+'</span>')+'</div>'+
+      '<div class="avp-tabs">'+Object.keys(AV_SETS).map(function(k){return '<span class="'+(AVP.tab===k?'on':'')+'" onclick="ucAvTab(\''+k+'\')">'+AV_SETS[k].n+(k==='ani'?' 🔥':'')+'</span>'}).join('')+'</div>'+
+      '<div class="avp-g">'+set.l.map(function(u){return '<button class="'+(u===cur?'on':'')+(AVP.tab==='ani'?' an':'')+'" onclick="ucAvSel(this)" data-u="'+esc(u)+'"><img loading="lazy" src="'+esc(u)+'" alt=""></button>'}).join('')+'</div>'+
+      '<div class="avp-f"><button class="btn g" onclick="ucUploadAvatar()"><i class="fas fa-image"></i> Upload from gallery</button><button class="btn" id="ucAvpSave" onclick="ucAvSave(this)"'+(AVP.sel?'':' disabled')+'>Save</button></div></div>');
+  }
+  window.ucPickAvatar=function(){AVP.sel=null;AVP.tab='def';avpPaint()};
+  window.ucAvTab=function(k){AVP.tab=k;var sc=document.querySelector('#ucSh');var y=sc?sc.scrollTop:0;avpPaint();if(sc)sc.scrollTop=y};
+  window.ucAvSel=function(b){AVP.sel=b.getAttribute('data-u');[].forEach.call(document.querySelectorAll('.avp-g button'),function(x){x.classList.toggle('on',x===b)});var pv=document.querySelector('.avp-pv');if(pv)pv.innerHTML='<img src="'+esc(AVP.sel)+'" alt="">';var s=$('ucAvpSave');if(s)s.disabled=false};
+  window.ucAvSave=async function(btn){if(!AVP.sel)return;btn.disabled=true;btn.textContent='Saving…';var url=AVP.sel;
+    if(await saveProf({avatar:url},'Profile picture updated')){try{await F().update(R(''),{avatarUrl:url});if(window.currentFbUser)currentFbUser.avatarUrl=url;updateUserUI&&updateUserUI()}catch(e){}ucSClose()}else{btn.disabled=false;btn.textContent='Save'}};
+  window.ucUploadAvatar=function(){var f=$('ucFile');f.value='';f.click()};
+
   $('ucFile').addEventListener('change',function(){var file=this.files&&this.files[0];if(!file)return;if(!/^image\//.test(file.type))return toast('Choose an image');
     var rd=new FileReader();rd.onload=function(){var im=new Image();im.onload=function(){CR={img:im,z:1,x:0,y:0};
       sheet(head('Profile Picture','Drag to position, slide to zoom.')+'<div class="crop" id="ucCrop"><img id="ucCrImg" src="'+rd.result+'"></div><input type="range" id="ucZoom" min="1" max="3" step="0.01" value="1"><button class="btn" id="ucAvSave">Save photo</button>');
@@ -16610,6 +16718,275 @@ body.bx-rev{--green:#f6465d;--red:#20b26c}
   document.addEventListener('click',function(e){var t=e.target.closest('#sd .pf-user, #sd .pf-arrow');if(!t||e.target.closest('.cpy,.pf-pill,[onclick*="copy"]'))return;e.stopPropagation();e.preventDefault();ucOpen()},true);
 })();
 </script>
+<!-- ═══ BIEXC 24/7 SUPPORT CHAT (assistant + live agent via Telegram bot) ═══ -->
+<style id="bxSupCss">
+#bxSup{--sb:#000;--sc:#16181c;--sc2:#1f2228;--st:#eaecef;--ss:#8a8f98;--sl:#23262c;--su:#f7a600;--sut:#111;position:fixed;inset:0;z-index:10070;display:none;flex-direction:column;background:var(--sb);color:var(--st);font-family:inherit;transform:translate3d(100%,0,0);transition:transform .26s cubic-bezier(.22,.8,.3,1)}
+body.light #bxSup{--sb:#f6f7f9;--sc:#fff;--sc2:#eef0f3;--st:#121417;--ss:#6b717c;--sl:#e4e6ea;--sut:#111}
+#bxSup.show{display:flex}#bxSup.in{transform:none}
+#bxSup .sp-h{display:flex;align-items:center;gap:10px;padding:calc(env(safe-area-inset-top) + 12px) 14px 8px;background:var(--sb)}
+#bxSup .sp-ib{width:38px;height:38px;border:0;background:transparent;color:var(--st);font-size:19px;display:grid;place-items:center;border-radius:50%;cursor:pointer}
+#bxSup .sp-ib:active{background:var(--sc2)}
+#bxSup .sp-t{flex:1;text-align:center;font-weight:800;font-size:17px;letter-spacing:.1px}
+#bxSup .sp-t small{display:flex;align-items:center;justify-content:center;gap:5px;font-weight:600;font-size:11.5px;color:var(--ss);margin-top:2px}
+#bxSup .dot{width:7px;height:7px;border-radius:50%;background:#20c77a;box-shadow:0 0 0 3px rgba(32,199,122,.18)}
+#bxSup .dot.w{background:#f7a600;box-shadow:0 0 0 3px rgba(247,166,0,.18);animation:spPulse 1.2s infinite}
+@keyframes spPulse{50%{opacity:.35}}
+#bxSup .sp-hist{display:flex;align-items:center;justify-content:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--ss);padding:4px 0 8px;cursor:pointer;border:0;background:none;width:100%}
+#bxSup .sp-body{flex:1;overflow-y:auto;padding:6px 14px 14px;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+#bxSup .m{display:flex;gap:8px;margin:10px 0;align-items:flex-end;animation:spIn .2s ease-out}
+@keyframes spIn{from{opacity:0;transform:translateY(6px)}}
+#bxSup .m .av{width:28px;height:28px;border-radius:50%;flex:none;display:grid;place-items:center;font-size:12px;font-weight:800;background:#f7a600;color:#111}
+#bxSup .m .av.ag{background:#20c77a;color:#06140d}
+#bxSup .m .bw{max-width:80%;display:flex;flex-direction:column;gap:3px}
+#bxSup .m .nm{font-size:11px;color:var(--ss);font-weight:700;padding-left:2px}
+#bxSup .m .b{background:var(--sc);border:1px solid var(--sl);padding:10px 13px;border-radius:16px 16px 16px 5px;font-size:14.5px;line-height:1.45;word-wrap:break-word;white-space:pre-wrap}
+#bxSup .m .b b{font-weight:800}
+#bxSup .m .tm{font-size:10.5px;color:var(--ss);padding:0 3px}
+#bxSup .m.me{flex-direction:row-reverse}
+#bxSup .m.me .bw{align-items:flex-end}
+#bxSup .m.me .b{background:var(--su);color:var(--sut);border-color:transparent;border-radius:16px 16px 5px 16px;font-weight:500}
+#bxSup .m .b img{display:block;max-width:220px;max-height:260px;border-radius:10px;cursor:zoom-in}
+#bxSup .m .b img+span{display:block;margin-top:6px}
+#bxSup .sys{text-align:center;margin:12px 0}
+#bxSup .sys span{display:inline-block;font-size:12px;color:var(--ss);background:var(--sc2);padding:6px 12px;border-radius:20px;max-width:88%;line-height:1.4}
+#bxSup .acts{display:flex;flex-wrap:wrap;gap:7px;margin-top:6px}
+#bxSup .acts button{border:1px solid var(--sl);background:var(--sc);color:var(--st);font:inherit;font-size:13px;font-weight:600;padding:8px 12px;border-radius:20px;cursor:pointer}
+#bxSup .acts button:active{transform:scale(.97)}
+#bxSup .acts button.live{background:#f7a600;color:#111;border-color:#f7a600;font-weight:800;display:flex;align-items:center;gap:7px}
+#bxSup .typing{display:inline-flex;gap:4px;padding:13px 14px}
+#bxSup .typing i{width:6px;height:6px;border-radius:50%;background:var(--ss);animation:spDot 1s infinite}
+#bxSup .typing i:nth-child(2){animation-delay:.15s}#bxSup .typing i:nth-child(3){animation-delay:.3s}
+@keyframes spDot{30%{transform:translateY(-4px);opacity:1}0%,60%,100%{opacity:.4}}
+#bxSup .bar{margin:0 14px 8px;border-radius:14px;padding:11px 13px;display:none;align-items:center;gap:11px;font-size:13px;background:var(--sc);border:1px solid var(--sl)}
+#bxSup .bar.show{display:flex}
+#bxSup .bar .sp{width:20px;height:20px;border:2.5px solid rgba(247,166,0,.25);border-top-color:#f7a600;border-radius:50%;animation:spSp .8s linear infinite;flex:none}
+@keyframes spSp{to{transform:rotate(360deg)}}
+#bxSup .bar b{display:block;font-size:13.5px}#bxSup .bar small{color:var(--ss);font-size:12px}
+#bxSup .bar button{margin-left:auto;border:0;background:var(--sc2);color:var(--st);font:inherit;font-size:12.5px;font-weight:700;padding:7px 11px;border-radius:10px;cursor:pointer}
+#bxSup .sp-f{display:flex;align-items:flex-end;gap:9px;padding:10px 14px calc(env(safe-area-inset-bottom) + 12px);border-top:1px solid var(--sl);background:var(--sb)}
+#bxSup .sp-in{flex:1;display:flex;align-items:flex-end;background:var(--sc);border:1px solid var(--sl);border-radius:14px;padding:4px 4px 4px 12px}
+#bxSup textarea{flex:1;background:transparent;border:0;outline:0;color:var(--st);font:inherit;font-size:15px;resize:none;max-height:110px;padding:10px 0;line-height:1.35}
+#bxSup textarea::placeholder{color:var(--ss)}
+#bxSup .att{width:36px;height:36px;border:0;background:transparent;color:var(--ss);font-size:17px;cursor:pointer;border-radius:10px}
+#bxSup .send{width:46px;height:46px;border-radius:50%;border:0;background:#f7a600;color:#111;font-size:17px;display:grid;place-items:center;cursor:pointer;flex:none;transition:transform .12s,opacity .12s}
+#bxSup .send:disabled{opacity:.45}#bxSup .send:active{transform:scale(.92)}
+#bxSup .welcome{text-align:center;padding:18px 6px 4px}
+#bxSup .welcome .lg{width:56px;height:56px;border-radius:18px;margin:0 auto 10px;background:#f7a600;color:#111;display:grid;place-items:center;font-size:24px}
+#bxSup .welcome h4{margin:0 0 4px;font-size:16px}#bxSup .welcome p{margin:0;color:var(--ss);font-size:12.5px}
+#bxSupZoom{position:fixed;inset:0;z-index:10080;background:rgba(0,0,0,.92);display:none;align-items:center;justify-content:center}
+#bxSupZoom.show{display:flex}#bxSupZoom img{max-width:96vw;max-height:90vh;border-radius:8px}
+#bxSupCf{position:fixed;inset:0;z-index:10081;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:24px}
+#bxSupCf.show{display:flex}
+#bxSupCf .c{background:#16181c;color:#eaecef;border-radius:18px;padding:20px;max-width:320px;width:100%;text-align:center}
+body.light #bxSupCf .c{background:#fff;color:#121417}
+#bxSupCf h4{margin:0 0 6px;font-size:16px}#bxSupCf p{margin:0 0 16px;font-size:13px;opacity:.7}
+#bxSupCf button{width:100%;border:0;border-radius:12px;padding:12px;font:inherit;font-weight:800;margin-top:8px;cursor:pointer}
+#bxSupCf .y{background:#f6465d;color:#fff}#bxSupCf .n{background:rgba(127,127,127,.15);color:inherit}
+.kx-otp-btn{width:100%;margin-top:9px;height:44px;border:0;border-radius:12px;background:#25d366;color:#05210f;font:inherit;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer}
+.kx-otp-btn:disabled{opacity:.6}
+.kx-otp{margin-top:10px;padding:12px;border-radius:12px;border:1px solid rgba(127,127,127,.22)}
+.kx-otp.ok{color:#20c77a;font-weight:800;font-size:13.5px;display:flex;align-items:center;gap:7px;border-color:rgba(32,199,122,.35);background:rgba(32,199,122,.08)}
+.kx-otp-link{margin-top:8px;border:0;background:none;color:#f7a600;font:inherit;font-weight:700;font-size:12.5px;padding:0;cursor:pointer}
+.kx-otp-link:disabled{color:inherit;opacity:.5}
+</style>
+<div id="bxSup" role="dialog" aria-label="24/7 Dedicated Support">
+  <div class="sp-h">
+    <button class="sp-ib" onclick="bxSupClose()" aria-label="Back"><i class="fas fa-arrow-left"></i></button>
+    <div class="sp-t">24/7 Dedicated Support<small id="bxSupSt"><span class="dot"></span>BIEXC Assistant · online</small></div>
+    <button class="sp-ib" onclick="bxSupEnd()" aria-label="End chat"><i class="fas fa-power-off"></i></button>
+  </div>
+  <button class="sp-hist" id="bxSupHist" onclick="bxSupToggleHist()"><i class="far fa-clock"></i><span>View Chat History</span></button>
+  <div class="sp-body" id="bxSupBody"></div>
+  <div class="bar" id="bxSupWait"><span class="sp"></span><div><b>Waiting for an agent…</b><small id="bxSupWaitT">You're in the queue · usually 2–5 min</small></div><button onclick="bxSupCancel()">Cancel</button></div>
+  <div class="sp-f">
+    <div class="sp-in">
+      <textarea id="bxSupIn" rows="1" maxlength="1500" placeholder="Drop your question(s) here"></textarea>
+      <button class="att" onclick="bxSupAttach()" aria-label="Send photo"><i class="fas fa-paperclip"></i></button>
+    </div>
+    <button class="send" id="bxSupSend" onclick="bxSupSend()" aria-label="Send" disabled><i class="fas fa-paper-plane"></i></button>
+  </div>
+  <input type="file" id="bxSupFile" accept="image/*" style="display:none">
+</div>
+<div id="bxSupZoom" onclick="this.classList.remove('show')"><img alt=""></div>
+<div id="bxSupCf"><div class="c"><h4>End this chat?</h4><p>You can start a new chat with support any time.</p><button class="y" onclick="bxSupEndYes()">End chat</button><button class="n" onclick="document.getElementById('bxSupCf').classList.remove('show')">Keep chatting</button></div></div>
+<script>
+(function(){
+  var $=function(i){return document.getElementById(i)};
+  var S={open:false,fuid:null,unsub:null,meta:{},msgs:[],all:false,miss:0,typing:false,waitIv:null};
+  function F(){return window._fb}
+  function fuidNow(){try{var u=F()&&F().auth&&F().auth.currentUser;if(u&&u.uid)return u.uid;var c=window.currentFbUser;return c?(c.firebaseUid||null):null}catch(e){return null}}
+  function R(p){return F().ref(F().db,'users/'+S.fuid+'/support'+(p?'/'+p:''))}
+  function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+  function fmt(s){return esc(s).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>')}
+  function tm(ts){try{return new Date(ts).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:false})}catch(e){return ''}}
+  function toast(m){try{window.toast&&window.toast(m)}catch(e){}}
+
+  /* ---------- built-in help centre ---------- */
+  var KB=[
+    {k:['deposit','deposite','add fund','add money','recharge','jama','deposit nahi','deposit nhi','not credited','not received'],t:'Deposit',
+     a:'**How to deposit crypto**\n1. Go to Assets → Deposit.\n2. Pick the coin and the network (BEP20 / TRC20 / ERC20 etc.).\n3. Copy the address or scan the QR and send from your wallet.\n4. Submit the TXID — our team verifies it and credits your Spot balance.\n\n**Not credited yet?** Most deposits are confirmed within 5–30 minutes. Make sure you used the same network you selected. If it is still pending after 30 minutes, connect with live support and share the TXID.',c:['Wrong network sent','Deposit pending long']},
+    {k:['wrong network','galat network','wrong chain','wrong address'],t:'Wrong network',
+     a:'Sending on a different network than the one selected can delay or lose funds. Do **not** send again. Connect with live support and share the TXID, coin, network and amount — our team will check if it can be recovered.',live:1},
+    {k:['withdraw','withdrawal','nikal','payout','send out','withdraw nahi','withdraw nhi'],t:'Withdrawal',
+     a:'**How to withdraw**\n1. Assets → Withdraw.\n2. Choose coin + network and paste the address (double-check it).\n3. Enter the amount and your Withdrawal PIN if you set one.\n4. Requests are reviewed and processed — usually within 30 minutes.\n\nIf your request was **rejected**, the amount is returned to your Spot wallet automatically. Full KYC (Level 1 + Level 2) is required to withdraw.',c:['Withdrawal pending','Set withdrawal PIN']},
+    {k:['p2p','buy usdt','sell usdt','merchant','upi','inr','order','appeal','paid but','payment done'],t:'P2P',
+     a:'**P2P trading (INR ⇄ USDT)**\n• Open P2P, pick a merchant and tap Buy / Sell.\n• Enter the amount, pay the merchant via the shown method (UPI / IMPS etc.) and upload the payment screenshot in the order chat.\n• Orders auto-cancel after **30 minutes** if not completed.\n• P2P fees are **0%**.\n\nPaid but USDT not received? Keep the payment proof ready and connect with live support with your order number.',c:['Paid but not received','Cancel P2P order']},
+    {k:['kyc','verify','verification','aadhaar','aadhar','pan','identity','level 1','level 2','document'],t:'KYC',
+     a:'**KYC has 2 levels — both are required**\n**Level 1:** full name, mobile (confirmed by OTP on WhatsApp), date of birth, profession and address.\n**Level 2:** Aadhaar + PAN photos (scan or upload). The name on your documents must match Level 1.\n\nAfter Level 2 is verified, deposits, withdrawals and P2P unlock and you receive the **$10 KYC bonus** offer.',c:['OTP not received','Name mismatch']},
+    {k:['otp','code','not received','nahi aaya','nhi aaya','whatsapp code','email code'],t:'OTP',
+     a:'**Didn’t get the code?**\n• Email codes can land in Spam / Promotions — search “BIEXC”.\n• Mobile codes are sent on **WhatsApp** — the number must be active on WhatsApp.\n• Wait for the timer and tap Resend. Codes expire in 10 minutes.\nStill nothing? Connect with live support.'},
+    {k:['bonus','reward','10$','$10','welcome','unlock','free usdt','gift'],t:'Bonus',
+     a:'**$10 Bonus**\nComplete KYC to unlock the $10 bonus offer. It moves to your main balance after any **3 eligible actions** — a spot trade, a closed futures trade, a completed P2P order or an approved deposit. You can see progress in Assets → Reward Balance.'},
+    {k:['refer','referral','invite','friend','code','commission'],t:'Referral',
+     a:'**Refer & Earn**\nShare your invite link from Profile → Refer & Earn. When a friend signs up with your link (or enters your invite code), completes KYC and makes a qualifying deposit, you both get the reward automatically. Track invites and rewards on the Refer page.'},
+    {k:['spot','trade','buy btc','limit order','market order','chart'],t:'Spot',
+     a:'**Spot trading**\nOpen Trade, choose a pair, select Limit or Market, enter the amount and confirm. Spot maker/taker fee: **0.10%**. Your open orders and history are on the Orders tab.'},
+    {k:['future','futures','leverage','liquidat','long','short','margin','tp/sl','stop loss'],t:'Futures',
+     a:'**Futures**\nTrade with leverage, set TP/SL and close positions from the Positions tab. Fees: maker **0.02%**, taker **0.055%**. Higher leverage means higher liquidation risk — always use a stop loss.'},
+    {k:['convert','swap','exchange coin'],t:'Convert',a:'Use **Convert / Swap** to switch between coins instantly at the shown rate — no order book needed. Enter the amount, check the quote, and confirm.'},
+    {k:['earn','stake','staking','savings','apy','interest','redeem'],t:'Earn',a:'**Earn**\nPick a product, tap Stake, enter the amount and confirm. Rewards accrue to your Earn balance; tap Redeem to move funds back to Spot.'},
+    {k:['password','forgot','reset','login problem','cant login','can\'t login','locked'],t:'Password',
+     a:'**Forgot password?** On the login page tap “Forgot password”, enter your email and use the code sent to reset it.\nLogged in already? Profile → Security → Login Password to change it.'},
+    {k:['2fa','authenticator','google auth','pin','security','hack','phishing','anti-phishing'],t:'Security',
+     a:'**Keep your account safe**\nProfile → Security lets you turn on Google Authenticator (2FA), set a Withdrawal PIN, an anti-phishing code, the withdrawal whitelist, and review devices & login history.\nBIEXC staff will **never** ask for your password, OTP or PIN.'},
+    {k:['email change','change email','number change','change number','change phone','mobile change','gmail change'],t:'Email / phone',
+     a:'For your security, the **email and mobile number** linked to an account **cannot be changed**. If you lost access to them, connect with live support.',live:1},
+    {k:['uid','user id','account id'],t:'UID',a:'Your **UID** is shown in Profile → My info. Tap it to copy. Every account has a UID — share it with support so we can find your account quickly.'},
+    {k:['profile pic','photo','avatar','nickname','name change','dp'],t:'Profile',a:'Tap your profile picture in Profile to choose an avatar or upload your own photo. Nickname can be changed from Profile → My info → Nickname.'},
+    {k:['vip','fee','fees','charges','commission rate'],t:'Fees & VIP',a:'**Fees:** Spot 0.10% · Futures 0.02% maker / 0.055% taker · P2P 0%.\nVIP levels are based on approved deposits — VIP 1 starts at 50,000 USDT. See Profile → VIP level.'},
+    {k:['freeze','delete account','close account','deactivate'],t:'Account',a:'Profile → Security → Freeze / delete account. Freezing blocks login and withdrawals until support unfreezes it. Deletion is permanent after review.'},
+    {k:['app','apk','android','download','ios'],t:'App',a:'Download the BIEXC Android app from the About page (biexc.com/about.html). Notifications and swipe-back work inside the app.'},
+    {k:['balance','missing','wrong balance','balance kam','balance nahi'],t:'Balance',a:'Balances update in real time. Pull down / reopen Assets to refresh. If an amount still looks wrong, connect with live support and mention the coin and the time of the last transaction.',live:1},
+    {k:['hi','hello','hey','hii','namaste','good morning','good evening'],t:'Hi',a:'Hello! 👋 I’m the BIEXC Assistant. Ask me anything about deposits, withdrawals, P2P, KYC, bonuses or your account — or tap a topic below.',c:['Deposit','Withdrawal','P2P order','KYC']},
+    {k:['thank','thanks','ok','okay','great','done','solved'],t:'Thanks',a:'Happy to help! 💛 Anything else I can do for you?'}
+  ];
+  var LIVE=/(live|human|agent|real person|person|executive|customer ?care|customer ?service|support|helpline|staff|representative|insaan|banda|kisi se baat|baat karni|call me|talk to)/i;
+  var TOPICS=['Deposit','Withdrawal','P2P order','KYC','Bonus & rewards','Account security'];
+  function answer(q){
+    var s=q.toLowerCase(),best=null,score=0;
+    KB.forEach(function(e){var sc=0;e.k.forEach(function(k){if(s.indexOf(k)>=0)sc+=k.length>3?2:1});if(e.t==='Hi'||e.t==='Thanks'){if(s.split(/\s+/).length>4)sc=0}if(sc>score){score=sc;best=e}});
+    if(LIVE.test(s))return {text:'Sure — I can connect you with a member of our support team. Tap the button below and an agent will join this chat.',live:1};
+    if(!best){S.miss++;return {text:'Sorry, I couldn’t find an exact answer to that. You can pick a topic below or talk to our support team.',live:1,chips:TOPICS}}
+    S.miss=0;return {text:best.a,live:best.live?1:0,chips:best.c};
+  }
+
+  /* ---------- render ---------- */
+  function session(){return (S.meta&&S.meta.sessionAt)||0}
+  function render(){
+    var b=$('bxSupBody');if(!b)return;
+    var st=S.meta.status||'bot',ss=session();
+    var list=S.all?S.msgs:S.msgs.filter(function(m){return (m.ts||0)>=ss});
+    var older=S.msgs.length-list.length;
+    $('bxSupHist').style.display=(older>0||S.all)?'':'none';
+    $('bxSupHist').querySelector('span').textContent=S.all?'Hide older messages':'View Chat History ('+older+')';
+    var h='';
+    if(!S.all||!older) h+='<div class="welcome"><div class="lg"><i class="fas fa-headset"></i></div><h4>BIEXC Support</h4><p>Assistant replies instantly · live agents 24/7</p></div>'+
+      '<div class="m"><span class="av">B</span><div class="bw"><span class="nm">BIEXC Assistant</span><div class="b">Hello there! I’m the BIEXC Assistant, how can I assist you today?</div><div class="acts">'+TOPICS.map(function(t){return '<button onclick="bxSupQuick(this)">'+esc(t)+'</button>'}).join('')+'<button class="live" onclick="bxSupConnect()"><i class="fas fa-headset"></i> Talk to an agent</button></div></div></div>';
+    var lastLive=-1;list.forEach(function(m,i){if(m.from==='bot'&&m.live)lastLive=i});
+    list.forEach(function(m,i){
+      if(m.from==='sys'){h+='<div class="sys"><span>'+fmt(m.text)+'</span></div>';return}
+      var me=m.from==='user',ag=m.from==='agent';
+      var body=(m.img?'<img src="'+esc(m.img)+'" onclick="bxSupZoom(this.src)" alt="photo">':'')+(m.text?(m.img?'<span>'+fmt(m.text)+'</span>':fmt(m.text)):'');
+      var acts='';
+      if(m.from==='bot'&&i===list.length-1&&m.chips&&m.chips.length)acts+=m.chips.map(function(c){return '<button onclick="bxSupQuick(this)">'+esc(c)+'</button>'}).join('');
+      if(m.from==='bot'&&m.live&&i===lastLive&&st!=='waiting'&&st!=='live')acts+='<button class="live" onclick="bxSupConnect()"><i class="fas fa-headset"></i> Connect with Live Support</button>';
+      h+='<div class="m'+(me?' me':'')+'">'+(me?'':'<span class="av'+(ag?' ag':'')+'">'+(ag?'<i class="fas fa-headset"></i>':'B')+'</span>')+'<div class="bw">'+(me?'':'<span class="nm">'+(ag?'BIEXC Support Agent':'BIEXC Assistant')+'</span>')+'<div class="b">'+body+'</div>'+(acts?'<div class="acts">'+acts+'</div>':'')+'<span class="tm">'+tm(m.ts)+'</span></div></div>';
+    });
+    if(S.typing)h+='<div class="m"><span class="av">B</span><div class="bw"><div class="b typing"><i></i><i></i><i></i></div></div></div>';
+    b.innerHTML=h;
+    var stEl=$('bxSupSt');
+    if(st==='live')stEl.innerHTML='<span class="dot"></span>Connected with a support agent';
+    else if(st==='waiting')stEl.innerHTML='<span class="dot w"></span>Connecting to an agent…';
+    else stEl.innerHTML='<span class="dot"></span>BIEXC Assistant · online';
+    $('bxSupWait').classList.toggle('show',st==='waiting');
+    clearInterval(S.waitIv);
+    if(st==='waiting'){var tick=function(){var s=Math.max(0,Math.floor((Date.now()-(S.meta.reqAt||Date.now()))/1000));var w=$('bxSupWaitT');if(w)w.textContent=s>600?'All agents are busy — your messages are saved, we will reply here.':'In queue · '+Math.floor(s/60)+':'+String(s%60).padStart(2,'0')+' · usually 2–5 min'};tick();S.waitIv=setInterval(tick,1000)}
+    $('bxSupIn').placeholder=st==='live'?'Message the support agent':st==='waiting'?'Describe your issue while you wait':'Drop your question(s) here';
+    requestAnimationFrame(function(){b.scrollTop=b.scrollHeight});
+  }
+
+  /* ---------- data ---------- */
+  function subscribe(){
+    if(S.unsub){try{S.unsub()}catch(e){}S.unsub=null}
+    S.unsub=F().onValue(R(),function(snap){
+      var v=snap.val()||{};S.meta=v.meta||{};var m=v.msgs||{};
+      S.msgs=Object.keys(m).map(function(k){var x=m[k]||{};x._k=k;return x}).sort(function(a,b){return (a.ts||0)-(b.ts||0)});
+      if(S.open)render();
+    });
+  }
+  function push(m){m.ts=Date.now();return F().push(R('msgs'),m)}
+  function upMeta(p){return F().update(R('meta'),p)}
+
+  /* ---------- actions ---------- */
+  window.bxSupOpen=function(topic){
+    var f=fuidNow();
+    if(!f){try{(window.needLogin||window.requireLogin)&&window.needLogin(function(){})}catch(e){}if(!fuidNow()){toast('Please log in to chat with support');return}f=fuidNow()}
+    try{window.ucClose&&window.ucClose(true)}catch(e){}
+    try{document.querySelectorAll('#sidebarOverlay.show,.sidebar.open').forEach(function(x){x.classList.remove('show','open')})}catch(e){}
+    if(S.fuid!==f){S.fuid=f;S.msgs=[];S.meta={};subscribe()}else if(!S.unsub)subscribe();
+    var p=$('bxSup');S.open=true;p.classList.add('show');requestAnimationFrame(function(){requestAnimationFrame(function(){p.classList.add('in')})});
+    render();
+    if(topic==='problem')setTimeout(function(){bxSupQuickText('I want to report a problem')},250);
+    setTimeout(function(){try{$('bxSupIn').focus({preventScroll:true})}catch(e){}},300);
+  };
+  window.bxSupClose=function(){var p=$('bxSup');if(!p||!p.classList.contains('show'))return false;S.open=false;clearInterval(S.waitIv);p.classList.remove('in');setTimeout(function(){if(!S.open)p.classList.remove('show')},260);return true};
+  var ob=window.biexcBack;
+  window.biexcBack=function(){
+    if($('bxSupZoom').classList.contains('show')){$('bxSupZoom').classList.remove('show');return true}
+    if($('bxSupCf').classList.contains('show')){$('bxSupCf').classList.remove('show');return true}
+    if(S.open){bxSupClose();return true}
+    return typeof ob==='function'?ob.apply(this,arguments):false;
+  };
+  function botReply(q){
+    S.typing=true;render();
+    setTimeout(function(){S.typing=false;var a=answer(q);var m={from:'bot',text:a.text};if(a.live)m.live=1;if(a.chips)m.chips=a.chips;push(m)},550+Math.random()*350);
+  }
+  function freshIfClosed(){var st=S.meta.status;if(st==='closed'){var now=Date.now();S.meta.status='bot';return upMeta({status:'bot',sessionAt:now,closedBy:null,endNotified:null})}return Promise.resolve()}
+  window.bxSupQuickText=function(t){
+    freshIfClosed().then(function(){
+      if(!S.meta.sessionAt)upMeta({sessionAt:Date.now()-1000,status:S.meta.status||'bot'});
+      push({from:'user',text:t});
+      var st=S.meta.status;if(st!=='live'&&st!=='waiting')botReply(t);
+    });
+  };
+  window.bxSupQuick=function(btn){var t=btn.textContent.trim();if(/agent/i.test(t))return bxSupConnect();bxSupQuickText(t)};
+  window.bxSupSend=function(){
+    var i=$('bxSupIn'),t=i.value.trim();if(!t)return;i.value='';grow();bxSupQuickText(t.slice(0,1500));
+    try{i.focus({preventScroll:true})}catch(e){}
+  };
+  window.bxSupConnect=function(){
+    var st=S.meta.status;if(st==='waiting'||st==='live')return;
+    var now=Date.now(),last=S.msgs.filter(function(m){return m.from==='user'&&m.text}).pop();
+    var c=window.currentFbUser||{};
+    upMeta({status:'waiting',reqAt:now,sessionAt:(st==='closed'||!S.meta.sessionAt)?now:S.meta.sessionAt,notified:null,cancelled:null,cancelNotified:null,closedBy:null,endNotified:null,acceptedAt:null,topic:last?String(last.text).slice(0,80):'General',uid:c.uid||'',name:c.name||''})
+      .then(function(){push({from:'sys',text:'Connecting you to a live support agent… Please stay on this page. You can keep typing — the agent will see your messages.'})})
+      .catch(function(e){toast('Could not connect — '+(e.message||'try again'))});
+  };
+  window.bxSupCancel=function(){if(S.meta.status!=='waiting')return;upMeta({status:'bot',cancelled:true}).then(function(){push({from:'sys',text:'Request cancelled. The assistant is here if you need anything.'})})};
+  window.bxSupEnd=function(){var st=S.meta.status;if(st==='live'||st==='waiting'){$('bxSupCf').classList.add('show');return}bxSupClose()};
+  window.bxSupEndYes=function(){$('bxSupCf').classList.remove('show');var st=S.meta.status;
+    var p=st==='waiting'?upMeta({status:'bot',cancelled:true}):upMeta({status:'closed',closedBy:'user',closedAt:Date.now(),endNotified:null});
+    p.then(function(){push({from:'sys',text:'You ended the chat. Thanks for contacting BIEXC Support 💛'})})};
+  window.bxSupToggleHist=function(){S.all=!S.all;render();if(S.all)requestAnimationFrame(function(){$('bxSupBody').scrollTop=0})};
+  window.bxSupZoom=function(src){var z=$('bxSupZoom');z.querySelector('img').src=src;z.classList.add('show')};
+  window.bxSupAttach=function(){var f=$('bxSupFile');f.value='';f.click()};
+  $('bxSupFile').addEventListener('change',function(){
+    var file=this.files&&this.files[0];if(!file)return;if(!/^image\//.test(file.type))return toast('Please choose an image');
+    var rd=new FileReader();rd.onload=function(){var im=new Image();im.onload=function(){
+      var mx=1280,w=im.width,h=im.height,k=Math.min(1,mx/Math.max(w,h));var cv=document.createElement('canvas');cv.width=Math.round(w*k);cv.height=Math.round(h*k);
+      cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);var url=cv.toDataURL('image/jpeg',.8);
+      if(url.length>1400000)url=cv.toDataURL('image/jpeg',.6);
+      freshIfClosed().then(function(){push({from:'user',img:url});var st=S.meta.status;
+        if(st!=='live'&&st!=='waiting'){S.typing=true;render();setTimeout(function(){S.typing=false;push({from:'bot',text:'Thanks for the screenshot! To have a support agent review it, connect with live support — they will see it right away.',live:1})},600)}});
+    };im.src=rd.result};rd.readAsDataURL(file);
+  });
+  var ta=$('bxSupIn');
+  function grow(){ta.style.height='auto';ta.style.height=Math.min(110,ta.scrollHeight)+'px';$('bxSupSend').disabled=!ta.value.trim()}
+  ta.addEventListener('input',grow);
+  ta.addEventListener('keydown',function(e){if(e.key==='Enter'&&!e.shiftKey&&!/Android|iPhone|iPad/.test(navigator.userAgent)){e.preventDefault();bxSupSend()}});
+})();
+</script>
+
 </body>
 
 
