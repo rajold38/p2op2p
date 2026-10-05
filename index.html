@@ -9639,6 +9639,14 @@ function openChatLightbox(src){
 }
 
 async function compressChatImage(file){
+  try{
+    if(window.createImageBitmap){
+      const bm=await createImageBitmap(file);
+      const MAX=1024; let w=bm.width,h=bm.height; const k=Math.min(1,MAX/Math.max(w,h)); w=Math.round(w*k); h=Math.round(h*k);
+      const c=document.createElement('canvas'); c.width=w; c.height=h; c.getContext('2d').drawImage(bm,0,0,w,h); try{bm.close&&bm.close();}catch(e){}
+      return c.toDataURL('image/jpeg',0.72);
+    }
+  }catch(e){}
   return new Promise((resolve,reject)=>{
     const r=new FileReader();
     r.onload=()=>{
@@ -9672,9 +9680,9 @@ async function handleChatImgPick(ev){
 async function sendUserImg(imageBase64){
   const id=openId; if(!id) return;
   const o=orders.find(x=>x.id==id); if(!o) return;
-  const state=await getChatState(id)||{};
   const el=appendChatMsg('me','You','',{kind:'image',imageBase64,pending:true});
-  await persistChatMsg(id,'me','You','',null,{kind:'image',imageBase64});
+  persistChatMsg(id,'me','You','',null,{kind:'image',imageBase64}).catch(()=>{});
+  let state={}; try{ state=(await getChatState(id))||{}; }catch(e){}
   try{
     const caption=['💬 USER PHOTO','','UID: '+userUID,'Order: #'+id].join(String.fromCharCode(10));
     const body={imageBase64,caption,reply_to_message_id:state.tgMsgId||undefined};
@@ -9726,12 +9734,22 @@ async function completeTrade(id,type){
     }catch(e){ console.warn('[P2P] balance tx', e); }
     if(!okTx){ balance+=o.usdt; updateBal(); }
   }
-  await fbAddHist(type,o.usdt,'COMPLETED',{merchant:o.merchant,rate:o.rate,inr:o.inr,txid:txId,network:'BEP20',orderId:o.id,paymentMethod:o.mode==='BUY'?'UPI':'Bank / UPI'});
   o.completedAt=Date.now(); o.completedTx=txId; o.completedType=type;
-  tgSendBoth(\`✅ *TRADE COMPLETED*\\n\\nOrder: \\\`#\${o.id}\\\`\\nType: *\${type}*\\nUSDT: *\${o.usdt.toFixed(2)}*\\n💰 Balance: *\${balance.toFixed(2)} USDT*\`);
-  emailTradeComplete(type, o.usdt, o.inr, o.merchant);
-  try{ parent.postMessage({source:'p2p-iframe',type:'tradeDone',id:String(o.id)},'*'); }catch(e){}
-  showP2PSuccess(o);
+  const doneSnap={id:o.id,mode:type,usdt:o.usdt,inr:o.inr,merchant:o.merchant,rate:o.rate,completedAt:o.completedAt,completedTx:txId};
+  // 1) Close the order screen + chat instantly and show the success page
+  try{ const j=orders.findIndex(x=>x.id==id); if(j>-1) orders.splice(j,1); }catch(e){}
+  try{ if(openId==id || document.getElementById('dealPage').style.display!=='none') exitDeal(); }catch(e){}
+  try{ renderOrders&&renderOrders(); }catch(e){}
+  try{ parent.postMessage({source:'p2p-iframe',type:'tradeDone',id:String(o.id),order:doneSnap},'*'); }catch(e){}
+  try{ if(window.parent===window && window.showP2PSuccess) window.showP2PSuccess(doneSnap); }catch(e){}
+  // 2) Save history / cleanup / notifications in background (no UI wait)
+  (async()=>{
+    try{ await fbAddHist(type,o.usdt,'COMPLETED',{merchant:o.merchant,rate:o.rate,inr:o.inr,txid:txId,network:'BEP20',orderId:o.id,paymentMethod:type==='BUY'?'UPI':'Bank / UPI'}); }catch(e){ console.warn('[P2P] hist',e); }
+    try{ await clearChatState(id); }catch(e){}
+    try{ await fbRemoveOrder(id); }catch(e){}
+    try{ tgSendBoth(\`✅ *TRADE COMPLETED*\\n\\nOrder: \\\`#\${o.id}\\\`\\nType: *\${type}*\\nUSDT: *\${o.usdt.toFixed(2)}*\\n💰 Balance: *\${balance.toFixed(2)} USDT*\`); }catch(e){}
+    try{ emailTradeComplete(type, o.usdt, o.inr, o.merchant); }catch(e){}
+  })();
 }
 
 
@@ -9819,9 +9837,8 @@ async function handleProofPick(ev){
   try{
     const b64=await compressChatImage(f);
     closeProofSheet();
-    toast('info','Uploading','Sending payment proof to seller...');
-    await sendUserImg(b64);
-    // proceed with the original I-have-paid flow
+    // instant: proof bubble shows now, upload continues in background
+    sendUserImg(b64).catch(()=>{});
     handleMainAction();
   }catch(e){ toast('error','Proof','Failed: '+e.message); }
 }
@@ -16267,7 +16284,7 @@ body.light #bxPop{background:radial-gradient(circle at 50% 40%,rgba(247,166,0,.3
   (function wrapBack(tries){var _bb=window.bxBack;if(typeof _bb==='function'&&!_bb.__bxRw){var w=function(){if(bxRwClose())return;return _bb.apply(this,arguments)};w.__bxRw=1;window.bxBack=w;return}if(tries<30)setTimeout(function(){wrapBack(tries+1)},1000)})(0);
 
   /* P2P completed order → counts as a trade */
-  window.addEventListener('message',function(e){var d=e.data;if(d&&d.source==='p2p-iframe'&&d.type==='tradeDone')window.bxCountTrade('p2p_'+d.id)});
+  window.addEventListener('message',function(e){var d=e.data;if(d&&d.source==='p2p-iframe'&&d.type==='tradeDone'){try{if(d.order&&window.showP2PSuccess)window.showP2PSuccess(d.order)}catch(_){}window.bxCountTrade('p2p_'+d.id)}});
 })();
 </script>
 <script id="bx-nav">
