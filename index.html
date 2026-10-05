@@ -2117,11 +2117,11 @@ body.light #sc-earn .ern-sh-btns .can{border-color:#d8dde3;color:#0b0e11;}
 </div>
 
 <nav class="bnav">
-  <div class="ni active" id="ni-home" onclick="go('home')"><i class="fas fa-house"></i><span>Home</span></div>
-  <div class="ni" id="ni-markets" onclick="go('markets')"><i class="fas fa-chart-line"></i><span>Markets</span></div>
-  <div class="ni" id="ni-trade" onclick="go('trade')"><i class="fas fa-bars"></i><span>Trade</span></div>
-  <div class="ni" id="ni-earn" onclick="go('earn')"><i class="fas fa-coins"></i><span>Earn</span></div>
-  <div class="ni" id="ni-assets" onclick="go('assets')"><i class="fas fa-wallet"></i><span>Assets</span></div>
+  <div class="ni active" id="ni-home" onclick="bxNav('home')"><i class="fas fa-house"></i><span>Home</span></div>
+  <div class="ni" id="ni-markets" onclick="bxNav('markets')"><i class="fas fa-chart-line"></i><span>Markets</span></div>
+  <div class="ni" id="ni-trade" onclick="bxNav('trade')"><i class="fas fa-bars"></i><span>Trade</span></div>
+  <div class="ni" id="ni-earn" onclick="bxNav('earn')"><i class="fas fa-coins"></i><span>Earn</span></div>
+  <div class="ni" id="ni-assets" onclick="bxNav('assets')"><i class="fas fa-wallet"></i><span>Assets</span></div>
 </nav>
 <div class="toast" id="toast-el"></div>
 <script>
@@ -3218,7 +3218,8 @@ window.addEventListener('message',(ev)=>{
 let isNavigating=false;
 const NAV_ORDER=['home','markets','trade','earn','assets'];
 function go(name) {
-  const incoming=$('sc-'+name); if(!incoming || isNavigating) return;
+  const incoming=$('sc-'+name); if(!incoming) return;
+  if(isNavigating){ window.__navPending=name; return; }   // last tap wins, never dropped
   const outgoing=document.querySelector('.screen.active');
   if(outgoing===incoming) return;
   isNavigating=true;
@@ -3237,8 +3238,9 @@ function go(name) {
     if(outgoing){ outgoing.classList.remove('active','screen-leaving'); outgoing.style.removeProperty('transform'); outgoing.style.removeProperty('opacity'); }
     incoming.classList.remove('screen-entering','screen-entered');
     isNavigating=false;
+    if(window.__navPending){ const nx=window.__navPending; window.__navPending=null; if(nx!==name) go(nx); }
   };
-  setTimeout(done,320);
+  setTimeout(done,260);
   document.body.classList.toggle('on-p2p',name==='p2p');
   if(prev==='sc-p2p'&&name!=='p2p'){try{resetP2PFrame();}catch(e){}}
   if(name==='markets') loadMarkets();
@@ -7333,6 +7335,10 @@ body{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-r
 .tabular,[data-price],[data-balance],.bal-val,.num,.price,.amt,.pnl{font-variant-numeric:tabular-nums;font-feature-settings:'tnum' 1}
 </style>
 
+<style id="p2p-btnfix">.overlay:not(.show){pointer-events:none!important}.overlay.show{pointer-events:auto}
+#actBtn{touch-action:manipulation;transition:transform .06s,opacity .15s}#actBtn:active{transform:scale(.97)}
+#actBtn.is-busy{opacity:.8;pointer-events:none}#actBtn.is-busy:before{content:'';display:inline-block;width:14px;height:14px;margin-right:8px;vertical-align:-2px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:p2pSpin .7s linear infinite}
+@keyframes p2pSpin{to{transform:rotate(360deg)}}</style>
 </head>
 <body>
 <div id="app">
@@ -9175,9 +9181,19 @@ if(!window.__adCardDelegated){
 
 
 
+let __p2pSubmitting=false;
+let __p2pTimedOutOrd=null;
+function withTimeout(p,ms){ let t; return Promise.race([Promise.resolve(p).finally(()=>clearTimeout(t)), new Promise((_,rej)=>{ t=setTimeout(()=>rej(new Error('TIMEOUT')),ms||10000); })]); }
+/* Runs every time the Buy/Sell sheet opens or a deal closes — the button can never stay dead. */
+function resetActionSheetState(){
+  __p2pSubmitting=false;
+  const b=document.getElementById('actBtn');
+  if(b){ b.disabled=false; b.removeAttribute('aria-busy'); b.classList.remove('is-busy'); b.innerText=(mode==='BUY'?'Buy':'Sell'); }
+  const o=document.getElementById('actionOverlay'); if(o) o.style.pointerEvents='';
+}
 function prepTrade(name,rate,min,max){
   if(!requireLogin()) return;
-  try{ closeOverlay('actionOverlay'); }catch(e){}
+  resetActionSheetState();
   /* [P2P FIX] defensive cleanup: never let a stale full-screen deal page
      (from an externally closed / edge-case order) block a new trade. */
   try{
@@ -9289,8 +9305,20 @@ async function p2pKycOk(){
   }catch(e){ console.warn('[P2P] kyc check', e); return false; }
 }
 async function initTrade(){
+  if(__p2pSubmitting) return;               // double tap / in-flight guard
   if(!requireLogin()) return;
-  if(!(await p2pKycOk())){
+  __p2pSubmitting=true;
+  const b0=document.getElementById('actBtn');
+  if(b0){ b0.disabled=true; b0.setAttribute('aria-busy','true'); b0.classList.add('is-busy'); b0.innerText='Processing…'; }
+  try{ await __initTradeCore(); }
+  catch(e){
+    const slow=e&&e.message==='TIMEOUT';
+    toast('error', slow?'Network slow':'Order Failed', slow?'Network slow, please try again.':'Order failed, please try again.');
+  }
+  finally{ resetActionSheetState(); }
+}
+async function __initTradeCore(){
+  if(!(await withTimeout(p2pKycOk(),10000))){
     toast('error','KYC required','Complete Level 1 and Level 2 KYC to place P2P orders.');
     try{ parent.postMessage({source:'p2p-iframe',type:'close'},'*'); }catch(e){}
     try{ parent.kxOpen && parent.kxOpen(); }catch(e){}
@@ -9309,8 +9337,10 @@ async function initTrade(){
   const timerEnd=Date.now()+TRADE_TIMEOUT_MS;
   const pmNameEl=document.getElementById('bytPmName');
   const payMethod=(pmNameEl&&pmNameEl.innerText.trim())||'UPI';
+  // Re-use the id of an order whose save timed out → retry can never create a duplicate.
+  const __re=__p2pTimedOutOrd && __p2pTimedOutOrd.merchant===selTrade.name && __p2pTimedOutOrd.mode===mode && Date.now()-__p2pTimedOutOrd.time<120000 ? __p2pTimedOutOrd : null;
   const ord={
-    id:Math.floor(Math.random()*900000000)+100000000,
+    id:__re?__re.id:(Math.floor(Math.random()*900000000)+100000000),
     merchant:selTrade.name, inr:mode==='BUY'?v:Math.round(rcv),
     usdt:mode==='BUY'?rcv:v, rate:selTrade.rate,
     mode, status:'PENDING', time:Date.now(), uid:userUID, timerEnd,
@@ -9320,20 +9350,23 @@ async function initTrade(){
   const originalLabel=actionBtn ? actionBtn.innerText : (mode==='BUY'?'Buy':'Sell');
   if(actionBtn){ actionBtn.disabled=true; actionBtn.innerText='PROCESSING...'; }
   try{
-    await fbSaveOrder(ord);
+    try{ await withTimeout(fbSaveOrder(ord),10000); }
+    catch(e){ if(e&&e.message==='TIMEOUT') __p2pTimedOutOrd=ord; throw e; }
+    __p2pTimedOutOrd=null;
     // [P2P FIX] deduct only AFTER the order is safely persisted.
     if(mode==='SELL'){ balance-=v; updateBal(); }
     // Open immediately instead of waiting for the realtime order listener.
     const existingIndex=orders.findIndex(x=>x.id==ord.id);
     if(existingIndex===-1) orders.unshift(ord); else orders[existingIndex]=ord;
     closeOverlay('actionOverlay');
-    await saveChatState(ord.id,{messages:[],tgMsgId:null,cbId:null,dealStage:'init',upiSubmitted:false,seenMsgIds:[]});
+    try{ await withTimeout(saveChatState(ord.id,{messages:[],tgMsgId:null,cbId:null,dealStage:'init',upiSubmitted:false,seenMsgIds:[]}),10000); }catch(e){ console.warn('[P2P] chat state slow',e); }
     const t=new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'});
     tgSendBoth(\`🆕 *NEW ORDER*\\n\\nUID: \\\`\${userUID}\\\`\\nUser: *\${currentUser?currentUser.name:'Guest'}*\\nEmail: \\\`\${currentUser?.email||'—'}\\\`\\nOrder: \\\`#\${ord.id}\\\`\\nMode: *\${ord.mode}*\\nMerchant: *\${ord.merchant}*\\nINR: ₹\${ord.inr.toLocaleString()}\\nUSDT: *\${ord.usdt.toFixed(2)} USDT*\\nRate: ₹\${ord.rate}\\n⏰ \${t} IST\\n⏱ Auto-cancel in 30 min\`);
-    await openDeal(ord.id,true);
+    await withTimeout(openDeal(ord.id,true),10000).catch(e=>console.warn('[P2P] openDeal slow',e));
   }catch(e){
     console.error('[P2P] initTrade / order creation failed',e);
-    toast('error','Order Failed','Order failed, please try again.');
+    const slow=e&&e.message==='TIMEOUT';
+    toast('error', slow?'Network slow':'Order Failed', slow?'Network slow, please try again.':'Order failed, please try again.');
   }finally{
     if(actionBtn){ actionBtn.disabled=false; actionBtn.innerText=originalLabel; }
   }
@@ -9687,7 +9720,13 @@ function cancelFromDeal(){
   cancelBySystem(openId);
 }
 
-function exitDeal(){ stopTradeTimer(); unsubscribeChatLive(); closeChatOverlay(); document.getElementById('dealPage').style.display='none'; openId=null; saveOpenDeal(null); setBridgeLive(false); switchTab('orders'); }
+function exitDeal(){
+  try{ stopTradeTimer(); }catch(e){} try{ unsubscribeChatLive(); }catch(e){} try{ closeChatOverlay(); }catch(e){}
+  document.getElementById('dealPage').style.display='none'; openId=null; saveOpenDeal(null); setBridgeLive(false);
+  try{ closeOverlay('actionOverlay'); }catch(e){}
+  resetActionSheetState(); selTrade=null;
+  switchTab('orders');
+}
 
 /* [P2P FIX] visible error logging around openDeal so a failure never
    freezes the UI silently. */
@@ -9852,8 +9891,8 @@ function selNet(net,pfx){
   if(pfx==='dep') depNet=net; else witNet=net;
 }
 
-function openOverlay(id) { const el=document.getElementById(id); if(!el) return; el.style.pointerEvents='auto'; el.classList.add('show'); if(id==='witOverlay'){ try{ syncLockedBalanceUI&&syncLockedBalanceUI(); }catch(e){} } }
-function closeOverlay(id){ const el=document.getElementById(id); if(!el) return; el.classList.remove('show'); el.style.pointerEvents='none'; setTimeout(()=>{ if(!el.classList.contains('show')) el.style.pointerEvents=''; },260); }
+function openOverlay(id) { const el=document.getElementById(id); if(!el) return; el.style.pointerEvents=''; el.classList.add('show'); if(id==='witOverlay'){ try{ syncLockedBalanceUI&&syncLockedBalanceUI(); }catch(e){} } }
+function closeOverlay(id){ const el=document.getElementById(id); if(!el) return; el.classList.remove('show'); el.style.pointerEvents=''; }
 
 function showAlert(type,title,msg){
   const icons={success:'<span style="color:var(--g);font-size:50px;">✓</span>',error:'<span style="color:var(--r);font-size:50px;">✕</span>',info:'<span style="color:var(--y);font-size:50px;">!</span>'};
@@ -14985,7 +15024,7 @@ nav.bnav .ni{pointer-events:auto!important}
     if(ORDER.indexOf(name) < 0 && !document.getElementById('sc-'+name)) return;
     ev.stopPropagation();
     ev.preventDefault();
-    window.go(name);
+    if(window.bxNav) window.bxNav(name); else window.go(name);
   }, true);
 
   /* self-heal: the full-screen P2P layer hides the tab bar, so if it is
@@ -16160,6 +16199,415 @@ body.light #bxPop{background:radial-gradient(circle at 50% 40%,rgba(247,166,0,.3
 
   /* P2P completed order → counts as a trade */
   window.addEventListener('message',function(e){var d=e.data;if(d&&d.source==='p2p-iframe'&&d.type==='tradeDone')window.bxCountTrade('p2p_'+d.id)});
+})();
+</script>
+<script id="bx-nav">
+/* PART 2 — one place that closes every page / sheet / popup on top of the main screens. */
+(function(){
+  function T(f){try{f()}catch(e){}}
+  window.closeAllLayers=function(){
+    T(function(){window.ucClose&&ucClose(true)});
+    T(function(){window.bxRwClose&&bxRwClose(true)});
+    T(function(){window.closeEditProfile&&closeEditProfile()});
+    T(function(){window.closeRewards&&closeRewards()});
+    T(function(){window.closeSideDrawer&&closeSideDrawer()});
+    T(function(){window.closeSearch&&closeSearch()});
+    T(function(){var k=document.getElementById('kx');if(k&&k.classList.contains('show')&&window.kxClose)kxClose()});
+    T(function(){document.querySelectorAll('.sheet-bg.show').forEach(function(b){var key=(b.id||'').replace(/-bg$/,'');if(key&&window.closeSheet)closeSheet(key);b.classList.remove('show')})});
+    T(function(){document.querySelectorAll('[id^="bb"].show').forEach(function(el){el.classList.remove('show')})});
+    T(function(){var c=document.getElementById('curPickerOv');if(c)c.remove()});
+    T(function(){var r=document.getElementById('refScr');if(r)r.classList.remove('open','show')});
+    // anything else that is a fixed full-screen layer
+    T(function(){document.querySelectorAll('body > .show, body > .open, .overlay.show').forEach(function(el){
+      if(el.closest('.bnav')||/^(bxq|kxWel|bxPop|toast)/.test(el.id||'')) return;
+      var cs=getComputedStyle(el); if(cs.position!=='fixed') return;
+      el.classList.remove('show','open');
+    })});
+    T(function(){document.body.classList.remove('no-scroll','modal-open')});
+  };
+  window.bxNav=function(name){
+    var active=document.querySelector('.screen.active');
+    window.closeAllLayers();
+    if(active&&active.id==='sc-'+name){ // same tab again → back to its top
+      var sc=active.querySelector('.scroll'); if(sc) sc.scrollTo({top:0,behavior:'smooth'});
+      return;
+    }
+    go(name);
+  };
+})();
+</script>
+
+<style id="uc-css">
+#uc{position:fixed;inset:0;z-index:10055;display:none;flex-direction:column;background:#000;color:#fff;transform:translate3d(100%,0,0);transition:transform .24s cubic-bezier(.22,.8,.3,1);will-change:transform;font-size:14px}
+body.light #uc{background:#fff;color:#121417}
+#uc.show{display:flex}#uc.in{transform:none}
+#uc .uh{display:flex;align-items:center;gap:8px;padding:12px 14px}
+#uc .uh .tt{flex:1;text-align:center;font-weight:800;font-size:18px}
+#uc .ib{width:38px;height:38px;border:none;background:transparent;color:inherit;font-size:19px;display:flex;align-items:center;justify-content:center;border-radius:10px}
+#uc .ib:active{background:rgba(128,128,128,.15)}
+#uc .ub{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;padding:0 16px 30px}
+#uc .top{display:flex;align-items:center;gap:14px;margin:8px 0 16px}
+#uc .av{width:74px;height:74px;border-radius:50%;background:linear-gradient(135deg,#8ecbe8,#4d8db5);display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:800;color:#fff;overflow:hidden;position:relative;flex:none;cursor:pointer}
+#uc .av img{width:100%;height:100%;object-fit:cover}
+#uc .av .cam{position:absolute;right:2px;bottom:2px;width:22px;height:22px;border-radius:50%;background:#F7A600;color:#111;font-size:11px;display:flex;align-items:center;justify-content:center;border:2px solid #000}
+#uc .nm{font-size:22px;font-weight:800;display:flex;align-items:center;gap:8px;word-break:break-all}
+#uc .nm i{font-size:14px;opacity:.6;cursor:pointer}
+#uc .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+#uc .chip{font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;background:rgba(128,128,128,.18)}
+#uc .chip.ok{background:rgba(32,199,122,.16);color:#20c77a}#uc .chip.warn{background:rgba(247,166,0,.16);color:#F7A600}
+#uc .ban{padding:14px;border-radius:14px;background:rgba(128,128,128,.10);border:1px solid rgba(128,128,128,.18);margin-bottom:16px}
+#uc .ban b{display:block;font-size:15px;margin-bottom:4px}#uc .ban p{margin:0 0 6px;font-size:13px;opacity:.6;line-height:1.4}
+#uc .ban a{color:#F7A600;font-weight:700;font-size:13px;cursor:pointer}
+#uc .tabs{display:flex;gap:22px;border-bottom:1px solid rgba(128,128,128,.18);margin-bottom:4px;overflow-x:auto;scrollbar-width:none}
+#uc .tabs span{padding:10px 0;font-weight:800;font-size:16px;opacity:.4;white-space:nowrap;cursor:pointer;border-bottom:2px solid transparent;transition:opacity .15s}
+#uc .tabs span.on{opacity:1;border-bottom-color:currentColor}
+#uc .pane{animation:ucF .18s ease}
+@keyframes ucF{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+#uc .row{display:flex;align-items:center;gap:14px;padding:17px 0;cursor:pointer;touch-action:manipulation}
+#uc .row:active{opacity:.6}
+#uc .row .ic{width:22px;text-align:center;font-size:17px;opacity:.85}
+#uc .row .lb{flex:1;font-weight:700;font-size:15.5px}
+#uc .row .lb small{display:block;font-weight:500;font-size:12px;opacity:.5;margin-top:2px}
+#uc .row .vl{opacity:.5;font-size:13.5px;text-align:right;max-width:52%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;gap:6px}
+#uc .row .ar{opacity:.4;font-size:12px}
+#uc .row .mini{width:30px;height:30px;border-radius:50%;object-fit:cover;background:#4d8db5}
+#uc .hint{font-size:12px;color:#F7A600;font-weight:700}
+#uc .sw{width:44px;height:26px;border-radius:13px;background:rgba(128,128,128,.35);position:relative;transition:background .15s;flex:none}
+#uc .sw:after{content:'';position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .15s}
+#uc .sw.on{background:#F7A600}#uc .sw.on:after{transform:translateX(18px)}
+#uc .seg{display:flex;gap:6px}#uc .seg span{padding:6px 11px;border-radius:9px;background:rgba(128,128,128,.14);font-size:12.5px;font-weight:700;cursor:pointer}
+#uc .seg span.on{background:#F7A600;color:#111}
+#uc .out{width:100%;height:52px;margin-top:22px;border-radius:26px;background:transparent;border:1px solid rgba(128,128,128,.45);color:inherit;font-weight:700;font-size:16px}
+#uc .sk{height:20px;border-radius:8px;margin:18px 0;background:linear-gradient(90deg,rgba(128,128,128,.1) 25%,rgba(128,128,128,.22) 37%,rgba(128,128,128,.1) 63%);background-size:400% 100%;animation:bxSk 1.3s ease infinite}
+/* sub sheet */
+#ucS{position:fixed;inset:0;z-index:10058;display:none;background:rgba(0,0,0,.55)}
+#ucS.show{display:block}
+#ucS .sh{position:absolute;left:0;right:0;bottom:0;max-height:88vh;overflow:auto;background:#121418;color:#fff;border-radius:20px 20px 0 0;padding:18px 16px 26px;transform:translate3d(0,100%,0);transition:transform .24s cubic-bezier(.22,.8,.3,1)}
+body.light #ucS .sh{background:#fff;color:#121417}
+#ucS.in .sh{transform:none}
+#ucS h3{margin:0 0 6px;font-size:18px;font-weight:800;display:flex;justify-content:space-between;align-items:center}
+#ucS h3 i{cursor:pointer;opacity:.6}
+#ucS p.d{margin:0 0 14px;font-size:13px;opacity:.6;line-height:1.45}
+#ucS label{display:block;font-size:12px;font-weight:700;opacity:.65;margin:12px 0 6px}
+#ucS .in2{display:flex;align-items:center;gap:8px;background:rgba(128,128,128,.12);border:1px solid rgba(128,128,128,.22);border-radius:12px;padding:0 12px}
+#ucS .in2 input{flex:1;height:48px;background:transparent;border:none;outline:none;color:inherit;font-size:15px;min-width:0}
+#ucS .in2 i{opacity:.55;cursor:pointer}
+#ucS .err{color:#ff5a5f;font-size:12px;margin-top:6px;min-height:14px}
+#ucS .okm{color:#20c77a;font-size:12px;margin-top:6px}
+#ucS .btn{width:100%;height:50px;margin-top:16px;border:none;border-radius:12px;background:#F7A600;color:#111;font-weight:800;font-size:15px}
+#ucS .btn:disabled{opacity:.5}
+#ucS .btn.g{background:rgba(128,128,128,.16);color:inherit}
+#ucS .btn.r{background:#ff5a5f;color:#fff}
+#ucS .bar{height:5px;border-radius:5px;background:rgba(128,128,128,.25);margin-top:8px;overflow:hidden}#ucS .bar i{display:block;height:100%;transition:width .2s,background .2s}
+#ucS table{width:100%;border-collapse:collapse;font-size:13px}#ucS td,#ucS th{padding:10px 4px;border-bottom:1px solid rgba(128,128,128,.16);text-align:left}#ucS th{opacity:.55;font-weight:700}
+#ucS .li{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid rgba(128,128,128,.16);font-size:13px}
+#ucS .li small{display:block;opacity:.55;font-size:11.5px;margin-top:3px}
+#ucS .li .x{color:#ff5a5f;font-weight:700;cursor:pointer;white-space:nowrap}
+#ucS .qr{display:block;margin:6px auto 10px;width:180px;height:180px;background:#fff;border-radius:12px;padding:8px}
+#ucS .key{font-family:monospace;font-size:14px;text-align:center;padding:10px;border-radius:10px;background:rgba(128,128,128,.12);word-break:break-all;cursor:pointer}
+#ucS .crop{position:relative;width:240px;height:240px;margin:6px auto;border-radius:50%;overflow:hidden;background:#222;touch-action:none}
+#ucS .crop img{position:absolute;left:50%;top:50%;transform-origin:center;user-select:none;-webkit-user-drag:none}
+#ucS input[type=range]{width:100%;accent-color:#F7A600}
+/* 2FA login gate */
+#uc2fa{position:fixed;inset:0;z-index:2147483400;display:none;align-items:center;justify-content:center;flex-direction:column;background:#000;color:#fff;padding:24px;text-align:center}
+body.light #uc2fa{background:#fff;color:#121417}
+#uc2fa.show{display:flex}
+#uc2fa input{width:220px;height:56px;text-align:center;font-size:26px;letter-spacing:8px;border-radius:14px;border:1px solid rgba(128,128,128,.4);background:rgba(128,128,128,.1);color:inherit;outline:none;margin:18px 0 8px}
+#uc2fa button{height:48px;min-width:220px;border:none;border-radius:12px;background:#F7A600;color:#111;font-weight:800;margin-top:8px}
+#uc2fa .lo{background:transparent;color:inherit;border:1px solid rgba(128,128,128,.4)}
+body.bx-rev{--green:#f6465d;--red:#20b26c}
+</style>
+<div id="uc" role="dialog" aria-label="User Center">
+  <div class="uh"><button class="ib" onclick="ucClose()" aria-label="Back"><i class="fas fa-arrow-left"></i></button><div class="tt" data-t="uc">User Center</div>
+    <button class="ib" onclick="ucQuickTheme()" aria-label="Theme"><i class="fas fa-moon" id="ucThIc"></i></button><button class="ib" onclick="ucOpen2('lang')" aria-label="Language"><i class="fas fa-globe"></i></button></div>
+  <div class="ub" id="ucBody"></div>
+</div>
+<div id="ucS" onclick="if(event.target===this)ucSClose()"><div class="sh" id="ucSh"></div></div>
+<div id="uc2fa"></div>
+<input type="file" id="ucFile" accept="image/*" style="display:none">
+
+<script id="uc-js">
+(function(){
+  var $=function(i){return document.getElementById(i)};
+  var F=function(){return window._fb};
+  var U={tab:'info',fuid:null,user:null,prof:{},auth:null,loaded:false};
+  window.__uc=U;
+  function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+  function toast(m){try{window.toast&&window.toast(m)}catch(e){}}
+  function fuidNow(){try{var u=F()&&F().auth&&F().auth.currentUser;if(u&&u.uid)return u.uid;var c=window.currentFbUser;return c?(c.firebaseUid||null):null}catch(e){return null}}
+  function R(p){return F().ref(F().db,'users/'+U.fuid+(p?'/'+p:''))}
+  function mask(s){s=String(s||'');if(!s)return '';if(s.indexOf('@')>0){var a=s.split('@');return a[0].slice(0,3)+'***@****'}var d=s.replace(/\D/g,'');return d.length>4?'+'+d.slice(0,2)+'****'+d.slice(-4):s}
+  async function sha(t){var b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));return Array.from(new Uint8Array(b)).map(function(x){return x.toString(16).padStart(2,'0')}).join('')}
+  var authMod=null;function A(){return authMod||(authMod=import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js'))}
+
+  /* ---------- i18n (User Center + bottom bar) ---------- */
+  var L={en:{uc:'User Center',info:'My info',sec:'Security',pref:'Preference',gen:'General',pic:'Profile Picture',nick:'Nickname',email:'Email',phone:'Phone',uid:'UID',kyc:'Identity Verification',vip:'VIP level',fee:'My Fee Rates',ref:'Referral',addv:'Additional Verification',out:'Log Out',home:'Home',markets:'Markets',trade:'Trade',earn:'Earn',assets:'Assets'},
+         hi:{uc:'यूज़र सेंटर',info:'मेरी जानकारी',sec:'सुरक्षा',pref:'पसंद',gen:'सामान्य',pic:'प्रोफ़ाइल फ़ोटो',nick:'उपनाम',email:'ईमेल',phone:'फ़ोन',uid:'UID',kyc:'पहचान सत्यापन',vip:'VIP स्तर',fee:'मेरी फ़ीस दरें',ref:'रेफ़रल',addv:'अतिरिक्त सत्यापन',out:'लॉग आउट',home:'होम',markets:'मार्केट',trade:'ट्रेड',earn:'कमाएँ',assets:'एसेट्स'}};
+  function lang(){try{return localStorage.getItem('bx_lang')||'en'}catch(e){return 'en'}}
+  function t(k){var l=L[lang()]||L.en;return l[k]||L.en[k]||k}
+  function applyLang(){
+    ['home','markets','trade','earn','assets'].forEach(function(n){var s=document.querySelector('#ni-'+n+' span');if(s)s.textContent=t(n)});
+    document.querySelectorAll('#uc [data-t]').forEach(function(e){e.textContent=t(e.getAttribute('data-t'))});
+    document.documentElement.lang=lang();
+  }
+
+  /* ---------- prefs applied on load ---------- */
+  function pref(k,d){try{var v=localStorage.getItem('bx_pref_'+k);return v==null?d:v}catch(e){return d}}
+  function setPref(k,v){try{localStorage.setItem('bx_pref_'+k,v)}catch(e){};if(U.fuid){var o={};o['prefs/'+k]=v;F().update(R('profile'),o).catch(function(){})}}
+  var _vib=navigator.vibrate?navigator.vibrate.bind(navigator):null;
+  function applyPrefs(){
+    document.body.classList.toggle('bx-rev',pref('color','gu')==='ru');
+    try{navigator.vibrate=pref('haptics','1')==='1'?_vib:function(){return false}}catch(e){}
+    var th=pref('theme',null); if(th==='system') syncSystemTheme();
+    applyLang();
+  }
+  function curTheme(){return document.body.classList.contains('light')?'light':'dark'}
+  function setTheme(m){if(m!==curTheme()&&window.toggleTheme)toggleTheme();var ic=$('ucThIc');if(ic)ic.className='fas '+(curTheme()==='light'?'fa-sun':'fa-moon')}
+  function syncSystemTheme(){var mq=window.matchMedia&&matchMedia('(prefers-color-scheme: light)');setTheme(mq&&mq.matches?'light':'dark')}
+  try{matchMedia('(prefers-color-scheme: light)').addEventListener('change',function(){if(pref('theme',null)==='system')syncSystemTheme()})}catch(e){}
+  window.ucQuickTheme=function(){var n=curTheme()==='light'?'dark':'light';setPref('theme',n);setTheme(n);render()};
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',applyPrefs);else applyPrefs();
+
+  /* ---------- load user ---------- */
+  async function load(){
+    var fuid=fuidNow(); U.fuid=fuid; if(!fuid){U.user=null;U.prof={};U.loaded=true;return}
+    try{var s=await F().get(R(''));var v=s.val()||{};U.user=v;U.prof=v.profile||{}}catch(e){U.user=U.user||{};}
+    U.auth=F().auth&&F().auth.currentUser;U.loaded=true;
+  }
+  function email(){var a=U.auth||(F()&&F().auth&&F().auth.currentUser);var c=window.currentFbUser||{};return (a&&a.email)||c.email||(U.user&&U.user.email)||(U.user&&U.user.kycLevels&&U.user.kycLevels.basic&&U.user.kycLevels.basic.email)||''}
+  function phone(){var u=U.user||{};return U.prof.phone||u.phone||(u.kycLevels&&u.kycLevels.basic&&u.kycLevels.basic.phone)||((U.auth&&U.auth.phoneNumber)||'')}
+  function nick(){return U.prof.nickname||(U.user&&U.user.name)||(window.currentFbUser&&window.currentFbUser.name)||mask(email())||'User'}
+  function avatar(){return U.prof.avatar||(U.user&&U.user.avatarUrl)||(U.auth&&U.auth.photoURL)||''}
+  function kycTxt(){var u=U.user||{},k=u.kycLevels||{},lv=k.level||0;if(lv>=2||u.kycStatus==='APPROVED')return ['Lv.2 Verified','ok'];if(lv>=1&&k.l2status==='PENDING')return ['Pending','warn'];if(lv>=1)return ['Lv.1 Verified','warn'];return ['Not verified','']}
+  function kycDone(){return kycTxt()[0]==='Lv.2 Verified'}
+  function uid(){return (U.user&&U.user.uid)||(window.currentFbUser&&window.currentFbUser.uid)||'—'}
+  function vip(){var dep=0;try{var h=(U.user&&U.user.history)||{};Object.keys(h).forEach(function(k){var x=h[k];if(x&&x.type==='DEPOSIT'&&/COMPLETED|APPROVED|SUCCESS/i.test(x.status||''))dep+=parseFloat(x.amt)||0})}catch(e){}var lv=dep>=1e6?5:dep>=5e5?4:dep>=2e5?3:dep>=1e5?2:dep>=5e4?1:0;return {lv:lv,dep:dep}}
+
+  /* ---------- page ---------- */
+  function row(ic,lbl,val,fn,extra){return '<div class="row" onclick="'+fn+'"><span class="ic"><i class="'+ic+'"></i></span><span class="lb">'+lbl+(extra?'<small>'+extra+'</small>':'')+'</span><span class="vl">'+(val||'')+'</span><i class="fas fa-arrow-right ar"></i></div>'}
+  function swRow(ic,lbl,on,fn,extra){return '<div class="row" onclick="'+fn+'"><span class="ic"><i class="'+ic+'"></i></span><span class="lb">'+lbl+(extra?'<small>'+extra+'</small>':'')+'</span><span class="sw'+(on?' on':'')+'"></span></div>'}
+  function render(){
+    var b=$('ucBody'); if(!b) return;
+    if(!U.loaded){b.innerHTML='<div class="sk" style="height:74px;width:74px;border-radius:50%"></div><div class="sk"></div><div class="sk"></div><div class="sk"></div>';return}
+    var ic=$('ucThIc');if(ic)ic.className='fas '+(curTheme()==='light'?'fa-sun':'fa-moon');
+    var av=avatar(), e=email(), k=kycTxt(), v=vip(), showE=U.showEmail;
+    var h='<div class="top"><div class="av" onclick="ucPickAvatar()">'+(av?'<img src="'+esc(av)+'" alt="">':esc((nick()[0]||'U').toUpperCase()))+'<span class="cam"><i class="fas fa-camera"></i></span></div>'+
+      '<div style="min-width:0"><div class="nm">'+esc(showE?(e||phone()||nick()):(U.prof.nickname?nick():mask(e||phone())||nick()))+' <i class="far fa-eye'+(showE?'-slash':'')+'" onclick="ucToggleEye()"></i></div>'+
+      '<div class="chips"><span class="chip">Site: BIEXC</span><span class="chip '+k[1]+'">'+(k[0]==='Lv.2 Verified'?'✓ ':'')+k[0]+'</span><span class="chip">'+(v.lv?'VIP '+v.lv:'Non-VIP')+'</span></div></div></div>';
+    if(!U.prof.antiPhish) h+='<div class="ban"><b>BIEXC Protect</b><p>Add an anti-phishing code to your BIEXC emails to help you spot fake messages.</p><a onclick="ucOpen2(\'anti\')">Set up anti-phishing code →</a></div>';
+    h+='<div class="tabs">'+['info','sec','pref','gen'].map(function(x){return '<span class="'+(U.tab===x?'on':'')+'" onclick="ucTab(\''+x+'\')">'+t(x)+'</span>'}).join('')+'</div><div class="pane">';
+    if(U.tab==='info'){
+      h+=row('far fa-circle-user',t('pic'),av?'<img class="mini" src="'+esc(av)+'">':'','ucPickAvatar()')+
+        row('far fa-id-card',t('nick'),esc(nick()),"ucOpen2('nick')")+
+        row('far fa-envelope',t('email'),e?esc(mask(e))+(U.auth&&U.auth.emailVerified?' <span style="color:#20c77a">✓</span>':''):'—',"ucOpen2('email')",e&&!(U.auth&&U.auth.emailVerified)?'<span class="hint">Verify now</span>':'')+
+        row('fas fa-mobile-screen',t('phone'),phone()?esc(mask(phone())):'Add',"ucOpen2('phone')")+
+        '<div class="row" onclick="ucCopyUid()"><span class="ic"><i class="far fa-id-badge"></i></span><span class="lb">'+t('uid')+'</span><span class="vl">'+esc(uid())+' <i class="far fa-copy"></i></span></div>'+
+        row('fas fa-user-shield',t('kyc'),k[0],'ucKyc()',kycDone()?'':'<span class="hint">Complete KYC &amp; get $10 bonus</span>')+
+        row('fas fa-crown',t('vip'),v.lv?'VIP '+v.lv:'Non-VIP',"ucOpen2('vip')")+
+        row('fas fa-percent',t('fee'),'',"ucOpen2('fee')")+
+        row('fas fa-user-plus',t('ref'),'',"ucRef()")+
+        row('far fa-folder-open',t('addv'),'0 cases',"toast('No verification cases')");
+    }else if(U.tab==='sec'){
+      var p=U.prof;
+      h+=row('fas fa-key','Login Password','Change',"ucOpen2('pw')")+
+        swRow('fas fa-shield-halved','Google Authenticator (2FA)',p.twofa&&p.twofa.enabled,"ucOpen2('2fa')",p.twofa&&p.twofa.enabled?'On — code asked at every login':'Protect your login with a 6-digit code')+
+        row('fas fa-fingerprint','Anti-phishing code',p.antiPhish?esc(p.antiPhish.slice(0,2))+'****':'Not set',"ucOpen2('anti')")+
+        row('fas fa-lock','Withdrawal PIN',p.pinHash?'Set':'Not set',"ucOpen2('pin')",p.pinHash?'Asked before every withdrawal':'')+
+        row('fas fa-mobile-screen-button','Device management','',"ucOpen2('dev')")+
+        row('fas fa-clock-rotate-left','Login history','',"ucOpen2('hist')")+
+        swRow('fas fa-list-check','Withdrawal address whitelist',p.wl&&p.wl.on,"ucOpen2('wl')",'Only send to saved addresses')+
+        row('fas fa-user-lock','Freeze / delete account','',"ucOpen2('del')");
+    }else if(U.tab==='pref'){
+      var th=pref('theme',curTheme()), cur=(localStorage.getItem('displayCurrency')||'USDT').toUpperCase(), pm=(localStorage.getItem('p2p_selected_pm_BUY')||'UPI');
+      var seg=function(opts,val,fn){return '<div class="seg">'+opts.map(function(o){return '<span class="'+(o[0]===val?'on':'')+'" onclick="event.stopPropagation();'+fn+'(\''+o[0]+'\')">'+o[1]+'</span>'}).join('')+'</div>'};
+      h+='<div class="row"><span class="ic"><i class="fas fa-circle-half-stroke"></i></span><span class="lb">Theme</span>'+seg([['dark','Dark'],['light','Light'],['system','System']],th,'ucSetTheme')+'</div>'+
+        row('fas fa-language','Language',lang()==='hi'?'हिन्दी':'English',"ucOpen2('lang')")+
+        '<div class="row"><span class="ic"><i class="fas fa-indian-rupee-sign"></i></span><span class="lb">Currency</span>'+seg([['INR','INR'],['USD','USD'],['USDT','USDT'],['BTC','BTC']],cur,'ucSetCur')+'</div>'+
+        row('far fa-bell','Notifications','',"ucOpen2('notif')")+
+        row('fas fa-money-bill-transfer','Default P2P payment',esc(pm),"ucOpen2('pm')")+
+        '<div class="row"><span class="ic"><i class="fas fa-palette"></i></span><span class="lb">Price colours</span>'+seg([['gu','<b style="color:#20b26c">▲</b> Green up'],['ru','<b style="color:#f6465d">▲</b> Red up']],pref('color','gu'),'ucSetColor')+'</div>'+
+        swRow('fas fa-hand-pointer','Haptics',pref('haptics','1')==='1',"ucToggle('haptics')");
+    }else{
+      h+=row('fas fa-headset','Help Center / 24x7 Support','Telegram',"window.open('https://t.me/biexc10','_blank')")+
+        row('fas fa-bug','Report a problem','',"window.open('https://t.me/biexc10','_blank')")+
+        row('fas fa-circle-info','About BIEXC','',"window.open('https://biexc.com/about.html','_blank')")+
+        row('far fa-file-lines','Terms of Service','',"window.open('https://biexc.com/terms','_blank')")+
+        row('fas fa-user-secret','Privacy Policy','',"window.open('https://biexc.com/privacy','_blank')")+
+        '<div class="row" style="cursor:default"><span class="ic"><i class="fas fa-code-branch"></i></span><span class="lb">App version</span><span class="vl">v2.6.0</span></div>'+
+        row('far fa-star','Rate us','',"window.open('https://biexc.com','_blank')")+
+        row('fas fa-share-nodes','Share app','',"ucShare()");
+    }
+    h+='</div><button class="out" onclick="ucOpen2(\'logout\')" data-t="out">'+t('out')+'</button>';
+    b.innerHTML=h;
+  }
+  window.ucTab=function(x){U.tab=x;render()};
+  window.ucToggleEye=function(){U.showEmail=!U.showEmail;render();event&&event.stopPropagation()};
+  window.ucCopyUid=function(){var u=uid();try{navigator.clipboard.writeText(u)}catch(e){}toast('Copied')};
+  window.ucKyc=function(){ucClose();setTimeout(function(){try{kxOpen()}catch(e){}},200)};
+  window.ucRef=function(){ucClose();setTimeout(function(){try{openRefer()}catch(e){}},200)};
+  window.ucShare=function(){var d={title:'BIEXC',text:'Trade USDT/INR on BIEXC',url:'https://biexc.com'};if(navigator.share)navigator.share(d).catch(function(){});else{try{navigator.clipboard.writeText(d.url)}catch(e){}toast('Link copied')}};
+  window.ucSetTheme=function(m){setPref('theme',m);if(m==='system')syncSystemTheme();else setTheme(m);render()};
+  window.ucSetCur=function(c){try{localStorage.setItem('displayCurrency',c)}catch(e){};setPref('currency',c);try{renderAssetList()}catch(e){};toast('Currency: '+c);render()};
+  window.ucSetColor=function(c){setPref('color',c);applyPrefs();render()};
+  window.ucToggle=function(k){setPref(k,pref(k,'1')==='1'?'0':'1');applyPrefs();render()};
+
+  window.ucOpen=async function(){
+    if(!fuidNow()){try{return needLogin()}catch(e){return}}
+    var p=$('uc');U.loaded=false;render();p.classList.add('show');
+    requestAnimationFrame(function(){requestAnimationFrame(function(){p.classList.add('in')})});
+    try{history.pushState({uc:1},'')}catch(e){}
+    await load();render();
+  };
+  window.ucClose=function(fromPop){var p=$('uc');if(!p||!p.classList.contains('show'))return false;ucSClose(true);p.classList.remove('in');setTimeout(function(){p.classList.remove('show')},240);if(!fromPop){try{if(history.state&&history.state.uc)history.back()}catch(e){}}return true};
+  window.addEventListener('popstate',function(){if($('ucS').classList.contains('show'))return ucSClose(true);if($('uc').classList.contains('show'))ucClose(true)});
+  (function wrapBack(n){var bb=window.bxBack;if(typeof bb==='function'&&!bb.__uc){var w=function(){if($('ucS').classList.contains('show')){ucSClose();return}if(ucClose())return;return bb.apply(this,arguments)};w.__uc=1;w.__bxRw=bb.__bxRw;window.bxBack=w;return}if(n<30)setTimeout(function(){wrapBack(n+1)},1000)})(0);
+  // old entry points now open the User Center
+  window.openEditProfile=function(){window.ucOpen()};
+
+  /* ---------- sub sheets ---------- */
+  function sheet(h){var s=$('ucS');$('ucSh').innerHTML=h;s.classList.add('show');requestAnimationFrame(function(){requestAnimationFrame(function(){s.classList.add('in')})})}
+  window.ucSClose=function(){var s=$('ucS');if(!s.classList.contains('show'))return;s.classList.remove('in');setTimeout(function(){s.classList.remove('show');$('ucSh').innerHTML=''},230)};
+  function head(t,d){return '<h3>'+t+'<i class="fas fa-xmark" onclick="ucSClose()"></i></h3>'+(d?'<p class="d">'+d+'</p>':'')}
+  function inp(id,ph,type,extra){return '<div class="in2"><input id="'+id+'" placeholder="'+ph+'" type="'+(type||'text')+'" '+(extra||'')+'>'+(type==='password'?'<i class="far fa-eye" onclick="var i=document.getElementById(\''+id+'\');i.type=i.type===\'password\'?\'text\':\'password\'"></i>':'')+'</div>'}
+  function err(id,m){var e=$(id);if(e){e.textContent=m||'';e.className=m&&m[0]==='✓'?'okm':'err'}}
+  async function saveProf(patch,okMsg){var old=Object.assign({},U.prof);Object.assign(U.prof,patch);render();try{await F().update(R('profile'),patch);if(okMsg)toast(okMsg);return true}catch(e){U.prof=old;render();toast('Could not save — '+(e.message||'try again'));return false}}
+  async function reauth(pw){var m=await A();var a=F().auth.currentUser;if(!a||!a.email)throw new Error('This account has no email password. Use the reset option.');await m.reauthenticateWithCredential(a,m.EmailAuthProvider.credential(a.email,pw))}
+  var BAD=['fuck','shit','bitch','chutiya','madarchod','bhenchod','gandu','randi','bsdk','admin','biexc','support'];
+
+  window.ucOpen2=function(k){
+    var p=U.prof;
+    if(k==='nick'){sheet(head('Nickname','3–20 characters. Letters, numbers, space, _ and . only.')+inp('ucNk','Nickname','text','maxlength="20" value="'+esc(p.nickname||nick())+'"')+'<div class="err" id="ucNkE"></div><button class="btn" onclick="ucSaveNick()">Save</button>');return}
+    if(k==='email'){var e=email(),v=U.auth&&U.auth.emailVerified;sheet(head('Email','Your sign-in email. It cannot be changed here.')+'<div class="in2"><input value="'+esc(e||'No email on this account')+'" readonly></div><div class="'+(v?'okm':'err')+'" style="margin-top:8px">'+(e?(v?'✓ Verified':'Not verified yet'):'')+'</div>'+(e&&!v?'<button class="btn" onclick="ucVerifyEmail(this)">Verify now</button>':''));return}
+    if(k==='phone'){sheet(head('Phone','Used for WhatsApp login codes and support.')+'<div class="in2"><span style="opacity:.6">+91</span><input id="ucPh" inputmode="numeric" maxlength="10" placeholder="10-digit mobile" value="'+esc(String(phone()).replace(/\D/g,'').slice(-10))+'"></div><div class="err" id="ucPhE"></div><button class="btn" onclick="ucSavePhone()">Save</button>');return}
+    if(k==='vip'){var vv=vip(),next=[5e4,1e5,2e5,5e5,1e6][Math.min(vv.lv,4)];sheet(head('VIP level',vv.lv?'You are VIP '+vv.lv:'You are Non-VIP')+'<div style="font-size:13px;opacity:.7">Approved deposits: <b>'+(window.formatAmount?formatAmount(vv.dep,'USDT'):vv.dep)+' USDT</b> / '+next.toLocaleString('en-US')+' for '+(vv.lv>=5?'max level':'VIP '+(vv.lv+1))+'</div><div class="bar" style="height:7px"><i style="width:'+Math.min(100,vv.dep/next*100)+'%;background:#F7A600"></i></div><table style="margin-top:14px"><tr><th>Level</th><th>Deposits</th><th>Spot fee</th></tr>'+[['VIP 1','50,000','0.09%'],['VIP 2','100,000','0.08%'],['VIP 3','200,000','0.07%'],['VIP 4','500,000','0.06%'],['VIP 5','1,000,000','0.05%']].map(function(r){return '<tr><td>'+r.join('</td><td>')+'</td></tr>'}).join('')+'</table>');return}
+    if(k==='fee'){sheet(head('My Fee Rates','Your current trading fees.')+'<table><tr><th>Market</th><th>Maker</th><th>Taker</th></tr><tr><td>Spot</td><td>0.10%</td><td>0.10%</td></tr><tr><td>Futures</td><td>0.02%</td><td>0.055%</td></tr><tr><td>P2P</td><td>0%</td><td>0%</td></tr></table>');return}
+    if(k==='pw'){sheet(head('Login Password','At least 8 characters with a number.')+'<label>Current password</label>'+inp('ucP0','Current password','password')+'<label>New password</label>'+inp('ucP1','New password','password','oninput="ucPwMeter()"')+'<div class="bar"><i id="ucPwB" style="width:0"></i></div><label>Confirm new password</label>'+inp('ucP2','Re-enter new password','password')+'<div class="err" id="ucPwE"></div><button class="btn" onclick="ucSavePw(this)">Update password</button><button class="btn g" onclick="ucResetMail(this)">Send reset email instead</button>');return}
+    if(k==='2fa'){if(p.twofa&&p.twofa.enabled){sheet(head('Turn off 2FA','Enter a code from Google Authenticator to turn it off.')+inp('uc2c','6-digit code','text','inputmode="numeric" maxlength="6"')+'<div class="err" id="uc2E"></div><button class="btn r" onclick="ucOff2fa(this)">Turn off 2FA</button>');return}
+      var sec=U.newSec||(U.newSec=b32rand());var url='otpauth://totp/BIEXC:'+encodeURIComponent(email()||uid())+'?secret='+sec+'&issuer=BIEXC';
+      sheet(head('Google Authenticator','1. Install Google Authenticator. 2. Scan this QR or type the key. 3. Enter the 6-digit code.')+'<img class="qr" alt="QR" src="https://api.qrserver.com/v1/create-qr-code/?size=170x170&data='+encodeURIComponent(url)+'"><div class="key" onclick="navigator.clipboard&&navigator.clipboard.writeText(\''+sec+'\');toast(\'Key copied\')">'+sec.replace(/(.{4})/g,'$1 ')+'</div><p class="d" style="margin-top:8px">Save this backup key somewhere safe. You need it if you lose your phone.</p>'+inp('uc2c','6-digit code','text','inputmode="numeric" maxlength="6"')+'<div class="err" id="uc2E"></div><button class="btn" onclick="ucOn2fa(this)">Enable 2FA</button>');return}
+    if(k==='anti'){sheet(head('Anti-phishing code','4–20 letters or numbers. It will appear in every real BIEXC email, so you can spot fake ones.')+inp('ucAp','e.g. RAJ2026','text','maxlength="20" value="'+esc(p.antiPhish||'')+'"')+'<div class="err" id="ucApE"></div><button class="btn" onclick="ucSaveAnti()">Save</button>');return}
+    if(k==='pin'){sheet(head(p.pinHash?'Change withdrawal PIN':'Set withdrawal PIN','A 6-digit PIN asked before every withdrawal.')+(p.pinHash?'<label>Current PIN</label>'+inp('ucPn0','Current PIN','password','inputmode="numeric" maxlength="6"'):'')+'<label>New PIN</label>'+inp('ucPn1','6 digits','password','inputmode="numeric" maxlength="6"')+'<label>Confirm PIN</label>'+inp('ucPn2','6 digits','password','inputmode="numeric" maxlength="6"')+'<div class="err" id="ucPnE"></div><button class="btn" onclick="ucSavePin()">Save PIN</button>');return}
+    if(k==='dev'){var d=(U.user&&U.user.devices)||{};var ks=Object.keys(d).filter(function(x){return !d[x].revoked}).sort(function(a,b){return (d[b].lastActive||0)-(d[a].lastActive||0)});
+      sheet(head('Device management','Devices signed in to your account.')+(ks.map(function(x){var o=d[x];return '<div class="li"><div><b>'+esc(o.name||'Device')+(x===devId()?' · This device':'')+'</b><small>'+esc(o.loc||'—')+' · Last active '+new Date(o.lastActive||0).toLocaleString('en-IN',{hour12:false})+'</small></div>'+(x===devId()?'':'<span class="x" onclick="ucRmDev(\''+x+'\')">Remove</span>')+'</div>'}).join('')||'<p class="d">No devices yet.</p>'));return}
+    if(k==='hist'){var lg=(U.user&&U.user.logins)||{};var ls=Object.keys(lg).map(function(x){return lg[x]}).sort(function(a,b){return (b.ts||0)-(a.ts||0)}).slice(0,20);
+      sheet(head('Login history','Last 20 sign-ins.')+(ls.map(function(o){return '<div class="li"><div><b>'+esc(o.device||'Device')+'</b><small>'+new Date(o.ts||0).toLocaleString('en-IN',{hour12:false})+' · IP '+esc(o.ip||'—')+(o.loc?' · '+esc(o.loc):'')+'</small></div><span style="color:'+(o.ok===false?'#ff5a5f':'#20c77a')+';font-weight:700">'+(o.ok===false?'Failed':'Success')+'</span></div>'}).join('')||'<p class="d">No sign-ins recorded yet.</p>'));return}
+    if(k==='wl'){var w=p.wl||{},list=w.list||{};sheet(head('Withdrawal whitelist','When on, withdrawals can only go to the addresses below.')+'<div class="row" onclick="ucWlToggle()"><span class="lb">Whitelist</span><span class="sw'+(w.on?' on':'')+'"></span></div>'+Object.keys(list).map(function(x){return '<div class="li"><div><b>'+esc(list[x].label||'Address')+'</b><small style="word-break:break-all">'+esc(list[x].addr)+'</small></div><span class="x" onclick="ucWlRm(\''+x+'\')">Remove</span></div>'}).join('')+'<label>Add address</label>'+inp('ucWlL','Label (e.g. My Binance)')+'<div style="height:8px"></div>'+inp('ucWlA','Wallet address')+'<div class="err" id="ucWlE"></div><button class="btn" onclick="ucWlAdd()">Add address</button>');return}
+    if(k==='del'){sheet(head('Freeze or delete account','Freezing blocks login and withdrawals until support unfreezes it. Deleting is permanent after review.')+'<label>Password</label>'+inp('ucDp','Your password','password')+'<div class="err" id="ucDE"></div><button class="btn g" onclick="ucAcct(\'freeze\',this)">Freeze my account</button><button class="btn r" onclick="ucAcct(\'delete\',this)">Request account deletion</button>');return}
+    if(k==='lang'){sheet(head('Language','')+[['en','English'],['hi','हिन्दी']].map(function(l){return '<div class="li" onclick="ucSetLang(\''+l[0]+'\')" style="cursor:pointer;font-size:15px"><b>'+l[1]+'</b>'+(lang()===l[0]?'<span style="color:#F7A600">✓</span>':'')+'</div>'}).join(''));return}
+    if(k==='notif'){var n=(p.prefs&&p.prefs.notif)||{};var items=[['trade','Trade updates'],['funds','Deposit & withdraw'],['p2p','P2P orders'],['price','Price alerts'],['promo','Promotions']];
+      sheet(head('Notifications','Choose what you want to hear about.')+items.map(function(it){var on=n[it[0]]!==false;return '<div class="row" onclick="ucNotif(\''+it[0]+'\')"><span class="lb">'+it[1]+'</span><span class="sw'+(on?' on':'')+'"></span></div>'}).join(''));return}
+    if(k==='pm'){var cur=localStorage.getItem('p2p_selected_pm_BUY')||'UPI';sheet(head('Default P2P payment','Pre-selected when you open a P2P order.')+['UPI','PhonePe','Google Pay','Paytm','IMPS'].map(function(m){return '<div class="li" style="cursor:pointer;font-size:15px" onclick="ucSetPm(\''+m+'\')"><b>'+m+'</b>'+(cur===m?'<span style="color:#F7A600">✓</span>':'')+'</div>'}).join(''));return}
+    if(k==='logout'){sheet(head('Log out?','Are you sure you want to log out of BIEXC on this device?')+'<button class="btn r" onclick="ucLogout()">Log Out</button><button class="btn g" onclick="ucSClose()">Cancel</button>');return}
+  };
+
+  /* actions */
+  window.ucSaveNick=async function(){var v=($('ucNk').value||'').trim();
+    if(v.length<3||v.length>20)return err('ucNkE','Use 3–20 characters');
+    if(!/^[A-Za-z0-9 _.]+$/.test(v))return err('ucNkE','Only letters, numbers, space, _ and .');
+    var low=v.toLowerCase();if(BAD.some(function(w){return low.replace(/[^a-z]/g,'').indexOf(w)>=0}))return err('ucNkE','Please choose a different nickname');
+    var key=low.replace(/[^a-z0-9]/g,'');
+    try{var tx=await F().runTransaction(F().ref(F().db,'nicknames/'+key),function(c){if(c&&c!==U.fuid)return;return U.fuid});if(!tx.committed)return err('ucNkE','This nickname is already taken')}catch(e){}
+    var old=U.prof.nickname;if(old&&old.toLowerCase().replace(/[^a-z0-9]/g,'')!==key){try{F().set(F().ref(F().db,'nicknames/'+old.toLowerCase().replace(/[^a-z0-9]/g,'')),null)}catch(e){}}
+    if(await saveProf({nickname:v},'Nickname saved')){try{await F().update(R(''),{name:v});if(window.currentFbUser)currentFbUser.name=v;var m=await A();if(F().auth.currentUser)m.updateProfile(F().auth.currentUser,{displayName:v}).catch(function(){});updateUserUI&&updateUserUI()}catch(e){}ucSClose()}};
+  window.ucVerifyEmail=async function(b){b.disabled=true;try{var m=await A();await m.sendEmailVerification(F().auth.currentUser);toast('Verification email sent');ucSClose()}catch(e){toast('Could not send: '+(e.code||e.message));b.disabled=false}};
+  window.ucSavePhone=async function(){var d=($('ucPh').value||'').replace(/\D/g,'');if(!/^[6-9]\d{9}$/.test(d))return err('ucPhE','Enter a valid 10-digit Indian mobile');if(await saveProf({phone:'+91'+d},'Phone saved'))ucSClose()};
+  window.ucPwMeter=function(){var v=$('ucP1').value,sc=0;if(v.length>=8)sc++;if(/\d/.test(v))sc++;if(/[A-Z]/.test(v)&&/[a-z]/.test(v))sc++;if(/[^A-Za-z0-9]/.test(v))sc++;var b=$('ucPwB');b.style.width=(sc*25)+'%';b.style.background=['#ff5a5f','#ff5a5f','#F7A600','#9bd14b','#20c77a'][sc]};
+  window.ucSavePw=async function(b){var p0=$('ucP0').value,p1=$('ucP1').value,p2=$('ucP2').value;
+    if(!p0)return err('ucPwE','Enter your current password');if(p1.length<8||!/\d/.test(p1))return err('ucPwE','Use at least 8 characters with a number');if(p1!==p2)return err('ucPwE','Passwords do not match');if(p1===p0)return err('ucPwE','New password must be different');
+    b.disabled=true;b.textContent='Updating…';
+    try{await reauth(p0);var m=await A();await m.updatePassword(F().auth.currentUser,p1);toast('Password updated');ucSClose()}
+    catch(e){var c=e.code||'';err('ucPwE',/wrong-password|invalid-credential|invalid-login/.test(c)?'Current password is wrong':(e.message||'Failed'));b.disabled=false;b.textContent='Update password'}};
+  window.ucResetMail=async function(b){var e=email();if(!e)return toast('No email on this account');b.disabled=true;
+    try{var base=window.__BACKEND_URL__||'';var r=await fetch(base+'/api/password-reset/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:e})});if(!r.ok)throw new Error('server');toast('Reset code sent to '+mask(e)+' — use “Forgot password” on the login page')}
+    catch(x){try{await F().sendPasswordResetEmail(F().auth,e);toast('Reset link sent to '+mask(e))}catch(y){toast('Could not send: '+(y.message||''))}}b.disabled=false};
+  window.ucSaveAnti=async function(){var v=($('ucAp').value||'').trim();if(!/^[A-Za-z0-9]{4,20}$/.test(v))return err('ucApE','Use 4–20 letters or numbers');if(await saveProf({antiPhish:v},'Anti-phishing code saved'))ucSClose()};
+  window.ucSavePin=async function(){var p=U.prof;var a=$('ucPn1').value,c=$('ucPn2').value;
+    if(p.pinHash){var o=$('ucPn0').value;if((await sha(U.fuid+':'+o))!==p.pinHash)return err('ucPnE','Current PIN is wrong')}
+    if(!/^\d{6}$/.test(a))return err('ucPnE','PIN must be 6 digits');if(/^(\d)\1{5}$/.test(a)||'0123456789'.indexOf(a)>=0)return err('ucPnE','Too easy — avoid 111111 or 123456');if(a!==c)return err('ucPnE','PINs do not match');
+    if(await saveProf({pinHash:await sha(U.fuid+':'+a)},'Withdrawal PIN saved'))ucSClose()};
+  window.ucRmDev=async function(id){try{await F().update(R('devices/'+id),{revoked:true,revokedAt:Date.now()});U.user.devices[id].revoked=true;toast('Device removed — it will be signed out');ucOpen2('dev')}catch(e){toast('Failed')}};
+  window.ucWlToggle=async function(){var w=Object.assign({},U.prof.wl||{});w.on=!w.on;if(w.on&&!Object.keys(w.list||{}).length){toast('Add an address first');return}await saveProf({wl:w});ucOpen2('wl')};
+  window.ucWlAdd=async function(){var a=($('ucWlA').value||'').trim(),l=($('ucWlL').value||'').trim()||'Address';if(a.length<20)return err('ucWlE','Enter a valid wallet address');var w=JSON.parse(JSON.stringify(U.prof.wl||{}));w.list=w.list||{};w.list['a'+Date.now()]={addr:a,label:l.slice(0,30),ts:Date.now()};await saveProf({wl:w},'Address added');ucOpen2('wl')};
+  window.ucWlRm=async function(k){var w=JSON.parse(JSON.stringify(U.prof.wl||{}));if(w.list)delete w.list[k];if(!Object.keys(w.list||{}).length)w.on=false;await saveProf({wl:w},'Removed');ucOpen2('wl')};
+  window.ucAcct=async function(type,b){var pw=$('ucDp').value;if(!pw)return err('ucDE','Enter your password to confirm');if(!confirm(type==='delete'?'Request permanent deletion of your account?':'Freeze your account now?'))return;b.disabled=true;
+    try{await reauth(pw);await F().update(R(''),{'profile/accountRequest':{type:type,ts:Date.now(),status:'PENDING'}});if(type==='freeze')await F().update(R(''),{frozen:true});toast(type==='freeze'?'Account frozen. Contact support to unfreeze.':'Deletion request sent to support');ucSClose();if(type==='freeze')setTimeout(ucLogout,800)}
+    catch(e){err('ucDE',/wrong-password|invalid-credential|invalid-login/.test(e.code||'')?'Wrong password':(e.message||'Failed'));b.disabled=false}};
+  window.ucSetLang=function(l){try{localStorage.setItem('bx_lang',l)}catch(e){};setPref('lang',l);applyLang();ucSClose();render()};
+  window.ucNotif=async function(k){var n=Object.assign({},(U.prof.prefs&&U.prof.prefs.notif)||{});n[k]=n[k]===false?true:false;U.prof.prefs=Object.assign({},U.prof.prefs||{},{notif:n});try{await F().update(R('profile/prefs'),{notif:n})}catch(e){};ucOpen2('notif')};
+  window.ucSetPm=function(m){try{localStorage.setItem('p2p_selected_pm_BUY',m);localStorage.setItem('p2p_selected_pm_SELL',m);var fr=document.getElementById('p2pFrame');if(fr&&fr.contentWindow){fr.contentWindow.localStorage.setItem('p2p_selected_pm_BUY',m);fr.contentWindow.localStorage.setItem('p2p_selected_pm_SELL',m)}}catch(e){};setPref('p2pPm',m);toast('Default payment: '+m);ucSClose();render()};
+  window.ucLogout=async function(){ucSClose();ucClose();try{sessionStorage.removeItem('bx2fa_'+U.fuid)}catch(e){};U.fuid=null;U.user=null;U.prof={};
+    try{var fr=document.getElementById('p2pFrame');if(fr)fr.src='about:blank'}catch(e){};try{window.resetP2PFrame&&resetP2PFrame()}catch(e){};try{closeAllLayers()}catch(e){};
+    try{await doLogout()}catch(e){try{await F().signOut(F().auth)}catch(_){}};try{go('home')}catch(e){}};
+
+
+  /* ---------- avatar: pick → circle crop → save ---------- */
+  var CR={img:null,z:1,x:0,y:0};
+  window.ucPickAvatar=function(){var f=$('ucFile');f.value='';f.click()};
+  $('ucFile').addEventListener('change',function(){var file=this.files&&this.files[0];if(!file)return;if(!/^image\//.test(file.type))return toast('Choose an image');
+    var rd=new FileReader();rd.onload=function(){var im=new Image();im.onload=function(){CR={img:im,z:1,x:0,y:0};
+      sheet(head('Profile Picture','Drag to position, slide to zoom.')+'<div class="crop" id="ucCrop"><img id="ucCrImg" src="'+rd.result+'"></div><input type="range" id="ucZoom" min="1" max="3" step="0.01" value="1"><button class="btn" id="ucAvSave">Save photo</button>');
+      var el=$('ucCrImg'),box=240,base=Math.max(box/im.width,box/im.height);
+      function paint(){var w=im.width*base*CR.z,h=im.height*base*CR.z;var mx=(w-box)/2,my=(h-box)/2;CR.x=Math.max(-mx,Math.min(mx,CR.x));CR.y=Math.max(-my,Math.min(my,CR.y));el.style.width=w+'px';el.style.height=h+'px';el.style.transform='translate(calc(-50% + '+CR.x+'px),calc(-50% + '+CR.y+'px))'}
+      paint();$('ucZoom').oninput=function(){CR.z=+this.value;paint()};
+      var c=$('ucCrop'),drag=null;c.onpointerdown=function(e){drag={x:e.clientX-CR.x,y:e.clientY-CR.y};c.setPointerCapture(e.pointerId)};c.onpointermove=function(e){if(!drag)return;CR.x=e.clientX-drag.x;CR.y=e.clientY-drag.y;paint()};c.onpointerup=function(){drag=null};
+      $('ucAvSave').onclick=async function(){this.disabled=true;this.textContent='Saving…';
+        var cv=document.createElement('canvas');cv.width=cv.height=256;var g=cv.getContext('2d');g.beginPath();g.arc(128,128,128,0,Math.PI*2);g.clip();
+        var k=256/box,w=im.width*base*CR.z*k,h=im.height*base*CR.z*k;g.drawImage(im,128-w/2+CR.x*k,128-h/2+CR.y*k,w,h);
+        var url=cv.toDataURL('image/jpeg',.85);
+        if(await saveProf({avatar:url},'Profile picture updated')){try{await F().update(R(''),{avatarUrl:url});if(window.currentFbUser)currentFbUser.avatarUrl=url;updateUserUI&&updateUserUI()}catch(e){}ucSClose()}else{this.disabled=false;this.textContent='Save photo'}}
+    };im.src=rd.result};rd.readAsDataURL(file)});
+
+  /* ---------- 2FA (TOTP, RFC 6238) ---------- */
+  var B32='ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+  function b32rand(){var a=new Uint8Array(20);crypto.getRandomValues(a);var s='';for(var i=0;i<32;i++)s+=B32[a[i%20]%32];return s}
+  function b32dec(s){var bits='',out=[];s=s.replace(/=+$/,'').toUpperCase();for(var i=0;i<s.length;i++){var v=B32.indexOf(s[i]);if(v<0)continue;bits+=v.toString(2).padStart(5,'0')}for(var j=0;j+8<=bits.length;j+=8)out.push(parseInt(bits.slice(j,j+8),2));return new Uint8Array(out)}
+  async function totp(sec,step){var key=await crypto.subtle.importKey('raw',b32dec(sec),{name:'HMAC',hash:'SHA-1'},false,['sign']);var buf=new ArrayBuffer(8),dv=new DataView(buf);dv.setUint32(4,step);var h=new Uint8Array(await crypto.subtle.sign('HMAC',key,buf));var o=h[19]&15;var n=((h[o]&127)<<24|h[o+1]<<16|h[o+2]<<8|h[o+3])%1e6;return String(n).padStart(6,'0')}
+  async function check(sec,code){code=String(code||'').replace(/\D/g,'');if(code.length!==6)return false;var st=Math.floor(Date.now()/30000);for(var d=-1;d<=1;d++){if((await totp(sec,st+d))===code)return true}return false}
+  window.__bxTotp=totp;
+  window.ucOn2fa=async function(b){var c=$('uc2c').value;if(!(await check(U.newSec,c)))return err('uc2E','Wrong code — check the time on your phone and try again');b.disabled=true;if(await saveProf({twofa:{enabled:true,secret:U.newSec,at:Date.now()}},'2FA enabled')){try{sessionStorage.setItem('bx2fa_'+U.fuid,'1')}catch(e){};U.newSec=null;ucSClose()}b.disabled=false};
+  window.ucOff2fa=async function(b){var c=$('uc2c').value;if(!(await check(U.prof.twofa.secret,c)))return err('uc2E','Wrong code');b.disabled=true;if(await saveProf({twofa:null},'2FA turned off'))ucSClose();b.disabled=false};
+  // login gate: ask the code once per session
+  async function gate(fuid,prof){
+    if(!prof||!prof.twofa||!prof.twofa.enabled)return;try{if(sessionStorage.getItem('bx2fa_'+fuid))return}catch(e){}
+    var g=$('uc2fa');g.innerHTML='<i class="fas fa-shield-halved" style="font-size:44px;color:#F7A600"></i><h2 style="margin:16px 0 4px">Two-factor check</h2><div style="opacity:.65;font-size:14px">Enter the 6-digit code from Google Authenticator</div><input id="uc2g" inputmode="numeric" maxlength="6" autocomplete="one-time-code"><div id="uc2gE" style="color:#ff5a5f;font-size:13px;min-height:16px"></div><button id="uc2gB">Verify</button><button class="lo" onclick="ucLogout();document.getElementById(\'uc2fa\').classList.remove(\'show\')">Log out</button>';
+    g.classList.add('show');var tries=0;
+    $('uc2gB').onclick=async function(){if(await check(prof.twofa.secret,$('uc2g').value)){try{sessionStorage.setItem('bx2fa_'+fuid,'1')}catch(e){};g.classList.remove('show');g.innerHTML='';logLogin(fuid,true)}else{tries++;$('uc2gE').textContent='Wrong code'+(tries>=5?' — too many tries':'');if(tries>=5){logLogin(fuid,false);setTimeout(ucLogout,800);g.classList.remove('show')}}};
+    $('uc2g').oninput=function(){if(this.value.replace(/\D/g,'').length===6)$('uc2gB').click()};
+  }
+
+  /* ---------- devices + login history ---------- */
+  function devId(){try{var d=localStorage.getItem('bx_dev');if(!d){d='d'+Date.now().toString(36)+Math.random().toString(36).slice(2,8);localStorage.setItem('bx_dev',d)}return d}catch(e){return 'dweb'}}
+  function devName(){var u=navigator.userAgent;var os=/Android/.test(u)?'Android':/iPhone|iPad/.test(u)?'iOS':/Windows/.test(u)?'Windows':/Mac/.test(u)?'Mac':/Linux/.test(u)?'Linux':'Device';var br=/Capacitor|wv\)/.test(u)?'BIEXC App':/Edg\//.test(u)?'Edge':/Chrome\//.test(u)?'Chrome':/Safari\//.test(u)?'Safari':/Firefox\//.test(u)?'Firefox':'Browser';return br+' · '+os}
+  var geo=null;async function getGeo(){if(geo)return geo;try{var c=new AbortController();setTimeout(function(){c.abort()},4000);var r=await fetch('https://ipapi.co/json/',{signal:c.signal});var j=await r.json();geo={ip:j.ip||'',loc:[j.city,j.country_name].filter(Boolean).join(', ')}}catch(e){geo={ip:'',loc:''}}return geo}
+  async function logLogin(fuid,ok){try{var g=await getGeo();await F().set(F().ref(F().db,'users/'+fuid+'/logins/l'+Date.now()),{ts:Date.now(),device:devName(),ip:g.ip,loc:g.loc,ok:ok!==false})}catch(e){}}
+  var seen=null,devUnsub=null;
+  async function onUser(fuid){
+    if(devUnsub){try{devUnsub()}catch(e){}devUnsub=null}
+    if(!fuid)return;
+    var id=devId(),g=await getGeo();
+    try{await F().update(F().ref(F().db,'users/'+fuid+'/devices/'+id),{name:devName(),lastActive:Date.now(),loc:g.loc,ip:g.ip,revoked:null})}catch(e){}
+    try{var k='bx_loginlog_'+fuid;if(!sessionStorage.getItem(k)){sessionStorage.setItem(k,'1');logLogin(fuid,true)}}catch(e){}
+    try{devUnsub=F().onValue(F().ref(F().db,'users/'+fuid+'/devices/'+id+'/revoked'),function(s){if(s.val()===true){toast('This device was removed from your account');ucLogout()}})}catch(e){}
+    try{var p=(await F().get(F().ref(F().db,'users/'+fuid+'/profile'))).val()||{};U.prof=p;
+      if(p.prefs){if(p.prefs.lang)try{localStorage.setItem('bx_lang',p.prefs.lang)}catch(e){};['color','haptics','theme'].forEach(function(x){if(p.prefs[x]!=null)try{localStorage.setItem('bx_pref_'+x,p.prefs[x])}catch(e){}});applyPrefs()}
+      var fr=(await F().get(F().ref(F().db,'users/'+fuid+'/frozen'))).val();if(fr===true){toast('This account is frozen. Contact support on Telegram.');setTimeout(ucLogout,1500);return}
+      gate(fuid,p)}catch(e){}
+  }
+  setInterval(function(){if(document.hidden)return;var f=fuidNow();if(f!==seen){seen=f;onUser(f)}},1500);
+
+  /* ---------- withdrawal PIN + whitelist enforced on Withdraw ---------- */
+  function askPin(){return new Promise(function(res){sheet(head('Withdrawal PIN','Enter your 6-digit PIN to confirm.')+inp('ucWp','PIN','password','inputmode="numeric" maxlength="6"')+'<div class="err" id="ucWpE"></div><button class="btn" id="ucWpB">Confirm</button>');
+    var done=false;var s=$('ucS');var obs=new MutationObserver(function(){if(!s.classList.contains('show')&&!done){done=true;obs.disconnect();res(false)}});obs.observe(s,{attributes:true});
+    $('ucWpB').onclick=async function(){if((await sha(U.fuid+':'+$('ucWp').value))===U.prof.pinHash){done=true;obs.disconnect();ucSClose();res(true)}else err('ucWpE','Wrong PIN')}})}
+  (function wrapWit(n){var orig=window.bbDoWithdraw;if(typeof orig!=='function'){if(n<40)setTimeout(function(){wrapWit(n+1)},500);return}if(orig.__uc)return;
+    var w=async function(){var p=U.prof||{};
+      if(p.wl&&p.wl.on){var a=(($('bbWitAddr')||{}).value||'').trim();var ok=Object.keys(p.wl.list||{}).some(function(k){return p.wl.list[k].addr===a});if(!ok){toast('This address is not on your whitelist');return}}
+      if(p.pinHash){if(!(await askPin()))return}
+      return orig.apply(this,arguments)};
+    w.__uc=1;window.bbDoWithdraw=w})(0);
+
+  /* entry: profile header + its arrow open the User Center */
+  document.addEventListener('click',function(e){var t=e.target.closest('#sd .pf-user, #sd .pf-arrow');if(!t||e.target.closest('.cpy,.pf-pill,[onclick*="copy"]'))return;e.stopPropagation();e.preventDefault();ucOpen()},true);
 })();
 </script>
 </body>
