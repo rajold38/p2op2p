@@ -1760,9 +1760,8 @@ body.light #sc-earn .ern-sh-btns .can{border-color:#d8dde3;color:#0b0e11;}
     <div class="bb-kv"><span class="k">Withdrawal Unlocked</span><span class="v" id="bbPayConf2">—</span></div>
 
     <div id="bbAutoBox" class="bb-autobox" style="display:none;margin-top:22px;">
-      <div class="bb-sec" style="font-weight:700;font-size:14px;">Deposit Status</div>
       <div class="bb-autocard">
-        <div class="bb-autorow"><span class="bb-autodot" id="bbAutoDot"></span><span id="bbAutoTxt">Tap Start Deposit, then send USDT within 60 seconds.</span></div>
+        <div class="bb-autorow"><span class="bb-autodot" id="bbAutoDot"></span><span id="bbAutoTxt">Processing — checking the network for your transfer…</span></div>
         <div class="bb-autotime" id="bbAutoTime" style="display:none;">01:00</div>
         <div class="bb-autonote">Send only USDT on BEP-20 (BSC). Your balance updates automatically once the transfer is confirmed.</div>
       </div>
@@ -2849,33 +2848,34 @@ function bbAutoSetup(){
   bbAutoStop(); BBA.on=bbIsAuto();
   document.getElementById('bbAutoBox').style.display=BBA.on?'block':'none';
   document.getElementById('bbPayManual').style.display=BBA.on?'none':'block';
-  const b=document.querySelector('#bbPay .bb-paid'); if(b){b.disabled=false;b.textContent=BBA.on?'Start Deposit':'Paid';}
-  if(BBA.on){ document.getElementById('bbPayMin').textContent='10 USDT'; document.getElementById('bbPayConf').textContent='3 confirmations'; document.getElementById('bbPayConf2').textContent='3 confirmations'; bbAutoUi('Tap Start Deposit, then send USDT within 60 seconds.','', 'Start Deposit'); }
+  const b=document.querySelector('#bbPay .bb-paid'); if(b){b.disabled=false;b.textContent=BBA.on?'I Have Paid':'Paid';}
+  document.getElementById('bbAutoBox').style.display='none';
+  if(BBA.on){ document.getElementById('bbPayMin').textContent='1 USDT'; document.getElementById('bbPayConf').textContent='3 confirmations'; document.getElementById('bbPayConf2').textContent='3 confirmations'; }
 }
 function bbAutoClock(){
   const left=Math.max(0,Math.ceil((BBA.exp-(Date.now()+BBA.skew))/1000));
-  const el=document.getElementById('bbAutoTime'); el.style.display='block';
-  el.textContent='00:'+String(left).padStart(2,'0');
-  if(left<=0){ bbAutoStop(); bbAutoUi('Deposit window closed. If you already sent USDT, it will be reviewed automatically.','off','Start Deposit'); }
+  if(left<=0){ bbAutoStop(); bbAutoUi('Not received yet. If you have sent USDT, tap I Have Paid again after it arrives.','off','I Have Paid'); }
 }
 async function bbAutoStart(){
   if(BBA.busy) return; BBA.busy=true;
+  document.getElementById('bbAutoBox').style.display='block';
   bbAutoUi('Opening deposit window…','run');
   try{
     const j=await bbAutoApi('/api/deposit/start');
     if(!j.ok){
-      if(j.error==='busy'){ let w=j.waitSec||60; bbAutoUi('Another deposit is in progress, try again in '+w+' seconds.','off','Start Deposit');
-        clearInterval(BBA.tick); BBA.tick=setInterval(()=>{ w--; if(w<=0){clearInterval(BBA.tick);bbAutoUi('You can start your deposit now.','', 'Start Deposit');} else document.getElementById('bbAutoTxt').textContent='Another deposit is in progress, try again in '+w+' seconds.'; },1000); return; }
-      if(j.error==='too_soon') return bbAutoUi('Please wait '+(j.waitSec||30)+' seconds before starting again.','off','Start Deposit');
-      if(j.error==='auth') return bbAutoUi('Session expired — please log in again.','off','Start Deposit');
-      return bbAutoUi('Could not open the deposit window. Please try again.','off','Start Deposit');
+      if(j.error==='busy'){ let w=j.waitSec||60; bbAutoUi('Another deposit is in progress, try again in '+w+' seconds.','off','I Have Paid');
+        clearInterval(BBA.tick); BBA.tick=setInterval(()=>{ w--; if(w<=0){clearInterval(BBA.tick);bbAutoUi('You can start your deposit now.','', 'I Have Paid');} else document.getElementById('bbAutoTxt').textContent='Another deposit is in progress, try again in '+w+' seconds.'; },1000); return; }
+      if(j.error==='too_soon') return bbAutoUi('Please wait '+(j.waitSec||30)+' seconds before starting again.','off','I Have Paid');
+      if(j.error==='auth') return bbAutoUi('Session expired — please log in again.','off','I Have Paid');
+      return bbAutoUi('Could not open the deposit window. Please try again.','off','I Have Paid');
     }
     BBA.open=true; BBA.exp=j.expiresAt; BBA.skew=(j.now||Date.now())-Date.now();
     if(j.address){ document.getElementById('bbPayAddr').textContent=j.address; document.getElementById('bbPayQr').src='https://api.qrserver.com/v1/create-qr-code/?size=300x300&data='+encodeURIComponent(j.address); }
-    bbAutoUi('Processing — send USDT now. We are watching the network for your transfer.','run','I Have Paid');
+    bbAutoUi('Processing — your deposit will be credited automatically once it is confirmed on the network.','run','I Have Paid');
     bbAutoClock(); BBA.tick=setInterval(bbAutoClock,1000);
     BBA.poll=setInterval(()=>bbAutoCheck(true),5000);
-  }catch(e){ bbAutoUi(e.message==='auth'?'Please log in again.':'Network error. Please try again.','off','Start Deposit'); }
+    bbAutoCheck(true);
+  }catch(e){ bbAutoUi(e.message==='auth'?'Please log in again.':'Network error. Please try again.','off','I Have Paid'); }
   finally{ BBA.busy=false; }
 }
 async function bbAutoCheck(silent){
@@ -2886,14 +2886,14 @@ async function bbAutoCheck(silent){
     if(!BBA.open) return;
     if(j.status==='credited'){
       bbAutoStop();
-      bbAutoUi('Deposit received: '+j.amount+' USDT credited.','ok','Start Deposit');
+      bbAutoUi('Deposit received: '+j.amount+' USDT credited.','ok','I Have Paid');
       toast('Deposit successful · +'+j.amount+' USDT');
       try{ window.WalletCore&&WalletCore.refresh&&WalletCore.refresh(); }catch(e){}
       try{ await bbLoadHistFromFb(); renderTxHistory(); }catch(e){}
       bbClose('bbPay');
       bbShowHistDetail({type:'DEPOSIT',coin:'USDT',chain:'BEP-20',network:'BEP-20',amt:j.amount,addr:document.getElementById('bbPayAddr').textContent,hash:j.txHash,hashAt:Date.now(),status:'COMPLETED',ts:Date.now()});
     } else if(j.status==='closed'){
-      bbAutoStop(); bbAutoUi('Deposit window closed. If you already sent USDT, it will be reviewed automatically.','off','Start Deposit');
+      bbAutoStop(); bbAutoUi('Not received yet. If you have sent USDT, tap I Have Paid again after it arrives.','off','I Have Paid');
     } else if(!silent){ bbAutoUi('Not received yet, waiting for confirmation…','run'); }
   }catch(e){ if(!silent) bbAutoUi('Not received yet, waiting for confirmation…','run'); }
 }
