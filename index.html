@@ -11914,12 +11914,13 @@ body.light #bxPop{background:radial-gradient(circle at 50% 40%,rgba(247,166,0,.3
     // Assets — Reward Balance (not part of Total Assets)
     var ac=slot('bxRwCard','#sc-assets .atabs','before');
     if(ac){
-      if(!has) setHTML(ac,'');
-      else setHTML(ac,'<div class="bxr-card v29-reward"><div class="v29-reward-top"><span class="v29-ticket" aria-hidden="true"><i class="fas fa-ticket-alt"></i></span><div class="v29-reward-title"><span class="v29-eyebrow">BIEXC REWARDS</span><b>Welcome bonus</b></div><span class="bxr-badge '+(st==='UNLOCKED'?'ok"><i class="fas fa-check"></i> Unlocked':'lock"><i class="fas fa-lock"></i> Locked')+'</span></div>'+
-        '<div class="a">'+(st==='UNLOCKED'?'0.00':fmt(amt))+' <span class="v29-unit">USDT</span></div>'+
-        '<div class="v29-reward-progress"><span>'+(st==='UNLOCKED'?'Transferred to your wallet':'Eligible actions')+'</span><b>'+n+' / '+NEED_TRADES+'</b></div>'+
-        '<div class="bxr-bar"><i style="width:'+(st==='UNLOCKED'?100:n/NEED_TRADES*100)+'%"></i></div>'+
-        '<div class="v29-reward-bottom"><div class="v29-ticker"><span>'+(st==='UNLOCKED'?'$'+fmt(amt)+' moved to your main balance':'Not included in Total Assets · Spot / Futures / P2P / Deposit')+'</span></div><button class="bxr-btn" onclick="bxRwOpen()" aria-label="View Rewards"><i class="fas fa-arrow-right"></i></button></div></div>');
+      ac.hidden=!has||st!=='LOCKED';
+      if(ac.hidden) setHTML(ac,'');
+      else setHTML(ac,'<div class="bxr-card v29-reward"><div class="v29-reward-top"><span class="v29-ticket" aria-hidden="true"><i class="fas fa-gift"></i></span><div class="v29-reward-title"><b>Welcome bonus</b></div><span class="bxr-badge lock">Locked</span><button class="bxr-btn" onclick="bxRwOpen()" aria-label="View Rewards"><i class="fas fa-arrow-right"></i></button></div>'+
+        '<div class="a">'+fmt(amt)+' <span class="v29-unit">USDT</span></div>'+
+        '<div class="v29-reward-progress"><span>Unlock progress</span><b>'+n+' / '+NEED_TRADES+'</b></div>'+
+        '<div class="bxr-bar"><i style="width:'+(n/NEED_TRADES*100)+'%"></i></div>'+
+        '<div class="v29-ticker"><span>Complete trades, P2P orders or deposits</span></div></div>');
     }
     // Home + Assets banners
     var hb=null;
@@ -12819,16 +12820,17 @@ body.on-p2p{max-width:none!important}
 #bxSup .sp-f{flex-shrink:0;padding-top:12px}#bxSup .sp-in{border-radius:6px;min-width:0}
 #bxSup textarea{min-width:0;font-size:14px}#bxSup .send{border-radius:6px;width:44px;height:44px}
 #bxSup .bar,#bxSup .agent-card{border-radius:6px}#bxSup .sys span{border-radius:3px;background:transparent;font-size:11px}
-#bxRwCard .v29-reward{background:var(--reward-surface);border:1px solid var(--reward-line);border-radius:8px;box-shadow:none;padding:18px;overflow:hidden}
+#bxRwCard[hidden]{display:none!important}
+#bxRwCard .v29-reward{background:var(--reward-surface);border:1px solid var(--reward-line);border-radius:8px;box-shadow:none;padding:12px 14px;overflow:hidden}
 body.light #bxRwCard{--reward-surface:var(--bg2);--reward-line:var(--border);--reward-accent:var(--orange)}
 .v29-reward-top{display:flex;align-items:center;gap:12px}.v29-reward-title{flex:1;min-width:0}.v29-reward-title b{display:block;font-size:14px;margin-top:4px;font-weight:600}
 .v29-eyebrow{font-size:9px;color:var(--text2);letter-spacing:0;font-weight:600}
-.v29-ticket{display:grid;place-items:center;flex:0 0 40px;width:40px;height:44px;border-radius:4px;background:var(--reward-sticker);color:var(--reward-accent-ink);transform:rotate(-8deg);font-size:20px;animation:v29Stamp .5s ease-out both;border:1px dashed var(--reward-accent-ink)}
+.v29-ticket{display:grid;place-items:center;flex:0 0 28px;width:28px;height:28px;border-radius:4px;background:var(--bg3);color:var(--reward-accent);font-size:14px}
 #bxRwCard .bxr-badge{border-radius:3px;background:var(--bg3);color:var(--text2);font-size:10px;font-weight:500;padding:5px 7px;white-space:nowrap}
-#bxRwCard .bxr-badge.ok{color:var(--reward-accent)}#bxRwCard .a{font-size:30px;font-weight:600;margin:18px 0 16px;font-variant-numeric:tabular-nums}
+#bxRwCard .bxr-badge.ok{color:var(--reward-accent)}#bxRwCard .a{font-size:24px;font-weight:600;margin:10px 0;font-variant-numeric:tabular-nums}
 .v29-unit{font-size:12px;color:var(--text2);font-weight:500}.v29-reward-progress{display:flex;justify-content:space-between;font-size:11px;color:var(--text2)}.v29-reward-progress b{color:var(--text);font-weight:500}
-#bxRwCard .bxr-bar{height:3px;background:var(--bg3);margin:8px 0 14px;border-radius:0}#bxRwCard .bxr-bar i{background:var(--reward-accent);border-radius:0}
-.v29-reward-bottom{display:flex;gap:14px;align-items:center}.v29-ticker{flex:1;min-width:0;overflow:hidden;font-size:11px;color:var(--text2)}.v29-ticker span{display:inline-block;white-space:nowrap;animation:v29Ticker 16s linear 3s infinite}
+#bxRwCard .bxr-bar{height:3px;background:var(--bg3);margin:7px 0 8px;border-radius:0}#bxRwCard .bxr-bar i{background:var(--reward-accent);border-radius:0}
+.v29-reward-bottom{display:flex;gap:14px;align-items:center}.v29-ticker{flex:1;min-width:0;overflow:hidden;font-size:11px;color:var(--text2)}.v29-ticker span{display:inline-block;white-space:normal}
 #bxRwCard .bxr-btn{width:32px;height:32px;flex:0 0 32px;padding:0;border-radius:4px;background:var(--bg3);color:var(--reward-accent)}
 @keyframes v29Stamp{from{transform:translateY(8px) rotate(4deg);opacity:0}to{transform:rotate(-8deg);opacity:1}}
 @keyframes v29Ticker{0%,25%{transform:translateX(0)}75%,90%{transform:translateX(-115px)}100%{transform:translateX(0)}}
