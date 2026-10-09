@@ -1892,14 +1892,14 @@ body.light #sc-earn .ern-sh-btns .can{border-color:#d8dde3;color:#0b0e11;}
 </div>
 
 <!-- TRANSACTION DETAILS SCREEN (Deposit / Withdrawal) -->
-<div class="bb-screen" id="bbDtl">
+<div class="bb-screen" id="bbDtl" style="z-index:1300">
   <div class="bb-hdr">
     <button class="bb-back" onclick="bbClose('bbDtl')"><i class="fas fa-arrow-left"></i></button>
     <div class="bb-ttl" id="bbDtlTitle">Withdrawal Details</div>
     <span style="width:24px"></span>
   </div>
-  <div class="bb-body" style="display:flex;flex-direction:column;height:100%;padding:0;">
-   <div style="max-width:420px;width:100%;margin:0 auto;padding:0 24px;display:flex;flex-direction:column;flex:1;">
+  <div class="bb-body" style="display:block;flex:1;min-height:0;overflow-y:auto;padding:0;">
+   <div style="max-width:420px;width:100%;margin:0 auto;padding:0 24px;display:flex;flex-direction:column;">
     <div style="text-align:center;padding:18px 0 28px;">
       <div style="color:#8c8c8c;font-size:14px;">Quantity</div>
       <div style="font-size:30px;font-weight:800;color:#fff;margin:8px 0 4px;"><span id="bbDtlQty">0</span> <span id="bbDtlSym">USDT</span></div>
@@ -1913,8 +1913,7 @@ body.light #sc-earn .ern-sh-btns .can{border-color:#d8dde3;color:#0b0e11;}
     <div class="bb-kv"><span class="k">Time</span><span class="v" id="bbDtlTime">—</span></div>
     <div class="bb-kv" style="align-items:flex-start;"><span class="k" id="bbDtlAddrK">Withdrawal Address</span><span class="v" style="text-align:right;word-break:break-all;max-width:62%;font-size:13px;display:flex;align-items:flex-start;gap:6px;justify-content:flex-end;line-height:1.5;"><span id="bbDtlAddr">—</span><i class="far fa-copy" style="cursor:pointer;color:#888;font-size:13px;flex-shrink:0;margin-top:2px;" onclick="copyText(document.getElementById('bbDtlAddr').textContent)"></i></span></div>
     <div class="bb-kv" style="align-items:flex-start;"><span class="k">Transaction Hash</span><span class="v" style="text-align:right;word-break:break-all;max-width:62%;font-size:13px;display:flex;align-items:flex-start;gap:6px;justify-content:flex-end;line-height:1.5;"><span id="bbDtlTx">—</span><i class="far fa-copy" style="cursor:pointer;color:#888;font-size:13px;flex-shrink:0;margin-top:2px;" onclick="copyText(document.getElementById('bbDtlTx').textContent)"></i></span></div>
-    <div style="flex:1;"></div>
-    <button onclick="bbExplorer()" style="margin:18px 0 18px;width:100%;background:transparent;border:1px solid #2a2a2a;color:#fff;border-radius:30px;padding:14px;font-size:15px;font-weight:600;cursor:pointer;">View in Blockchain Explorer</button>
+    <button id="bbDtlExp" type="button" onclick="bbExplorer()" style="position:relative;z-index:2;margin:24px 0 calc(28px + env(safe-area-inset-bottom));width:100%;background:transparent;border:1px solid #2a2a2a;color:#fff;border-radius:30px;padding:14px;font-size:15px;font-weight:600;cursor:pointer;">View in Blockchain Explorer</button>
    </div>
   </div>
 </div>
@@ -3025,7 +3024,7 @@ function bbRenderHist(){
   }).join('');
 }
 function bbExplorer(){
-  const tx = document.getElementById('bbDtlTx').textContent.trim();
+  const tx = (document.getElementById('bbDtlTx').dataset.tx||'').trim();
   const chain = (document.getElementById('bbDtlChain').textContent||'').toUpperCase();
   if(!tx || tx==='—') return toast('No transaction hash');
   let url='';
@@ -3036,7 +3035,8 @@ function bbExplorer(){
   else if(chain.includes('BTC')||chain.includes('BITCOIN')) url='https://www.blockchain.com/btc/tx/'+tx;
   else if(chain.includes('POLY')||chain.includes('MATIC')) url='https://polygonscan.com/tx/'+tx;
   else url='https://www.google.com/search?q='+encodeURIComponent(tx);
-  window.open(url,'_blank');
+  const win=window.open(url,'_blank');
+  if(!win) location.href=url;
 }
 function bbHistKey(h){
   return 'bbUsdRateV2:'+(h.hash||h.txid||h.txId||h.hid||h.id||(h.type+'_'+h.coin+'_'+h.amt+'_'+(h.time||h.ts||h.createdAt||'')));
@@ -3112,8 +3112,32 @@ function bbShowHistDetail(h){
   document.getElementById('bbDtlChain').textContent = bbFmtChain(h);
   document.getElementById('bbDtlTime').textContent = bbFmtTime(h);
   document.getElementById('bbDtlAddr').textContent = h.addr || h.address || '—';
-  document.getElementById('bbDtlTx').textContent = h.hash || h.txid || h.txId || '—';
+  bbSetDtlHash(h, isWit);
   bbOpen('bbDtl');
+  // Always reread the live record: the admin's TxID is added after approval.
+  try{
+    const fb=window._fb, fuid=fb&&fb.auth&&fb.auth.currentUser&&fb.auth.currentUser.uid;
+    if(fb && fuid && h.hid){
+      const tok = (window._bbDtlTok=(window._bbDtlTok||0)+1);
+      fb.get(fb.ref(fb.db,'users/'+fuid+'/history')).then(snap=>{
+        if(tok!==window._bbDtlTok || !snap.exists()) return;
+        let row=null; snap.forEach(c=>{ const v=c.val()||{}; if(v.hid===h.hid||c.key===h.hid) row=v; });
+        if(!row) return;
+        Object.assign(h,row);
+        try{ const w=document.getElementById('p2pFrame').contentWindow; (w.hist||[]).forEach(x=>{ if(x&&x.hid===h.hid) Object.assign(x,row); }); }catch(e){}
+        bbSetDtlHash(h, isWit);
+      }).catch(()=>{});
+    }
+  }catch(e){}
+}
+function bbSetDtlHash(h, isWit){
+  const el=document.getElementById('bbDtlTx');
+  // Withdrawals: only the hash entered by the admin on the bot is real.
+  const real = isWit ? (h.hash && h.hash!=='\u2014' && h.hashAt ? h.hash : '') : (h.hash || h.txid || h.txId || '');
+  el.dataset.tx = real;
+  el.textContent = real || (isWit ? 'Awaiting network confirmation' : '—');
+  const btn=document.getElementById('bbDtlExp');
+  if(btn){ btn.disabled=!real; btn.style.opacity = real?'1':'.45'; }
 }
 function openWithdrawOverlay(){
   document.getElementById('witAddr').value='';
