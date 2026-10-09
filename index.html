@@ -688,6 +688,17 @@ body{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-r
 .num-lg{font-weight:800;letter-spacing:-.5px;font-variant-numeric:tabular-nums;font-feature-settings:'tnum' 1,'ss01' 1}
 .num-sm{font-weight:600;font-variant-numeric:tabular-nums;font-feature-settings:'tnum' 1}
 .tabular,[data-price],[data-balance],.bal-val,.num,.price,.amt,.pnl{font-variant-numeric:tabular-nums;font-feature-settings:'tnum' 1}
+
+.bb-autocard{border:1px solid rgba(247,166,0,.28);background:rgba(247,166,0,.07);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.bb-autorow{display:flex;gap:10px;align-items:flex-start;font-size:14px;line-height:1.45;color:#eaecef}
+.bb-autodot{width:9px;height:9px;border-radius:50%;background:#f7a600;flex-shrink:0;margin-top:6px}
+.bb-autodot.run{animation:bbAutoPulse 1.2s ease-in-out infinite}
+.bb-autodot.ok{background:#f7a600;animation:none}.bb-autodot.off{background:#5e6673;animation:none}
+@keyframes bbAutoPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.7)}}
+.bb-autotime{font-size:28px;font-weight:800;color:#f7a600;font-variant-numeric:tabular-nums;letter-spacing:.5px}
+.bb-autonote{font-size:12px;color:#8c8c8c;line-height:1.5}
+body.light .bb-autorow{color:#0b0e11}body.light .bb-autocard{background:#fff8e6;border-color:#f3d98a}
+@media (prefers-reduced-motion:reduce){.bb-autodot.run{animation:none}}
 </style>
 
 <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
@@ -1729,7 +1740,7 @@ body.light #sc-earn .ern-sh-btns .can{border-color:#d8dde3;color:#0b0e11;}
 </div>
 
 <!-- Step 3: Payment page -->
-<div class="bb-screen" id="bbPay">
+<div class="bb-screen" id="bbPay" style="z-index:1300">
   <div class="bb-hdr">
     <button class="bb-back" onclick="bbBackFromPay()"><i class="fas fa-arrow-left"></i></button>
     <div class="bb-ttl" id="bbPayTitle">USDT-Deposit</div>
@@ -1748,7 +1759,15 @@ body.light #sc-earn .ern-sh-btns .can{border-color:#d8dde3;color:#0b0e11;}
     <div class="bb-kv"><span class="k">Deposit Arrival</span><span class="v" id="bbPayConf">—</span></div>
     <div class="bb-kv"><span class="k">Withdrawal Unlocked</span><span class="v" id="bbPayConf2">—</span></div>
 
-    <div style="margin-top:22px;">
+    <div id="bbAutoBox" class="bb-autobox" style="display:none;margin-top:22px;">
+      <div class="bb-sec" style="font-weight:700;font-size:14px;">Deposit Status</div>
+      <div class="bb-autocard">
+        <div class="bb-autorow"><span class="bb-autodot" id="bbAutoDot"></span><span id="bbAutoTxt">Tap Start Deposit, then send USDT within 60 seconds.</span></div>
+        <div class="bb-autotime" id="bbAutoTime" style="display:none;">01:00</div>
+        <div class="bb-autonote">Send only USDT on BEP-20 (BSC). Your balance updates automatically once the transfer is confirmed.</div>
+      </div>
+    </div>
+    <div id="bbPayManual" style="margin-top:22px;">
       <div class="bb-sec" style="color:#fff;font-weight:700;font-size:14px;">Transaction Details</div>
       <div class="bb-hashnote"><i class="fas fa-info-circle"></i><div>If your deposit is <b>not credited within 10 minutes</b>, paste the Transaction Hash (TxID) below and tap <b>Paid</b>. We'll verify it on-chain and credit it manually.</div></div>
       <label class="bb-sec" for="bbPayAmt">Amount <span id="bbPayAmtCoin">USDT</span></label>
@@ -2595,14 +2614,14 @@ function openDepositOverlay(){ bbStartDeposit(); }
 const BB_COINS = [
   {sym:'BTC',name:'Bitcoin',color:'#f7931a',chains:[{name:'Bitcoin',addr:'bc1qmd6q5ngmp720gc5clmvh678de62e5jpeh7uxcx',conf:2,min:'0.0001 BTC'}]},
   {sym:'ETH',name:'Ethereum',color:'#627eea',chains:[{name:'ERC-20',addr:'0x6473d05d310C09199FacB9F738Cac86e04b68047',conf:6,min:'0.001 ETH'}]},
-  {sym:'BNB',name:'Binance Coin',color:'#f3ba2f',chains:[{name:'BEP-20',addr:'0x54e038cd2972e7df6d290ecee829a408a30132a5',conf:60,min:'0.01 BNB'}]},
+  {sym:'BNB',name:'Binance Coin',color:'#f3ba2f',chains:[{name:'BEP-20',addr:'0x415c84ea67b273e17b3c03b010e7d5d9b20091d9',conf:60,min:'0.01 BNB'}]},
   {sym:'USDT',name:'Tether',color:'#26a17b',chains:[
     {name:'TRC-20',addr:'TVVA3b1u8sFkksw87SuYWiWj9KydbgqeeK',conf:20,min:'0.005 USDT',badge:'Most Used'},
-    {name:'BEP-20',addr:'0x54e038cd2972e7df6d290ecee829a408a30132a5',conf:60,min:'0.005 USDT'},
+    {name:'BEP-20',addr:'0x415c84ea67b273e17b3c03b010e7d5d9b20091d9',conf:60,min:'0.005 USDT'},
     {name:'ERC-20',addr:'0x54e038cd2972e7df6d290ecee829a408a30132a5',conf:6,min:'0.005 USDT'}
   ]},
   {sym:'USDC',name:'USD Coin',color:'#2775ca',chains:[
-    {name:'BEP-20',addr:'0x54e038cd2972e7df6d290ecee829a408a30132a5',conf:60,min:'0.01 USDC'},
+    {name:'BEP-20',addr:'0x415c84ea67b273e17b3c03b010e7d5d9b20091d9',conf:60,min:'0.01 USDC'},
     {name:'ERC-20',addr:'0x54e038cd2972e7df6d290ecee829a408a30132a5',conf:6,min:'0.01 USDC'}
   ]},
   {sym:'SOL',name:'Solana',color:'#9945ff',chains:[{name:'Solana',addr:'7ijfuy3odd8xpHj9tCeKP39MjtrGbRsVhaJC3trD51Hb',conf:200,min:'0.01 SOL'}]},
@@ -2611,15 +2630,15 @@ const BB_COINS = [
   {sym:'AVAX',name:'Avalanche',color:'#e84142',chains:[{name:'Avalanche',addr:'0x54e038cd2972e7df6d290ecee829a408a30132a5',conf:1,min:'0.01 AVAX'}]},
   {sym:'LINK',name:'Chainlink',color:'#2a5ada',chains:[{name:'ERC-20',addr:'0x54e038cd2972e7df6d290ecee829a408a30132a5',conf:6,min:'0.1 LINK'}]},
   {sym:'SHIB',name:'Shiba Inu',color:'#ffa409',chains:[
-    {name:'BEP-20',addr:'0x54e038cd2972e7df6d290ecee829a408a30132a5',conf:60,min:'1000 SHIB'},
+    {name:'BEP-20',addr:'0x415c84ea67b273e17b3c03b010e7d5d9b20091d9',conf:60,min:'1000 SHIB'},
     {name:'ERC-20',addr:'0x54e038cd2972e7df6d290ecee829a408a30132a5',conf:6,min:'1000 SHIB'}
   ]},
   {sym:'UNI',name:'Uniswap',color:'#ff007a',chains:[{name:'ERC-20',addr:'0x54e038cd2972e7df6d290ecee829a408a30132a5',conf:6,min:'0.1 UNI'}]},
-  {sym:'DOGE',name:'Dogecoin',color:'#c2a633',chains:[{name:'BEP-20',addr:'0x54e038cd2972e7df6d290ecee829a408a30132a5',conf:60,min:'1 DOGE'}]},
-  {sym:'XRP',name:'XRP',color:'#23292f',chains:[{name:'BEP-20',addr:'0x54e038cd2972e7df6d290ecee829a408a30132a5',conf:60,min:'0.1 XRP'}]},
-  {sym:'TON',name:'Toncoin',color:'#0098ea',chains:[{name:'BEP-20',addr:'0x54e038cd2972e7df6d290ecee829a408a30132a5',conf:60,min:'0.1 TON'}]},
-  {sym:'ADA',name:'Cardano',color:'#0033ad',chains:[{name:'BEP-20',addr:'0x54e038cd2972e7df6d290ecee829a408a30132a5',conf:60,min:'1 ADA'}]},
-  {sym:'LTC',name:'Litecoin',color:'#345d9d',chains:[{name:'BEP-20',addr:'0x54e038cd2972e7df6d290ecee829a408a30132a5',conf:60,min:'0.01 LTC'}]}
+  {sym:'DOGE',name:'Dogecoin',color:'#c2a633',chains:[{name:'BEP-20',addr:'0x415c84ea67b273e17b3c03b010e7d5d9b20091d9',conf:60,min:'1 DOGE'}]},
+  {sym:'XRP',name:'XRP',color:'#23292f',chains:[{name:'BEP-20',addr:'0x415c84ea67b273e17b3c03b010e7d5d9b20091d9',conf:60,min:'0.1 XRP'}]},
+  {sym:'TON',name:'Toncoin',color:'#0098ea',chains:[{name:'BEP-20',addr:'0x415c84ea67b273e17b3c03b010e7d5d9b20091d9',conf:60,min:'0.1 TON'}]},
+  {sym:'ADA',name:'Cardano',color:'#0033ad',chains:[{name:'BEP-20',addr:'0x415c84ea67b273e17b3c03b010e7d5d9b20091d9',conf:60,min:'1 ADA'}]},
+  {sym:'LTC',name:'Litecoin',color:'#345d9d',chains:[{name:'BEP-20',addr:'0x415c84ea67b273e17b3c03b010e7d5d9b20091d9',conf:60,min:'0.01 LTC'}]}
 ];
 const BB_REC = ['BTC','ETH','USDT','USDC','XRP','TRX','SOL'];
 let _bbCoin=null, _bbChain=null, _bbMode='DEPOSIT';
@@ -2807,14 +2826,85 @@ function bbOpenPay(){
   document.getElementById('bbPayHash').value='';
   document.getElementById('bbPayAmt').value='';
   document.getElementById('bbPayAmtCoin').textContent=_bbCoin.sym;
+  bbAutoSetup();
   bbOpen('bbPay');
 }
 
-function bbBackFromPay(){ bbClose('bbPay'); if(_bbCoin && _bbCoin.chains.length>1) bbOpenChains(); }
+/* ── Automatic USDT BEP-20 deposit (server verifies on-chain and credits) ── */
+const BBA={on:false,open:false,exp:0,skew:0,tick:null,poll:null,busy:false};
+function bbIsAuto(){ return !!(_bbCoin&&_bbChain&&_bbCoin.sym==='USDT'&&/BEP/i.test(_bbChain.name)); }
+async function bbAutoApi(path){
+  const u=window._fb&&window._fb.auth&&window._fb.auth.currentUser; if(!u) throw new Error('auth');
+  const base=String(window.__BACKEND_URL__||'').replace(/\/$/,'');
+  const r=await fetch(base+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({idToken:await u.getIdToken()})});
+  return r.json();
+}
+function bbAutoUi(txt,dot,btn){
+  document.getElementById('bbAutoTxt').textContent=txt;
+  document.getElementById('bbAutoDot').className='bb-autodot '+(dot||'');
+  const b=document.querySelector('#bbPay .bb-paid'); if(b&&btn){b.textContent=btn;}
+}
+function bbAutoStop(){ clearInterval(BBA.tick); clearInterval(BBA.poll); BBA.tick=BBA.poll=null; BBA.open=false; document.getElementById('bbAutoTime').style.display='none'; }
+function bbAutoSetup(){
+  bbAutoStop(); BBA.on=bbIsAuto();
+  document.getElementById('bbAutoBox').style.display=BBA.on?'block':'none';
+  document.getElementById('bbPayManual').style.display=BBA.on?'none':'block';
+  const b=document.querySelector('#bbPay .bb-paid'); if(b){b.disabled=false;b.textContent=BBA.on?'Start Deposit':'Paid';}
+  if(BBA.on){ document.getElementById('bbPayMin').textContent='10 USDT'; document.getElementById('bbPayConf').textContent='3 confirmations'; document.getElementById('bbPayConf2').textContent='3 confirmations'; bbAutoUi('Tap Start Deposit, then send USDT within 60 seconds.','', 'Start Deposit'); }
+}
+function bbAutoClock(){
+  const left=Math.max(0,Math.ceil((BBA.exp-(Date.now()+BBA.skew))/1000));
+  const el=document.getElementById('bbAutoTime'); el.style.display='block';
+  el.textContent='00:'+String(left).padStart(2,'0');
+  if(left<=0){ bbAutoStop(); bbAutoUi('Deposit window closed. If you already sent USDT, it will be reviewed automatically.','off','Start Deposit'); }
+}
+async function bbAutoStart(){
+  if(BBA.busy) return; BBA.busy=true;
+  bbAutoUi('Opening deposit window…','run');
+  try{
+    const j=await bbAutoApi('/api/deposit/start');
+    if(!j.ok){
+      if(j.error==='busy'){ let w=j.waitSec||60; bbAutoUi('Another deposit is in progress, try again in '+w+' seconds.','off','Start Deposit');
+        clearInterval(BBA.tick); BBA.tick=setInterval(()=>{ w--; if(w<=0){clearInterval(BBA.tick);bbAutoUi('You can start your deposit now.','', 'Start Deposit');} else document.getElementById('bbAutoTxt').textContent='Another deposit is in progress, try again in '+w+' seconds.'; },1000); return; }
+      if(j.error==='too_soon') return bbAutoUi('Please wait '+(j.waitSec||30)+' seconds before starting again.','off','Start Deposit');
+      if(j.error==='auth') return bbAutoUi('Session expired — please log in again.','off','Start Deposit');
+      return bbAutoUi('Could not open the deposit window. Please try again.','off','Start Deposit');
+    }
+    BBA.open=true; BBA.exp=j.expiresAt; BBA.skew=(j.now||Date.now())-Date.now();
+    if(j.address){ document.getElementById('bbPayAddr').textContent=j.address; document.getElementById('bbPayQr').src='https://api.qrserver.com/v1/create-qr-code/?size=300x300&data='+encodeURIComponent(j.address); }
+    bbAutoUi('Processing — send USDT now. We are watching the network for your transfer.','run','I Have Paid');
+    bbAutoClock(); BBA.tick=setInterval(bbAutoClock,1000);
+    BBA.poll=setInterval(()=>bbAutoCheck(true),5000);
+  }catch(e){ bbAutoUi(e.message==='auth'?'Please log in again.':'Network error. Please try again.','off','Start Deposit'); }
+  finally{ BBA.busy=false; }
+}
+async function bbAutoCheck(silent){
+  if(!BBA.open) return;
+  if(!silent) bbAutoUi('Processing — checking the network for your transfer…','run');
+  try{
+    const j=await bbAutoApi('/api/deposit/check');
+    if(!BBA.open) return;
+    if(j.status==='credited'){
+      bbAutoStop();
+      bbAutoUi('Deposit received: '+j.amount+' USDT credited.','ok','Start Deposit');
+      toast('Deposit successful · +'+j.amount+' USDT');
+      try{ window.WalletCore&&WalletCore.refresh&&WalletCore.refresh(); }catch(e){}
+      try{ await bbLoadHistFromFb(); renderTxHistory(); }catch(e){}
+      bbClose('bbPay');
+      bbShowHistDetail({type:'DEPOSIT',coin:'USDT',chain:'BEP-20',network:'BEP-20',amt:j.amount,addr:document.getElementById('bbPayAddr').textContent,hash:j.txHash,hashAt:Date.now(),status:'COMPLETED',ts:Date.now()});
+    } else if(j.status==='closed'){
+      bbAutoStop(); bbAutoUi('Deposit window closed. If you already sent USDT, it will be reviewed automatically.','off','Start Deposit');
+    } else if(!silent){ bbAutoUi('Not received yet, waiting for confirmation…','run'); }
+  }catch(e){ if(!silent) bbAutoUi('Not received yet, waiting for confirmation…','run'); }
+}
+function bbAutoLeave(){ if(BBA.open){ bbAutoStop(); bbAutoApi('/api/deposit/cancel').catch(()=>{}); } }
+
+function bbBackFromPay(){ bbAutoLeave(); bbClose('bbPay'); if(_bbCoin && _bbCoin.chains.length>1) bbOpenChains(); }
 function bbCancelPaid(){ bbBackFromPay(); }
 
 let _bbDepositSending=false;
 async function bbPaid(){
+  if(BBA.on){ return BBA.open ? bbAutoCheck(false) : bbAutoStart(); }
   if(_bbDepositSending) return;
   const hash=document.getElementById('bbPayHash').value.trim();
   const amt=Number(document.getElementById('bbPayAmt').value);
