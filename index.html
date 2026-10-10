@@ -1022,7 +1022,7 @@ button:active,.ibt:active,.qab:active,.crow:active,.qab:active,.bb-hitem:active,
     </div>
 
     <div class="sbar" onclick="openSearch()"><i class="fas fa-search"></i><i class="fas fa-fire" style="color:var(--orange);"></i><span id="home-search-label" style="color:var(--text2);">TON/USDT</span></div>
-    <div class="ibt" onclick="openSearch()"><i class="fas fa-expand"></i></div>
+    <div class="ibt" onclick="openScanner()" aria-label="Scan"><i class="fas fa-expand"></i></div>
     <div class="ibt" onclick="openRefer()"><i class="fas fa-user-plus"></i></div>
     <div class="ibt" id="notifBell" style="position:relative;" onclick="openNotifications()">
       <i class="fas fa-bell"></i><span class="bdg" id="notifBadge">52</span>
@@ -1166,7 +1166,7 @@ button:active,.ibt:active,.qab:active,.crow:active,.qab:active,.bb-hitem:active,
       <span style="cursor:pointer;margin-left:auto;" onclick="document.getElementById('trade-banner').style.display='none'">✕</span>
     </div>
     <div class="ctfs" style="display:flex;align-items:center;gap:14px;padding:8px 14px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);">
-      <span style="color:var(--text2);font-size:13px;font-weight:600;">Time</span>
+      <span class="tf" style="font-weight:600;" onclick="changeTF(this,'1')">Time</span>
       <span class="tf" onclick="changeTF(this,'15')">15m</span>
       <span class="tf" onclick="changeTF(this,'60')">1h</span>
       <span class="tf" onclick="changeTF(this,'240')">4h</span>
@@ -1194,9 +1194,31 @@ button:active,.ibt:active,.qab:active,.crow:active,.qab:active,.bb-hitem:active,
     </div>
     <div class="chart-bottom-btns" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:10px 14px;border-top:1px solid var(--border);align-items:center;">
       <button class="bbuy" id="cb-buy-btn" onclick="quickOrder('Buy')" style="background:#20b26c;color:#fff;border:none;border-radius:999px;padding:10px 4px;font-weight:700;font-size:13px;line-height:1.2;cursor:pointer;">Buy<br><small id="cb-buy-price" style="font-weight:600;font-size:12px;opacity:.95;">--</small></button>
-      <div class="bqty" style="background:var(--bg3);border-radius:999px;padding:10px 6px;text-align:center;line-height:1.2;"><div style="font-size:11px;color:var(--text2);">Quantity</div><div style="font-weight:700;font-size:13px;" id="cb-coin">--</div></div>
+      <div class="bqty" onclick="qoToggleUnit()" style="background:var(--bg3);border-radius:999px;padding:10px 6px;text-align:center;line-height:1.2;cursor:pointer;"><div style="font-size:11px;color:var(--text2);">Quantity <i class="fas fa-exchange-alt" style="font-size:9px"></i></div><div style="font-weight:700;font-size:13px;" id="cb-coin">--</div></div>
       <button class="bsell" id="cb-sell-btn" onclick="quickOrder('Sell')" style="background:#ef454a;color:#fff;border:none;border-radius:999px;padding:10px 4px;font-weight:700;font-size:13px;line-height:1.2;cursor:pointer;">Sell<br><small id="cb-sell-price" style="font-weight:600;font-size:12px;opacity:.95;">--</small></button>
     </div>
+    <div id="qo-box" style="padding:4px 14px 12px;">
+      <div style="display:flex;align-items:center;gap:8px;background:var(--bg3);border-radius:12px;padding:0 12px;height:46px;">
+        <input id="qo-amt" type="number" inputmode="decimal" min="0" placeholder="Quantity" oninput="qoCalc()" style="flex:1;min-width:0;background:none;border:0;outline:none;color:var(--text);font-size:15px;font-weight:600;">
+        <button type="button" onclick="qoToggleUnit()" id="qo-unit" style="background:none;border:0;color:var(--text);font-weight:700;font-size:13px;cursor:pointer;">--</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px;">
+        <button type="button" class="qo-pct" onclick="qoPct(.25)">25%</button><button type="button" class="qo-pct" onclick="qoPct(.5)">50%</button><button type="button" class="qo-pct" onclick="qoPct(.75)">75%</button><button type="button" class="qo-pct" onclick="qoPct(1)">100%</button>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text2);margin-top:8px;"><span>Avbl <b id="qo-avbl" style="color:var(--text)">--</b></span><span id="qo-conv">≈ --</span></div>
+    </div>
+    <style>.qo-pct{background:var(--bg3);border:0;border-radius:8px;color:var(--text2);font-size:12px;font-weight:600;padding:7px 0;cursor:pointer}.qo-pct:active{color:var(--text)}
+    #scanOv{position:fixed;inset:0;z-index:99999;background:#000;display:none;flex-direction:column;align-items:center;color:#fff}
+    #scanOv .sh{width:100%;display:flex;align-items:center;justify-content:center;position:relative;padding:calc(env(safe-area-inset-top) + 14px) 14px 0;height:58px;font-size:16px;font-weight:600}
+    #scanOv .sx{position:absolute;left:12px;bottom:4px;width:40px;height:40px;border:0;background:none;color:#fff;font-size:20px;cursor:pointer}
+    #scanOv .sf{position:relative;width:min(72vw,280px);aspect-ratio:1;margin-top:16vh;border-radius:16px;overflow:hidden;background:#111}
+    #scanOv .sf video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+    #scanOv .sf i{position:absolute;width:26px;height:26px;border:3px solid #f7a600;z-index:2}#scanOv .sf i:nth-of-type(1){left:0;top:0;border-right:0;border-bottom:0;border-radius:14px 0 0 0}#scanOv .sf i:nth-of-type(2){right:0;top:0;border-left:0;border-bottom:0;border-radius:0 14px 0 0}#scanOv .sf i:nth-of-type(3){left:0;bottom:0;border-right:0;border-top:0;border-radius:0 0 0 14px}#scanOv .sf i:nth-of-type(4){right:0;bottom:0;border-left:0;border-top:0;border-radius:0 0 14px 0}
+    #scanOv .st{margin-top:22px;font-size:14px;color:#bbb;text-align:center;padding:0 24px}
+    #scanOv .sa{margin-top:auto;margin-bottom:calc(env(safe-area-inset-bottom) + 48px);display:flex;gap:64px}
+    #scanOv .sa button{background:none;border:0;color:#fff;font-size:12px;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer}
+    #scanOv .sa span{width:52px;height:52px;border-radius:50%;background:#1e1e1e;display:grid;place-items:center;font-size:20px}
+    #scanOv .sa button.on span{background:#f7a600;color:#000}</style>
   </div>
 
   <!-- ORDER BOOK VIEW -->
@@ -3935,7 +3957,7 @@ function renderTradePanel(){ if($('ob-view') && $('ob-view').style.display!=='no
 async function loadKlineREST() {
   if(!tvChart || !candleSeries || !volSeries) { queueChartBootstrap(true); return; }
   const reqId = ++chartReqId;
-  const tfMap = { '1':'1','60':'60','240':'240','D':'D','W':'W' };
+  const tfMap = { '1':'1','5':'5','15':'15','60':'60','240':'240','D':'D','W':'W' };
   const interval = tfMap[currentTF] || '1';
   const data = await bybitGET('/v5/market/kline', {
     category: currentCat==='spot'?'spot':'linear',
@@ -5049,6 +5071,31 @@ function renderOrderTabs(){
   }
 }
 
+let QO_UNIT='COIN';
+function qoCoin(){return (currentSymbol||'').replace('USDT','');}
+function qoPrice(){return parseFloat($('chart-price-big')?.textContent)||0;}
+function qoAvbl(){const coin=qoCoin();return spotSide==='Sell'?((STATE&&STATE.coins&&STATE.coins[coin])||0):getBalance();}
+function qoCalc(){const coin=qoCoin(),p=qoPrice(),v=parseFloat($('qo-amt')?.value)||0;
+  if($('qo-unit'))$('qo-unit').innerHTML=(QO_UNIT==='USDT'?'USDT':coin)+' <i class="fas fa-caret-down" style="font-size:10px"></i>';
+  if($('cb-coin'))$('cb-coin').textContent=QO_UNIT==='USDT'?'USDT':coin;
+  if($('qo-amt'))$('qo-amt').placeholder=QO_UNIT==='USDT'?'Order value (USDT)':'Quantity ('+coin+')';
+  if($('qo-avbl'))$('qo-avbl').textContent=(getBalance()||0).toFixed(2)+' USDT · '+(((STATE&&STATE.coins&&STATE.coins[coin])||0).toFixed(4))+' '+coin;
+  if($('qo-conv'))$('qo-conv').textContent=!p||!v?'≈ --':(QO_UNIT==='USDT'?'≈ '+(v/p).toFixed(6)+' '+coin:'≈ '+(v*p).toFixed(2)+' USDT');}
+function qoToggleUnit(){const p=qoPrice(),v=parseFloat($('qo-amt').value)||0;QO_UNIT=QO_UNIT==='USDT'?'COIN':'USDT';$('qo-amt').value='';qoCalc();}
+function qoPct(f){const p=qoPrice();if(!p)return toast('Price not ready');const coin=qoCoin();
+  const usdt=getBalance()*f, held=((STATE&&STATE.coins&&STATE.coins[coin])||0)*f;
+  // Buy uses USDT balance, otherwise holdings
+  const useBuy=!(held>0&&usdt<1);const val=QO_UNIT==='USDT'?(useBuy?usdt:held*p):(useBuy?usdt/p:held);
+  $('qo-amt').value=val>0?(QO_UNIT==='USDT'?val.toFixed(2):val.toFixed(6)):'';qoCalc();}
+setInterval(()=>{if($('qo-box')&&$('sc-trade')?.classList.contains('active'))qoCalc();},1500);
+function openScanner(){let o=document.getElementById('scanOv');
+  if(!o){o=document.createElement('div');o.id='scanOv';o.innerHTML='<div class="sh"><button class="sx" aria-label="Close" onclick="closeScanner()"><i class="fas fa-arrow-left"></i></button>Scan</div><div class="sf"><video playsinline muted autoplay></video><i></i><i></i><i></i><i></i></div><div class="st">Place the QR code inside the frame</div><div class="sa"><button type="button" id="scanTorch" onclick="scanTorch()"><span><i class="fas fa-bolt"></i></span>Flashlight</button><button type="button" onclick="document.getElementById(\'scanFile\').click()"><span><i class="far fa-image"></i></span>Album</button></div><input type="file" id="scanFile" accept="image/*" hidden onchange="if(this.files[0])toast(\'Image selected\');this.value=\'\'">';document.body.appendChild(o);}
+  o.style.display='flex';const st=o.querySelector('.st');st.textContent='Place the QR code inside the frame';document.getElementById('scanTorch').classList.remove('on');
+  if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false}).then(sm=>{window.__scanStream=sm;o.querySelector('video').srcObject=sm;}).catch(()=>{st.textContent='Allow camera access to scan';});}else st.textContent='Camera not available on this device';}
+function scanTorch(){const b=document.getElementById('scanTorch'),t=window.__scanStream&&window.__scanStream.getVideoTracks()[0];if(!t)return toast('Camera not ready');const on=!b.classList.contains('on');
+  const caps=t.getCapabilities?t.getCapabilities():{};if(!caps.torch)return toast('Flashlight not supported on this device');
+  t.applyConstraints({advanced:[{torch:on}]}).then(()=>b.classList.toggle('on',on)).catch(()=>toast('Flashlight not supported on this device'));}
+function closeScanner(){const o=document.getElementById('scanOv');if(window.__scanStream){window.__scanStream.getTracks().forEach(t=>t.stop());window.__scanStream=null;}if(o)o.style.display='none';}
 function quickOrder(side){
   const p = parseFloat($('chart-price-big').textContent)||0;
   if(!p) return toast('Price not ready');
@@ -5062,21 +5109,26 @@ function quickOrder(side){
   } else {
     spotSide = side;
     if(side==='Buy'){
-      const usdt = getBalance()*0.1;
-      if(usdt<1) return toast('Insufficient USDT');
+      const qv = parseFloat($('qo-amt')?.value)||0;
+      if(qv<=0) return toast('Enter quantity');
+      const usdt = QO_UNIT==='USDT'?qv:qv*p;
+      if(usdt>getBalance()+1e-9) return toast('Insufficient USDT');
+      if(usdt<1) return toast('Minimum order 1 USDT');
       const qty = usdt/p;
       STATE.balance -= usdt;
       STATE.coins[coin] = (STATE.coins[coin]||0) + qty;
       STATE.orders.unshift({id:Date.now(),sym:currentSymbol,coin,side,type:'Spot Market',price:p,qty,value:usdt,ts:Date.now(),status:'Filled'});
     } else {
-      const qty = (STATE.coins[coin]||0)*0.5;
-      if(qty<=0) return toast('No '+coin+' to sell');
+      const qv = parseFloat($('qo-amt')?.value)||0;
+      if(qv<=0) return toast('Enter quantity');
+      const qty = QO_UNIT==='USDT'?qv/p:qv;
+      if(qty<=0 || qty>(STATE.coins[coin]||0)+1e-12) return toast('Insufficient '+coin);
       STATE.coins[coin] -= qty;
       STATE.balance += qty*p;
       STATE.orders.unshift({id:Date.now(),sym:currentSymbol,coin,side,type:'Spot Market',price:p,qty,value:qty*p,ts:Date.now(),status:'Filled'});
     }
     saveState(STATE);
-    toast(side+' '+coin+' filled @ '+p);
+    toast(side+' '+coin+' filled @ '+p); if($('qo-amt')){$('qo-amt').value='';qoCalc();}
     renderTradePanel(); renderOrderTabs(); renderAssetList();
   }
 }
