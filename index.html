@@ -855,7 +855,16 @@ button:active,.ibt:active,.qab:active,.crow:active,.qab:active,.bb-hitem:active,
 </style>
 <script id="wallet-storage-cleanup-v5">try{Object.keys(localStorage).forEach(function(k){if(['biexc_balance_store','biexc_wallet_usdt_v1','biexc_user_cache_v1','futuresHistory'].includes(k)||k.startsWith('bybit_paper_v1_')||k.startsWith('pnlSeed_'))localStorage.removeItem(k)})}catch(e){}</script><style id="bx-lockpop-css">.bxlp{display:none}.bxlp.show{display:flex;position:fixed;inset:0;z-index:100000;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,.55)}.bxlp-c{width:100%;max-width:340px;border-radius:20px;padding:22px 20px;background:var(--card,#fff);color:var(--text,#111);text-align:center;box-shadow:0 18px 50px rgba(0,0,0,.35)}.bxlp-i{font-size:34px}.bxlp-c h3{margin:6px 0 8px;font-size:18px}.bxlp-c p{margin:0 0 8px;font-size:13.5px;line-height:1.45;opacity:.85}.bxlp-pr{display:flex;justify-content:space-between;font-size:12.5px;margin:12px 0 6px}.bxlp-c button{margin-top:14px;width:100%;border:0;border-radius:12px;padding:12px;font-weight:800;font-size:15px;background:#f7a600;color:#111;cursor:pointer}</style><style>.bxr-claim{display:block;width:100%;margin-top:12px;padding:11px;border:0;border-radius:12px;font-weight:800;font-size:14px;background:rgba(127,127,127,.18);color:inherit;opacity:.75;cursor:pointer}.bxr-claim.on{background:#f7a600;color:#111;opacity:1}</style>
 </head>
-<body>
+<body><style id="bx22-loading-style">
+#bx22Loader{position:fixed;inset:0;z-index:2147483000;display:grid;place-items:center;background:var(--bg);color:var(--text);transition:opacity .28s ease;}
+#bx22Loader[hidden]{display:none!important}#bx22Loader.bx22-leaving{opacity:0;pointer-events:none}
+.bx22-load-inner{text-align:center;width:240px}.bx22-mark{position:relative;display:inline-block;font-size:44px;line-height:1.15;font-weight:850;letter-spacing:0;color:var(--text);margin-bottom:26px}
+.bx22-mark::after{content:'BIEXC';position:absolute;inset:0;color:var(--orange);clip-path:inset(0 100% 0 0);animation:bx22Sweep 1.8s ease-in-out infinite}
+.bx22-track{width:100px;height:3px;background:var(--border);overflow:hidden;margin:0 auto;border-radius:3px}.bx22-track::after{content:'';display:block;width:40%;height:100%;background:var(--orange);animation:bx22Travel 1.4s ease-in-out infinite}
+#bx22Status{margin:20px 0 0;font-size:12px;color:var(--text2)}#bx22Retry{margin-top:20px;padding:10px 20px;border:1px solid var(--border);border-radius:8px;background:var(--bg2);color:var(--text);font:inherit;font-size:13px}
+@keyframes bx22Sweep{0%{clip-path:inset(0 100% 0 0)}50%{clip-path:inset(0 0 0 0)}100%{clip-path:inset(0 0 0 100%)}}@keyframes bx22Travel{0%{transform:translateX(-100%)}100%{transform:translateX(350%)}}
+@media(prefers-reduced-motion:reduce){.bx22-mark::after,.bx22-track::after{animation:none}.bx22-mark::after{clip-path:inset(0)}#bx22Loader{transition:none}}
+</style><div id="bx22Loader" role="status" aria-live="polite" aria-label="Loading BIEXC"><div class="bx22-load-inner"><div class="bx22-mark" aria-hidden="true">BIEXC</div><div class="bx22-track" aria-hidden="true"></div><p id="bx22Status">Loading your account…</p><button id="bx22Retry" hidden onclick="location.reload()">Retry</button></div></div>
 <script>document.body.classList.toggle('light',window.__bxTheme!=='dark');(function(){var t=document.querySelector('meta[name="theme-color"]');if(t)t.setAttribute('content',window.__bxTheme==='dark'?'#000000':'#ffffff');})();</script>
 <div id="__diag" style="position:fixed;top:0;left:0;right:0;z-index:99999;background:#400;color:#fff;font:12px monospace;padding:8px;display:none;white-space:pre-wrap;max-height:50vh;overflow:auto"></div>
 <script>
@@ -9907,7 +9916,7 @@ body.light #biexcPromo{background:#f3f5f7}
     window.__wcPainting = true;
     try{ realPaint(); }
     catch(e){ try{ console.warn('[WalletCore] paint', e); }catch(_){} }
-    finally{ window.__wcPainting = false; }
+    finally{ window.__wcPainting = false; window.dispatchEvent(new Event("biexc:wallet-painted")); }
   }
   function realPaint(){
     var t = totals();
@@ -10199,6 +10208,7 @@ body.light #biexcPromo{background:#f3f5f7}
       W.coins={}; W.locked={}; W.earn={positions:[],history:[],total:0,today:0}; W.history=[]; W.ready=false;
     }
     W.uid = uid;
+    W.homeLoaded = {uid:uid,orders:false,history:false,earn:false,prefs:false};
     /* safety net: if Firebase never answers, show real computed numbers
        instead of leaving a loading dash on screen forever */
     clearTimeout(readyTimer);
@@ -10248,10 +10258,11 @@ body.light #biexcPromo{background:#f3f5f7}
         if(amt > 0) lk[sym] = NUM(lk[sym]) + amt;
       });
       W.locked = lk;
+      if(W.homeLoaded && W.homeLoaded.uid===uid) W.homeLoaded.orders=true;
       W.paint();
     }));
 
-    subs.push(onV(R('history'),function(snap){if(W.uid!==uid||uid!==uidOf())return;W.history=Object.values(snap.val()||{});W.paint()}));
+    subs.push(onV(R('history'),function(snap){if(W.uid!==uid||uid!==uidOf())return;W.history=Object.values(snap.val()||{});if(W.homeLoaded && W.homeLoaded.uid===uid)W.homeLoaded.history=true;W.paint()}));
     /* Earn — positions and history now live in Firebase */
     subs.push(onV(R('earn'), function(snap){
       if(W.uid!==uid||uid!==uidOf())return;
@@ -10262,6 +10273,7 @@ body.light #biexcPromo{background:#f3f5f7}
       W.earn.history = hist.filter(Boolean).sort(function(a,b){
         return String(b.endDate||'').localeCompare(String(a.endDate||''));
       });
+      if(W.homeLoaded && W.homeLoaded.uid===uid)W.homeLoaded.earn=true;
       W.earn.total = W.earn.positions.reduce(function(s,p){ return s + NUM(p.earned); }, 0);
       try{
         if(typeof earnState === 'object' && earnState){
@@ -10281,6 +10293,7 @@ body.light #biexcPromo{background:#f3f5f7}
       W.prefs.hidden    = !!v.hideBalances;
       W.prefs.currency  = UP(v.displayCurrency || 'USDT');
       W.prefs.hideSmall = !!v.hideSmallAssets;
+      if(W.homeLoaded && W.homeLoaded.uid===uid)W.homeLoaded.prefs=true;
       W.paint();
     }));
 
@@ -12998,7 +13011,7 @@ var originalReset=window.WalletBalance?.reset;window.WalletBalance={get:get,isLo
 :root{--bx21-accent:#ffda32;--bx21-ink:#151719;--bx21-link:#866300;--bx21-backdrop:rgba(0,0,0,.55)}
 body:not(.light){--bg:#000;--bg2:#000;--bg3:#151515;--card:#000}
 body:not(.light) .screen,body:not(.light) .bb-screen,body:not(.light) .scroll,body:not(.light) #sc-home .mkt-card{background:var(--bg)!important}
-#bx21LegacyHome{display:none!important}.bx21-welcome{padding:22px 16px 32px;text-align:center;color:var(--text)}
+#bx21LegacyHome[hidden]{display:none!important}.bx21-welcome{padding:22px 16px 32px;text-align:center;color:var(--text)}
 .bx21-ticket{width:180px;height:180px;position:relative;margin:0 auto 18px;display:grid;place-items:center;isolation:isolate}
 .bx21-ticket img{position:relative;width:160px;height:160px;object-fit:contain;z-index:1;animation:bx21Float 5s ease-in-out infinite}
 .bx21-rays{position:absolute;inset:0;border-radius:50%;background:repeating-conic-gradient(from 0deg,transparent 0deg 18deg,color-mix(in srgb,var(--bx21-accent) 25%,transparent) 19deg 31deg,transparent 32deg 45deg);mask-image:radial-gradient(circle,transparent 8%,#000 40%,transparent 72%);animation:bx21Spin 16s linear infinite}
@@ -13019,5 +13032,22 @@ body.light #bxq{--a-bg:#fff;--a-card:#fff;--a-card2:#f3f4f6;--a-inp:#f3f4f6;--a-
 @media(max-width:370px){.bx21-welcome h1,.bx21-welcome h2{font-size:23px}#bxq .a-wrap{padding-left:18px;padding-right:18px}}
 @media(prefers-reduced-motion:reduce){.bx21-rays,.bx21-ticket img,#bxq .a-wrap{animation:none!important}}
 </style>
-<script id="bx21-home-sync">(function(){function sync(){var b=document.getElementById('bx21HomeCTA');if(b)b.textContent=window._fb&&window._fb.auth&&window._fb.auth.currentUser?'View Assets':'Sign Up / Log In'}window.addEventListener('biexc:avatar-changed',sync);setInterval(sync,1500);sync()})();</script>
+
+<script id="bx22-home-loading">
+(function(){
+ var resolved=false,probe=null,authHook=null,lastKey='',shownAt=Date.now(),leaving=null;
+ function state(){var a=window._fb&&window._fb.auth;var u=a&&a.currentUser;var p=window.currentFbUser;var w=window.WalletCore;var id=u&&u.uid||p&&p.firebaseUid||w&&w.uid||null;var h=w&&w.homeLoaded;
+ return {id:id,ready:!!(id&&p&&p.firebaseUid===id&&w&&w.uid===id&&w.ready&&h&&h.uid===id&&h.orders&&h.history&&h.earn&&h.prefs),guest:resolved&&!id};}
+ window.bx22HomeState=state;
+ function sync(){var api=window._fb,a=api&&api.auth;if(a&&a!==authHook&&typeof api.onAuthStateChanged==='function'){authHook=a;api.onAuthStateChanged(a,function(){resolved=true;sync()})}if(a&&a!==probe&&typeof a.authStateReady==='function'){probe=a;a.authStateReady().then(function(){resolved=true;sync()},function(){document.getElementById('bx22Status').textContent='Unable to connect. Please retry.';document.getElementById('bx22Retry').hidden=false;});}
+ var t=state(),welcome=document.querySelector('.bx21-welcome'),normal=document.getElementById('bx21LegacyHome'),loader=document.getElementById('bx22Loader');
+ if(welcome)welcome.hidden=!!t.id;if(normal)normal.hidden=!t.id;
+ var key=t.id||'guest';if(key!==lastKey){lastKey=key;shownAt=Date.now();clearTimeout(leaving);leaving=null;loader.classList.remove('bx22-leaving');loader.hidden=false;}
+ if(t.ready||t.guest){if(!loader.hidden&&!leaving){loader.classList.add('bx22-leaving');leaving=setTimeout(function(){var now=state();if(now.ready||now.guest)loader.hidden=true;leaving=null},280);}}
+ else{clearTimeout(leaving);leaving=null;loader.hidden=false;loader.classList.remove('bx22-leaving');document.getElementById('bx22Retry').hidden=Date.now()-shownAt<18000;document.getElementById('bx22Status').textContent=Date.now()-shownAt>18000?'Connection is taking longer than usual.':'Loading your account…';}
+ }
+ var user=window.onFirebaseUser;window.onFirebaseUser=function(u){resolved=true;sync();var r=user&&user.apply(this,arguments);Promise.resolve(r).then(sync,sync);return r};
+ var logout=window.onFirebaseLogout;window.onFirebaseLogout=function(){resolved=true;var r=logout&&logout.apply(this,arguments);sync();return r};
+ window.bx22Sync=sync;window.addEventListener('biexc:wallet-painted',sync);window.addEventListener('visibilitychange',sync);setInterval(sync,1000);sync();
+})();</script>
 </body>
