@@ -854,6 +854,49 @@ button:active,.ibt:active,.qab:active,.crow:active,.qab:active,.bb-hitem:active,
 @media (prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
 </style>
 <script id="wallet-storage-cleanup-v5">try{Object.keys(localStorage).forEach(function(k){if(['biexc_balance_store','biexc_wallet_usdt_v1','biexc_user_cache_v1','futuresHistory'].includes(k)||k.startsWith('bybit_paper_v1_')||k.startsWith('pnlSeed_'))localStorage.removeItem(k)})}catch(e){}</script><style id="bx-lockpop-css">.bxlp{display:none}.bxlp.show{display:flex;position:fixed;inset:0;z-index:100000;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,.55)}.bxlp-c{width:100%;max-width:340px;border-radius:20px;padding:22px 20px;background:var(--card,#fff);color:var(--text,#111);text-align:center;box-shadow:0 18px 50px rgba(0,0,0,.35)}.bxlp-i{font-size:34px}.bxlp-c h3{margin:6px 0 8px;font-size:18px}.bxlp-c p{margin:0 0 8px;font-size:13.5px;line-height:1.45;opacity:.85}.bxlp-pr{display:flex;justify-content:space-between;font-size:12.5px;margin:12px 0 6px}.bxlp-c button{margin-top:14px;width:100%;border:0;border-radius:12px;padding:12px;font-weight:800;font-size:15px;background:#f7a600;color:#111;cursor:pointer}</style><style>.bxr-claim{display:block;width:100%;margin-top:12px;padding:11px;border:0;border-radius:12px;font-weight:800;font-size:14px;background:rgba(127,127,127,.18);color:inherit;opacity:.75;cursor:pointer}.bxr-claim.on{background:#f7a600;color:#111;opacity:1}</style>
+
+<style id="biexc-qr-login">
+/* ═══ BIEXC QR LOGIN — desktop only (≥1024px) ═══ */
+.bx-qr-panel{display:none}
+@media (min-width:1024px){
+  .bx-qr-panel{display:flex;flex-direction:column;align-items:center;gap:14px;position:fixed;right:7vw;top:50%;transform:translateY(-50%);z-index:610;background:var(--bg2,#12141B);border:1px solid var(--border,rgba(255,255,255,.08));border-radius:22px;padding:26px 26px 20px;box-shadow:0 24px 70px -20px rgba(0,0,0,.55);animation:bxQrIn .5s cubic-bezier(.22,1,.36,1)}
+  body.light .bx-qr-panel{background:#ffffff;border-color:#e6e9ef;box-shadow:0 24px 70px -24px rgba(15,23,42,.25)}
+}
+@keyframes bxQrIn{from{opacity:0;transform:translateY(-46%) scale(.94)}to{opacity:1;transform:translateY(-50%) scale(1)}}
+.bx-qr-title{font-size:17px;font-weight:800;color:var(--text,#F4F5F8);letter-spacing:.2px}
+body.light .bx-qr-title{color:#0b0e11}
+.bx-qr-box{position:relative;width:216px;height:216px;border-radius:18px;background:#fff;padding:12px;overflow:hidden}
+.bx-qr-box img{width:100%;height:100%;display:block;border-radius:8px}
+.bx-qr-logo{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:46px;height:46px;border-radius:13px;background:linear-gradient(135deg,#FFB74D,#FF8C2D);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:21px;color:#000;box-shadow:0 0 0 5px #fff,0 6px 18px rgba(255,140,45,.45)}
+.bx-qr-scan{position:absolute;left:10px;right:10px;height:3px;border-radius:3px;background:linear-gradient(90deg,transparent,#FF8C2D,transparent);box-shadow:0 0 14px 2px rgba(255,140,45,.65);animation:bxQrScan 2.4s ease-in-out infinite}
+@keyframes bxQrScan{0%,100%{top:12px}50%{top:calc(100% - 15px)}}
+.bx-qr-box::before,.bx-qr-box::after,.bx-qr-corner::before,.bx-qr-corner::after{content:"";position:absolute;width:26px;height:26px;border:3px solid #FF8C2D;border-radius:4px}
+.bx-qr-box::before{top:6px;left:6px;border-right:none;border-bottom:none}
+.bx-qr-box::after{top:6px;right:6px;border-left:none;border-bottom:none}
+.bx-qr-corner::before{bottom:6px;left:6px;border-right:none;border-top:none}
+.bx-qr-corner::after{bottom:6px;right:6px;border-left:none;border-top:none}
+.bx-qr-success{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(255,255,255,.94);border-radius:18px}
+.bx-qr-success.on{display:flex}
+.bx-qr-success i{width:74px;height:74px;border-radius:50%;background:linear-gradient(135deg,#34F2B6,#0EA968);color:#fff;font-size:34px;display:flex;align-items:center;justify-content:center;animation:bxQrPop .45s cubic-bezier(.22,1.4,.36,1)}
+@keyframes bxQrPop{from{transform:scale(.3);opacity:0}to{transform:scale(1);opacity:1}}
+.bx-qr-hint{font-size:12.5px;color:var(--muted,#6E7484);text-align:center;max-width:210px;line-height:1.5}
+.bx-qr-hint b{color:var(--text,#F4F5F8)}body.light .bx-qr-hint b{color:#0b0e11}
+.bx-qr-timer{font-size:11.5px;color:var(--muted,#6E7484);font-variant-numeric:tabular-nums}
+/* mobile confirm sheet */
+.bx-qrc{position:fixed;inset:0;z-index:1200;display:none;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.6);backdrop-filter:blur(6px)}
+.bx-qrc.show{display:flex;animation:scrIn .25s ease}
+.bx-qrc-card{width:100%;max-width:440px;background:var(--bg2,#12141B);border:1px solid var(--border,rgba(255,255,255,.08));border-radius:22px 22px 0 0;padding:26px 22px 30px;animation:bxQrcUp .35s cubic-bezier(.22,1,.36,1);text-align:center}
+body.light .bx-qrc-card{background:#fff;border-color:#e6e9ef}
+@keyframes bxQrcUp{from{transform:translateY(60px);opacity:0}to{transform:none;opacity:1}}
+.bx-qrc-ico{width:64px;height:64px;margin:0 auto 14px;border-radius:18px;background:linear-gradient(135deg,#FFB74D,#FF8C2D);display:flex;align-items:center;justify-content:center;font-size:26px;color:#000}
+.bx-qrc-t{font-size:18px;font-weight:800;color:var(--text,#F4F5F8);margin-bottom:8px}body.light .bx-qrc-t{color:#0b0e11}
+.bx-qrc-s{font-size:13.5px;color:var(--muted,#6E7484);line-height:1.55;margin-bottom:20px}
+.bx-qrc-btns{display:flex;gap:10px}
+.bx-qrc-btns button{flex:1;height:48px;border-radius:13px;font-size:15px;font-weight:700;border:none;cursor:pointer}
+.bx-qrc-yes{background:linear-gradient(135deg,#FFB74D,#FF8C2D);color:#000}
+.bx-qrc-no{background:var(--surface,rgba(255,255,255,.06));color:var(--text,#F4F5F8);border:1px solid var(--border,rgba(255,255,255,.1))!important}
+body.light .bx-qrc-no{background:#f1f3f7;color:#0b0e11}
+</style>
 </head>
 <body><style id="bx22-loading-style">
 #bx22Loader{position:fixed;inset:0;z-index:2147483000;display:grid;place-items:center;background:var(--bg);color:var(--text);transition:opacity .28s ease;}
@@ -864,7 +907,7 @@ button:active,.ibt:active,.qab:active,.crow:active,.qab:active,.bb-hitem:active,
 #bx22Status{margin:20px 0 0;font-size:12px;color:var(--text2)}#bx22Retry{margin-top:20px;padding:10px 20px;border:1px solid var(--border);border-radius:8px;background:var(--bg2);color:var(--text);font:inherit;font-size:13px}
 @keyframes bx22Sweep{0%{clip-path:inset(0 100% 0 0)}50%{clip-path:inset(0 0 0 0)}100%{clip-path:inset(0 0 0 100%)}}@keyframes bx22Travel{0%{transform:translateX(-100%)}100%{transform:translateX(350%)}}
 @media(prefers-reduced-motion:reduce){.bx22-mark::after,.bx22-track::after{animation:none}.bx22-mark::after{clip-path:inset(0)}#bx22Loader{transition:none}}
-</style><div id="bx22Loader" role="status" aria-live="polite" aria-label="Loading BIEXC"><div class="bx22-load-inner"><div class="bx22-mark" aria-hidden="true">BIEXC</div><div class="bx22-track" aria-hidden="true"></div><p id="bx22Status">Loading your account…</p><button id="bx22Retry" hidden onclick="location.reload()">Retry</button></div></div>
+</style><div id="bx22Loader" role="status" aria-live="polite" aria-label="Loading BIEXC"><div class="bx22-load-inner"><div class="bx25-logo"><svg viewBox="248 112 530 800" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false"><g fill="#F3BA12"><polygon points="512,118 669,275 512,432 355,275"/><polygon points="399,365 545,512 399,659 252,512"/><polygon points="627,366 773,512 627,658 537,568 591,512 536,457"/><polygon points="513,592 669,749 513,906 357,749"/></g></svg></div><div class="bx22-mark" aria-hidden="true">BIEXC</div><div class="bx22-track" aria-hidden="true"></div><p id="bx22Status">Loading your account…</p><button id="bx22Retry" hidden onclick="location.reload()">Retry</button></div></div>
 <script>document.body.classList.toggle('light',window.__bxTheme!=='dark');(function(){var t=document.querySelector('meta[name="theme-color"]');if(t)t.setAttribute('content',window.__bxTheme==='dark'?'#000000':'#ffffff');})();</script>
 <div id="__diag" style="position:fixed;top:0;left:0;right:0;z-index:99999;background:#400;color:#fff;font:12px monospace;padding:8px;display:none;white-space:pre-wrap;max-height:50vh;overflow:auto"></div>
 <script>
@@ -965,6 +1008,7 @@ button:active,.ibt:active,.qab:active,.crow:active,.qab:active,.bb-hitem:active,
   <div class="auth-modal">
     <div class="bx-bg"><div class="bx-grid"></div><div class="bx-stars"></div></div>
     <button class="bx-close" onclick="closeAuth()"><i class="fas fa-times"></i></button>
+
     <div class="bx-wrap">
     <div class="bx-hero">
       <div class="bx-orb">
@@ -13050,4 +13094,459 @@ body.light #bxq{--a-bg:#fff;--a-card:#fff;--a-card2:#f3f4f6;--a-inp:#f3f4f6;--a-
  var logout=window.onFirebaseLogout;window.onFirebaseLogout=function(){resolved=true;var r=logout&&logout.apply(this,arguments);sync();return r};
  window.bx22Sync=sync;window.addEventListener('biexc:wallet-painted',sync);window.addEventListener('visibilitychange',sync);setInterval(sync,1000);sync();
 })();</script>
+
+
+
+
+
+<script>window.__BX_LOGO="<svg viewBox=\"248 112 530 800\" xmlns=\"http://www.w3.org/2000/svg\" aria-hidden=\"true\" focusable=\"false\"><g fill=\"#F3BA12\"><polygon points=\"512,118 669,275 512,432 355,275\"/><polygon points=\"399,365 545,512 399,659 252,512\"/><polygon points=\"627,366 773,512 627,658 537,568 591,512 536,457\"/><polygon points=\"513,592 669,749 513,906 357,749\"/></g></svg>";</script>
+<style id="biexc-desktop-v23">
+/* ═══ BIEXC DESKTOP WEBSITE (≥1024px) — Bybit/Binance style; mobile untouched ═══ */
+@media (min-width:1024px){
+  body{max-width:none!important}
+  body.on-p2p{max-width:1100px!important}
+  .bb-screen{max-width:760px}
+  .bxa{max-width:1280px}
+
+  /* ── Top header ── */
+  nav.bnav.round-dock,body.light nav.bnav.round-dock,nav.byt-bot.round-dock,body.p2p-light nav.byt-bot.round-dock{
+    top:0!important;bottom:auto!important;left:0!important;right:0!important;transform:none!important;
+    width:100%!important;max-width:none!important;height:64px!important;border-radius:0!important;
+    border:none!important;border-bottom:1px solid var(--dock-edge)!important;
+    padding:0 32px!important;gap:4px!important;justify-content:flex-start;box-shadow:none!important;z-index:900!important;
+  }
+  .round-dock .dock-lens{display:none!important}
+  .bxd-logo{display:flex!important;align-items:center;gap:10px;margin-right:36px;cursor:pointer;flex:none}
+  .bxd-logo .m{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#FFB74D,#FF8C2D);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:15px;color:#000}
+  .bxd-logo .w{font-weight:900;font-size:20px;letter-spacing:1.5px;color:var(--text)}
+  nav.round-dock .ni,nav.round-dock .nv{flex:none!important;flex-direction:row!important;gap:8px!important;height:64px!important;padding:0 16px!important;border-radius:0!important;border-bottom:2px solid transparent!important}
+  nav.round-dock .ni i,nav.round-dock .nv i{font-size:14px!important}
+  nav.round-dock .ni span{font-size:14px!important;font-weight:600}
+  nav.round-dock .ni.active,nav.round-dock .nv.on{border-bottom-color:var(--dock-accent)!important}
+  nav.round-dock .ni:hover{background:var(--dock-lens)!important}
+  .bxd-spacer{flex:1}
+  .bxd-hbtn{display:flex!important;align-items:center;gap:8px;height:38px;padding:0 18px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;flex:none;border:none;background:transparent;color:var(--text)}
+  .bxd-hbtn:hover{background:var(--dock-lens)}
+  .bxd-hbtn.bxd-signup{background:#FF8C2D;color:#000!important}
+  .bxd-hbtn.bxd-signup:hover{background:#ffa14f}
+  .bxd-hbtn.bxd-icon{width:38px;padding:0;justify-content:center;font-size:16px}
+
+  /* ── Screens below header ── */
+  .screen{padding-top:64px}
+  .screen.active{min-height:100vh}
+  #sc-p2p{padding-top:64px}
+  .screen .scroll,.screen .ern-scroll{max-width:1280px;width:100%;margin:0 auto;padding-left:32px;padding-right:32px;padding-bottom:48px!important}
+  #sc-trade .scroll,#sc-markets .scroll{max-width:1440px}
+  #sc-trade .thdr,#sc-trade .tmode-tabs{max-width:1440px;width:100%;margin:0 auto}
+  .sheet,.search-sheet{max-width:560px;left:50%!important;margin-left:-280px;border-radius:18px 18px 0 0}
+
+  /* ── Guest hero (desktop only) ── */
+  .bxd-hero{display:none;max-width:1280px;margin:0 auto;padding:64px 32px 40px;gap:48px;align-items:center}
+  .bxd-hero.on{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr)}
+  .bxd-hero .bxd-eyebrow{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:600;color:var(--text);margin-bottom:18px}
+  .bxd-hero .bxd-eyebrow::before{content:"";width:4px;height:18px;background:#FF8C2D;border-radius:2px}
+  .bxd-hero .bxd-eyebrow .cur{color:#FF8C2D}
+  .bxd-hero h1{font-size:52px;line-height:1.12;font-weight:800;letter-spacing:-1px;color:var(--text);margin:0 0 18px}
+  .bxd-hero .bxd-sub{font-size:16px;color:var(--text2);margin-bottom:30px}
+  .bxd-hero .bxd-signrow{display:flex;max-width:520px;background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:6px;gap:6px}
+  .bxd-hero .bxd-signrow input{flex:1;min-width:0;border:none;background:transparent;padding:0 16px;font-size:15px;color:var(--text);outline:none}
+  .bxd-hero .bxd-signrow button{flex:none;border:none;border-radius:10px;background:#FF8C2D;color:#000;font-weight:800;font-size:15px;padding:13px 26px;cursor:pointer}
+  .bxd-hero .bxd-signrow button:hover{background:#ffa14f}
+  .bxd-hero .bxd-oruse{display:flex;align-items:center;gap:16px;margin-top:22px;font-size:14px;color:var(--text2)}
+  .bxd-hero .bxd-oruse .bxd-soc{width:40px;height:40px;border-radius:10px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:17px;cursor:pointer;color:var(--text);background:var(--bg2)}
+  .bxd-hero .bxd-oruse .bxd-soc:hover{border-color:#FF8C2D}
+
+  /* Live markets card */
+  .bxd-mktcard{background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:22px 24px;box-shadow:0 24px 60px -30px rgba(0,0,0,.35)}
+  .bxd-mktcard .bxd-mc-head{display:flex;align-items:baseline;gap:18px;margin-bottom:14px}
+  .bxd-mktcard .bxd-mc-head b{font-size:17px;color:var(--text)}
+  .bxd-mktcard .bxd-mc-head span{font-size:13px;color:var(--text2);margin-left:auto;cursor:pointer}
+  .bxd-mktcard .bxd-mc-head span:hover{color:#FF8C2D}
+  .bxd-mrow{display:flex;align-items:center;gap:12px;padding:13px 0;border-top:1px solid var(--border);cursor:pointer}
+  .bxd-mrow:hover{background:var(--dock-lens)}
+  .bxd-mrow img{width:30px;height:30px;border-radius:50%}
+  .bxd-mrow .bxd-msym{font-weight:700;font-size:15px;color:var(--text)}
+  .bxd-mrow .bxd-msym small{display:block;font-weight:500;font-size:11.5px;color:var(--text2)}
+  .bxd-mrow .bxd-mpx{margin-left:auto;text-align:right}
+  .bxd-mrow .bxd-mpx b{font-size:15px;color:var(--text);display:block}
+  .bxd-mrow .bxd-mpx span{font-size:13px;font-weight:700}
+  .bxd-mrow.bxd-up .bxd-mpx span{color:#16c784}.bxd-mrow.bxd-dn .bxd-mpx span{color:#ea3943}
+
+  /* Logged-in desktop home tweaks */
+  .tnav{max-width:1280px;margin:0 auto}
+  .bx21-welcome{max-width:1280px}
+  body.bxd-guest .bx21-welcome{display:none!important}
+  body.bxd-guest .tnav{display:none!important}
+}
+@media (max-width:1023px){.bxd-logo,.bxd-hbtn,.bxd-spacer,.bxd-hero{display:none!important}}
+</style>
+<script id="biexc-desktop-v23-js">
+(function(){
+  var COINS=[{s:'BTCUSDT',n:'Bitcoin',i:'https://assets.coincap.io/assets/icons/btc@2x.png'},
+             {s:'ETHUSDT',n:'Ethereum',i:'https://assets.coincap.io/assets/icons/eth@2x.png'},
+             {s:'SOLUSDT',n:'Solana',i:'https://assets.coincap.io/assets/icons/sol@2x.png'},
+             {s:'ZECUSDT',n:'Zcash',i:'https://assets.coincap.io/assets/icons/zec@2x.png'}];
+  function el(t,c,h){var e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e}
+  function openAuth(signup,email){
+    try{var b=document.getElementById('homeUserBadge');if(b)b.click();}catch(e){}
+    setTimeout(function(){
+      if(signup){try{var t=document.getElementById('tabSignUp');if(t)t.click();}catch(e){}}
+      if(email){try{var inp=document.querySelector('#loginSheet input[type="email"],#loginSheet input[name="email"],input[type="email"]');if(inp){inp.value=email;inp.dispatchEvent(new Event('input',{bubbles:true}))}}catch(e){}}
+    },400);
+  }
+  function initDesk(){
+    var bar=document.querySelector('nav.bnav');
+    if(bar&&!bar.querySelector('.bxd-logo')){
+      var logo=el('div','bxd-logo','<span class="m">'+window.__BX_LOGO+'</span><span class="w">BIEXC</span>');
+      logo.onclick=function(){try{bxNav('home')}catch(e){}};
+      bar.insertBefore(logo,bar.firstChild);
+      bar.appendChild(el('div','bxd-spacer'));
+      var s=el('button','bxd-hbtn bxd-icon bxd-search','<i class="fas fa-search"></i>');s.setAttribute('aria-label','Search');
+      s.onclick=function(){try{openSearch()}catch(e){}};
+      var li=el('button','bxd-hbtn bxd-login','Log in');
+      li.onclick=function(){openAuth(false)};
+      var su=el('button','bxd-hbtn bxd-signup','<i class="fas fa-gift"></i>&nbsp;Sign up');
+      su.onclick=function(){openAuth(true)};
+      bar.appendChild(s);bar.appendChild(li);bar.appendChild(su);
+    }
+    var home=document.getElementById('sc-home');
+    if(home&&!home.querySelector('.bxd-hero')){
+      var hero=el('section','bxd-hero');
+      hero.setAttribute('aria-label','BIEXC welcome');
+      var left=el('div','bxd-hero-l');
+      left.appendChild(el('div','bxd-eyebrow','The New Financial Platform <span class="cur">|</span>'));
+      left.appendChild(el('h1',null,'One place to grow,<br>spend, and move<br>your money.'));
+      left.appendChild(el('div','bxd-sub','Deposit · Earn · Trade · P2P · Withdraw'));
+      var row=el('div','bxd-signrow');
+      var inp=el('input');inp.type='text';inp.placeholder='Email / Mobile Number';inp.setAttribute('aria-label','Email or mobile');
+      var btn=el('button',null,'<i class="fas fa-shield-halved"></i>&nbsp;Sign Up Now');
+      btn.onclick=function(){openAuth(true,inp.value.trim())};
+      row.appendChild(inp);row.appendChild(btn);left.appendChild(row);
+      var or=el('div','bxd-oruse','Or Use');
+      var g=el('span','bxd-soc','<i class="fab fa-google"></i>');g.onclick=function(){openAuth(false)};
+      var a=el('span','bxd-soc','<i class="fab fa-apple"></i>');a.onclick=function(){openAuth(false)};
+      or.appendChild(g);or.appendChild(a);left.appendChild(or);
+      var card=el('div','bxd-mktcard');
+      card.appendChild(el('div','bxd-mc-head','<b>🔥 Hot Futures</b><span>View all</span>'));
+      card.querySelector('.bxd-mc-head span').onclick=function(){try{bxNav('markets')}catch(e){}};
+      COINS.forEach(function(c){
+        var r=el('div','bxd-mrow');
+        r.innerHTML='<img src="'+c.i+'" alt="" onerror="this.style.display=\'none\'"><div class="bxd-msym">'+c.s.replace('USDT','')+'/USDT<small>'+c.n+'</small></div><div class="bxd-mpx"><b>--</b><span>--</span></div>';
+        r.dataset.sym=c.s;
+        r.onclick=function(){try{bxNav('markets')}catch(e){}};
+        card.appendChild(r);
+      });
+      hero.appendChild(left);hero.appendChild(card);
+      var scroll=home.querySelector('.scroll');
+      home.insertBefore(hero,scroll);
+    }
+  }
+  function tick(){
+    window.__bxdTick=(window.__bxdTick||0)+1;
+    // Guest state: welcome section visible → show hero + auth buttons
+    var guest=!(window.currentUser||window.currentFbUser);
+    var hero=document.querySelector('.bxd-hero');
+    if(hero)hero.classList.toggle('on',guest);
+    document.body.classList.toggle('bxd-guest',guest);
+    var li=document.querySelector('.bxd-login'),su=document.querySelector('.bxd-signup');
+    if(li)li.style.display=guest?'':'none';
+    if(su)su.style.display=guest?'':'none';
+    // Live prices
+    try{
+      var TC=(typeof tickerCache!=='undefined')?tickerCache:null;
+      if(TC&&!(TC.linear||[]).length&&!(TC.spot||[]).length&&!window.__bxdFetching){
+        window.__bxdFetching=true;
+        bybitGET('/v5/market/tickers',{category:'linear'}).then(function(full){
+          if(full&&full.list&&full.list.length)TC.linear=full.list.filter(function(t){return t.symbol.endsWith('USDT')});
+        }).catch(function(){}).finally(function(){window.__bxdFetching=false});
+      }
+      var list=(TC&&(TC.linear||[]).length?TC.linear:TC?TC.spot:[])||[];
+      document.querySelectorAll('.bxd-mrow').forEach(function(r){
+        var t=list.find(function(x){return x.symbol===r.dataset.sym});
+        if(!t)return;
+        var px=parseFloat(t.lastPrice),pc=parseFloat(t.price24hPcnt)*100;
+        var b=r.querySelector('.bxd-mpx b'),sp=r.querySelector('.bxd-mpx span');
+        if(!isNaN(px))b.textContent=px>=1000?px.toFixed(1):px>=1?px.toFixed(2):px.toFixed(4);
+        if(!isNaN(pc)){sp.textContent=(pc>=0?'+':'')+pc.toFixed(2)+'%';r.classList.toggle('bxd-up',pc>=0);r.classList.toggle('bxd-dn',pc<0);}
+      });
+    }catch(e){}
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initDesk);else initDesk();
+  setTimeout(initDesk,1500);
+  setInterval(tick,2000);
+})();
+</script>
+
+<style id="biexc-v25">
+.bx25-logo{width:46px;height:60px;margin:0 auto 16px;animation:bx25Pulse 1.6s ease-in-out infinite}
+.bx25-logo svg{width:100%;height:100%;display:block}
+@keyframes bx25Pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(.92);opacity:.75}}
+.bx-qr-logo{background:#fff!important;padding:5px}
+.bx-qr-logo svg{width:26px;height:36px;display:block}
+@media(min-width:1024px){
+  .bxd-logo .m{width:28px!important;height:38px!important;background:none!important;border-radius:0!important}
+  .bxd-logo .m svg{width:100%;height:100%;display:block}
+  body:not(.bxd-guest) .bxd-login,body:not(.bxd-guest) .bxd-signup,body:not(.bxd-guest) .bxd-search{display:none!important}
+  nav.bnav .bxd-hbtn,nav.bnav .bxd-logo{align-self:center}
+  nav.bnav .tnav{display:flex!important;padding:0!important;margin:0 0 0 8px!important;max-width:none!important;gap:6px;height:64px;flex:none;align-items:center}
+  nav.bnav .tnav .sbar{flex:none;width:230px;padding:8px 14px}
+  body.bxd-guest nav.bnav .tnav{display:none!important}
+  #sc-home .hbtns{max-width:560px}
+  #sc-home .hbtns .hbm,#sc-home .hbtns .hbs{flex:1 1 0!important;min-width:0}
+  #sc-home .hbtns .hbs-icon{flex:none}
+  #sc-home .hacts{max-width:560px}
+}
+@media(prefers-reduced-motion:reduce){.bx25-logo{animation:none}}
+</style>
+<script id="biexc-v25-js">
+(function(){
+  function desk(){try{return matchMedia('(min-width:1024px)').matches}catch(e){return false}}
+  /* desktop header: real clicks only, no mobile drag-to-nearest-tab (it hijacked header buttons) */
+  document.addEventListener('pointerdown',function(e){if(!desk())return;var bar=document.querySelector('nav.bnav');if(bar&&bar.contains(e.target))e.stopPropagation();},true);
+  var home=null,anchor=null;
+  function place(){
+    var bar=document.querySelector('nav.bnav'),t=document.querySelector('.tnav');if(!bar||!t)return;
+    if(!home&&t.parentNode!==bar){home=t.parentNode;anchor=t.nextElementSibling;}
+    if(desk()){var sp=bar.querySelector('.bxd-spacer');if(sp&&t.parentNode!==bar)sp.after(t);}
+    else if(home&&t.parentNode!==home){home.insertBefore(t,anchor&&anchor.parentNode===home?anchor:home.firstChild);}
+  }
+  function sync(){
+    document.body.classList.toggle('bxd-guest',!(window.currentUser||window.currentFbUser));
+    place();
+  }
+  window.bx25Sync=sync;
+  try{matchMedia('(min-width:1024px)').addEventListener('change',sync)}catch(e){}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',sync);else sync();
+  setTimeout(sync,1600);setInterval(sync,500);
+})();
+</script>
+
+<style id="biexc-v26">
+@media(min-width:1024px){
+  .bxd-logo{margin-right:28px!important;gap:8px!important}
+  .bxd-logo .m{width:20px!important;height:27px!important}
+  .bxd-logo .w{font-size:18px!important;letter-spacing:1px!important}
+  nav.bnav .tnav .ibt[aria-label="Scan"]{display:none!important}
+  .bxd-hero-r{display:flex;flex-direction:column;gap:18px;min-width:0}
+  .bx26-qr{display:flex;align-items:center;gap:20px;background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:18px 20px}
+  .bx26-qr .bx26-box{position:relative;width:132px;height:132px;flex:none;background:#fff;border-radius:12px;padding:6px;overflow:hidden}
+  .bx26-qr .bx26-box img{width:100%;height:100%;display:block}
+  .bx26-qr .bx26-logo{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:30px;height:30px;background:#fff;border-radius:7px;padding:3px 6px}
+  .bx26-qr .bx26-logo svg{width:100%;height:100%;display:block}
+  .bx26-qr .bx26-scan{position:absolute;left:6px;right:6px;height:2px;top:8px;background:linear-gradient(90deg,transparent,#F3BA12,transparent);box-shadow:0 0 10px #F3BA12;animation:bx26Scan 2.2s ease-in-out infinite}
+  .bx26-qr .bx26-done{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(255,255,255,.94);color:#111;font-weight:700;font-size:13px;text-align:center;padding:8px}
+  .bx26-qr.ok .bx26-done{display:flex}
+  .bx26-qr b{display:block;font-size:16px;color:var(--text);margin-bottom:6px}
+  .bx26-qr p{margin:0 0 8px;font-size:13px;line-height:1.5;color:var(--text2)}
+  .bx26-qr small{font-size:12px;color:var(--text2)}
+  .bx26-qr .bx26-re{border:0;background:none;color:#F3BA12;font-weight:700;cursor:pointer;padding:0;font-size:12px;margin-left:6px}
+  @keyframes bx26Scan{0%,100%{top:8px}50%{top:calc(100% - 10px)}}
+}
+@media(max-width:1023px){.bx26-qr{display:none!important}}
+@media(prefers-reduced-motion:reduce){.bx26-qr .bx26-scan{animation:none}}
+</style>
+<script id="biexc-v26-js">
+(function(){
+  var S={id:null,exp:0,busy:false,ref:null};
+  function desk(){try{return matchMedia('(min-width:1024px)').matches}catch(e){return false}}
+  function guest(){return !(window.currentUser||window.currentFbUser)}
+  function card(){
+    var c=document.querySelector('.bx26-qr');if(c)return c;
+    var mk=document.querySelector('.bxd-hero .bxd-mktcard');if(!mk)return null;
+    var col=document.createElement('div');col.className='bxd-hero-r';mk.parentNode.insertBefore(col,mk);col.appendChild(mk);
+    c=document.createElement('div');c.className='bx26-qr';
+    c.innerHTML='<div class="bx26-box"><img alt="BIEXC login QR code"><div class="bx26-logo">'+"<svg viewBox=\"248 112 530 800\" xmlns=\"http://www.w3.org/2000/svg\" aria-hidden=\"true\" focusable=\"false\"><g fill=\"#F3BA12\"><polygon points=\"512,118 669,275 512,432 355,275\"/><polygon points=\"399,365 545,512 399,659 252,512\"/><polygon points=\"627,366 773,512 627,658 537,568 591,512 536,457\"/><polygon points=\"513,592 669,749 513,906 357,749\"/></g></svg>"+'</div><div class="bx26-scan"></div><div class="bx26-done">Logging you in…</div></div>'
+      +'<div><b>Log in with QR</b><p>Open the BIEXC app on your phone, scan this code and tap Confirm — you will be logged in here automatically.</p><small class="bx26-t"></small><button class="bx26-re" type="button">Refresh</button></div>';
+    c.querySelector('.bx26-re').onclick=function(){start(true)};
+    col.insertBefore(c,mk);return c;
+  }
+  function stop(){try{if(S.ref&&window._fb)_fb.off(S.ref)}catch(e){}S.ref=null;}
+  function start(force){
+    var c=card();if(!c||!window._fb||!_fb.db)return;
+    if(!force&&S.id&&Date.now()<S.exp)return;
+    stop();S.busy=false;c.classList.remove('ok');
+    S.id='qr_'+Date.now()+'_'+Math.random().toString(36).slice(2,10);S.exp=Date.now()+180000;
+    var url=location.origin+location.pathname+'?qr='+S.id;
+    c.querySelector('img').src='https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=4&ecc=H&data='+encodeURIComponent(url);
+    try{
+      S.ref=_fb.ref(_fb.db,'qrLogin/'+S.id);var myId=S.id;
+      _fb.set(S.ref,{status:'pending',ts:Date.now()});
+      _fb.onValue(S.ref,function(snap){
+        var v=snap.val();if(!v||myId!==S.id)return;
+        if(v.status==='confirmed'&&v.token&&!S.busy){
+          S.busy=true;c.classList.add('ok');
+          _fb.signInWithCustomToken(_fb.auth,v.token).then(function(){try{_fb.set(_fb.ref(_fb.db,'qrLogin/'+myId),null)}catch(e){}stop();})
+          .catch(function(){c.classList.remove('ok');try{toast('QR login failed, try again')}catch(e){}start(true);});
+        }
+      });
+    }catch(e){}
+  }
+  function tick(){
+    var c=document.querySelector('.bx26-qr')||card();
+    var home=document.getElementById('sc-home');
+    var want=desk()&&guest()&&home&&home.classList.contains('active');
+    if(!want){if(S.ref){stop();S.id=null;}return;}
+    if(!S.id||Date.now()>=S.exp)start(true);
+    var t=c&&c.querySelector('.bx26-t');if(t){var l=Math.max(0,Math.round((S.exp-Date.now())/1000));t.textContent='Refreshes in '+Math.floor(l/60)+':'+String(l%60).padStart(2,'0');}
+  }
+  setInterval(tick,1000);
+})();
+</script>
+
+<div id="bxQrConfirm" class="bx-qrc">
+  <div class="bx-qrc-card">
+    <div class="bx-qrc-ico"><i class="fas fa-laptop"></i></div>
+    <div class="bx-qrc-t" id="bxQrcTitle">Log in on laptop?</div>
+    <div class="bx-qrc-s" id="bxQrcSub">You scanned a BIEXC login QR code. Confirm to log in to your account on the other device. Never confirm a code you did not scan yourself.</div>
+    <div class="bx-qrc-btns">
+      <button class="bx-qrc-no" onclick="bxQrAnswer(false)">Cancel</button>
+      <button class="bx-qrc-yes" id="bxQrcYes" onclick="bxQrAnswer(true)">Confirm Login</button>
+    </div>
+  </div>
+</div>
+
+
+<script>
+/* ═══ BIEXC QR LOGIN (desktop shows QR, phone confirms) ═══ */
+(function(){
+  var QR={id:null,off:null,timer:null,exp:0,busy:false};
+  function desktop(){ try{return matchMedia('(min-width:1024px)').matches}catch(e){return false} }
+  function backend(){ return window.__BACKEND_URL__||'https://p2p-telegram-bot.onrender.com'; }
+
+  function bxQrStop(){
+    try{ if(QR.off&&window._fb) _fb.off(_fb.ref(_fb.db,'qrLogin/'+QR.id)); }catch(e){}
+    QR.off=null;
+    if(QR.timer){clearInterval(QR.timer);QR.timer=null;}
+  }
+  window.bxQrStop=bxQrStop;
+
+  function bxQrEnsure(){
+    var panel=document.getElementById('bxQrPanel');
+    if(panel) return panel;
+    var host=document.body;
+    if(!host) return null;
+    panel=document.createElement('div');
+    panel.className='bx-qr-panel'; panel.id='bxQrPanel';
+    panel.innerHTML='<div class="bx-qr-title"><i class="fas fa-qrcode" style="color:#FF8C2D;margin-right:8px"></i>Log in with QR</div>'
+      +'<div class="bx-qr-box" id="bxQrBox"><img id="bxQrImg" alt="BIEXC login QR"><div class="bx-qr-logo"><svg viewBox="248 112 530 800" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false"><g fill="#F3BA12"><polygon points="512,118 669,275 512,432 355,275"/><polygon points="399,365 545,512 399,659 252,512"/><polygon points="627,366 773,512 627,658 537,568 591,512 536,457"/><polygon points="513,592 669,749 513,906 357,749"/></g></svg></div><div class="bx-qr-scan"></div><div class="bx-qr-corner"></div><div class="bx-qr-success" id="bxQrSuccess"><i class="fas fa-check"></i></div></div>'
+      +'<div class="bx-qr-hint">Open the <b>BIEXC app</b> on your phone and scan this code to log in instantly</div>'
+      +'<div class="bx-qr-timer" id="bxQrTimer"></div>';
+    host.appendChild(panel);
+    return panel;
+  }
+  function bxQrStart(){
+    var panel=bxQrEnsure();
+    if(!panel) return;
+    var ov=document.getElementById('authOverlay');
+    var open=ov&&ov.classList.contains('show');
+    if(!desktop()||!open||window.currentUser||window.currentFbUser){ panel.style.display='none'; bxQrStop(); return; }
+    panel.style.display='flex';
+    panel.style.visibility='visible';
+    bxQrStop();
+    QR.id='qr_'+Date.now()+'_'+Math.random().toString(36).slice(2,10);
+    QR.exp=Date.now()+180000;
+    var url=location.origin+location.pathname+'?qr='+QR.id;
+    var img=document.getElementById('bxQrImg');
+    img.src='https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=6&data='+encodeURIComponent(url);
+    document.getElementById('bxQrSuccess').classList.remove('on');
+    try{
+      _fb.set(_fb.ref(_fb.db,'qrLogin/'+QR.id),{status:'pending',ts:Date.now()});
+      _fb.onValue(_fb.ref(_fb.db,'qrLogin/'+QR.id),function(snap){
+        var v=snap.val();
+        if(!v) return;
+        if(v.status==='confirmed'&&v.token&&!QR.busy){
+          QR.busy=true;
+          document.getElementById('bxQrSuccess').classList.add('on');
+          try{ _fb.remove&&0; }catch(e){}
+          _fb.signInWithCustomToken(_fb.auth,v.token).then(function(){
+            try{ _fb.set(_fb.ref(_fb.db,'qrLogin/'+QR.id),null); }catch(e){}
+            bxQrStop();
+          }).catch(function(e){
+            QR.busy=false;
+            document.getElementById('bxQrSuccess').classList.remove('on');
+            try{ toast&&toast('QR login failed, try again'); }catch(_){}
+            bxQrStart();
+          });
+        }
+      });
+    }catch(e){}
+    var tEl=document.getElementById('bxQrTimer');
+    QR.timer=setInterval(function(){
+      var ov2=document.getElementById('authOverlay');
+      if(!ov2||!ov2.classList.contains('show')||window.currentUser){ panel.style.display='none'; bxQrStop(); return; }
+      var left=Math.max(0,Math.round((QR.exp-Date.now())/1000));
+      if(left<=0){ bxQrStart(); return; }
+      tEl.textContent='Code refreshes in '+Math.floor(left/60)+':'+String(left%60).padStart(2,'0');
+    },1000);
+  }
+  window.bxQrStart=bxQrStart;
+
+  // hook openAuth/closeAuth
+  if(typeof window.openAuth==='function'){
+    var _oa=window.openAuth;
+    window.openAuth=function(t){ _oa(t); setTimeout(bxQrStart,60); };
+  }
+  if(typeof window.closeAuth==='function'){
+    var _ca=window.closeAuth;
+    window.closeAuth=function(){ _ca(); bxQrStop(); };
+  }
+  window.addEventListener('load',function(){
+    setTimeout(bxQrStart,800);
+    var ov=document.getElementById('authOverlay');
+    if(ov&&window.MutationObserver){
+      new MutationObserver(function(){
+        if(ov.classList.contains('show')) setTimeout(bxQrStart,80);
+        else { var pn=document.getElementById('bxQrPanel'); if(pn) pn.style.display='none'; bxQrStop(); }
+      }).observe(ov,{attributes:true,attributeFilter:['class']});
+    }
+  });
+
+  /* ── phone side: ?qr= scanned → confirmation popup ── */
+  var qrParam=null;
+  try{ qrParam=new URLSearchParams(location.search).get('qr'); }catch(e){}
+  if(qrParam && /^qr_[0-9]+_[a-z0-9]+$/i.test(qrParam)){
+    window.__bxQrPending=qrParam;
+    try{ history.replaceState(null,'',location.pathname); }catch(e){}
+    var tries=0;
+    var wait=setInterval(function(){
+      tries++;
+      if(window.currentUser||window.currentFbUser){
+        clearInterval(wait);
+        document.getElementById('bxQrConfirm').classList.add('show');
+      }else if(tries>40){
+        clearInterval(wait);
+        try{ toast&&toast('Please log in first, then scan the QR again'); }catch(e){}
+        try{ openAuth('signin'); }catch(e){}
+      }
+    },500);
+  }
+  window.bxQrAnswer=async function(yes){
+    var pop=document.getElementById('bxQrConfirm');
+    var id=window.__bxQrPending;
+    if(!yes){ pop.classList.remove('show'); window.__bxQrPending=null; return; }
+    var btn=document.getElementById('bxQrcYes');
+    btn.disabled=true; btn.textContent='Confirming…';
+    try{
+      var u=window.currentFbUser||(_fb&&_fb.auth&&_fb.auth.currentUser);
+      var tok=await u.getIdToken();
+      var r=await fetch(backend()+'/api/qr/approve',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({qrId:id,idToken:tok})});
+      var j=await r.json();
+      if(j&&j.ok){
+        document.getElementById('bxQrcTitle').textContent='Logged in!';
+        document.getElementById('bxQrcSub').textContent='You are now logged in on the other device. You can close this page.';
+        document.querySelector('.bx-qrc-btns').style.display='none';
+        setTimeout(function(){pop.classList.remove('show');},2200);
+      }else{
+        btn.disabled=false; btn.textContent='Confirm Login';
+        try{ toast&&toast(j.error==='expired'?'QR code expired — ask for a new one':'Could not confirm, try again'); }catch(e){}
+      }
+    }catch(e){
+      btn.disabled=false; btn.textContent='Confirm Login';
+      try{ toast&&toast('Network error, try again'); }catch(_){}
+    }
+    window.__bxQrPending=null;
+  };
+})();
+</script>
+
 </body>
