@@ -900,14 +900,14 @@ body.light .bx-qrc-no{background:#f1f3f7;color:#0b0e11}
 </head>
 <body><style id="bx22-loading-style">
 #bx22Loader{position:fixed;inset:0;z-index:2147483000;display:grid;place-items:center;background:var(--bg);color:var(--text);transition:opacity .28s ease;}
-#bx22Loader[hidden]{display:none!important}#bx22Loader.bx22-leaving{opacity:0;pointer-events:none}
+#bx22Loader[hidden]{display:none!important}#bx22Loader .bx25-logo{width:46px;height:60px;margin:0 auto 16px}#bx22Loader .bx25-logo svg{width:46px;height:60px;display:block}#bx22Loader.bx22-leaving{opacity:0;pointer-events:none}
 .bx22-load-inner{text-align:center;width:240px}.bx22-mark{position:relative;display:inline-block;font-size:44px;line-height:1.15;font-weight:850;letter-spacing:0;color:var(--text);margin-bottom:26px}
 .bx22-mark::after{content:'BIEXC';position:absolute;inset:0;color:var(--orange);clip-path:inset(0 100% 0 0);animation:bx22Sweep 1.8s ease-in-out infinite}
 .bx22-track{width:100px;height:3px;background:var(--border);overflow:hidden;margin:0 auto;border-radius:3px}.bx22-track::after{content:'';display:block;width:40%;height:100%;background:var(--orange);animation:bx22Travel 1.4s ease-in-out infinite}
 #bx22Status{margin:20px 0 0;font-size:12px;color:var(--text2)}#bx22Retry{margin-top:20px;padding:10px 20px;border:1px solid var(--border);border-radius:8px;background:var(--bg2);color:var(--text);font:inherit;font-size:13px}
 @keyframes bx22Sweep{0%{clip-path:inset(0 100% 0 0)}50%{clip-path:inset(0 0 0 0)}100%{clip-path:inset(0 0 0 100%)}}@keyframes bx22Travel{0%{transform:translateX(-100%)}100%{transform:translateX(350%)}}
 @media(prefers-reduced-motion:reduce){.bx22-mark::after,.bx22-track::after{animation:none}.bx22-mark::after{clip-path:inset(0)}#bx22Loader{transition:none}}
-</style><div id="bx22Loader" role="status" aria-live="polite" aria-label="Loading BIEXC"><div class="bx22-load-inner"><div class="bx25-logo"><svg viewBox="248 112 530 800" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false"><g fill="#F3BA12"><polygon points="512,118 669,275 512,432 355,275"/><polygon points="399,365 545,512 399,659 252,512"/><polygon points="627,366 773,512 627,658 537,568 591,512 536,457"/><polygon points="513,592 669,749 513,906 357,749"/></g></svg></div><div class="bx22-mark" aria-hidden="true">BIEXC</div><div class="bx22-track" aria-hidden="true"></div><p id="bx22Status">Loading your account…</p><button id="bx22Retry" hidden onclick="location.reload()">Retry</button></div></div>
+</style><div id="bx22Loader" role="status" aria-live="polite" aria-label="Loading BIEXC"><div class="bx22-load-inner"><div class="bx25-logo" style="width:46px;height:60px;margin:0 auto 16px"><svg width="46" height="60" style="width:46px;height:60px;display:block" viewBox="248 112 530 800" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false"><g fill="#F3BA12"><polygon points="512,118 669,275 512,432 355,275"/><polygon points="399,365 545,512 399,659 252,512"/><polygon points="627,366 773,512 627,658 537,568 591,512 536,457"/><polygon points="513,592 669,749 513,906 357,749"/></g></svg></div><div class="bx22-mark" aria-hidden="true">BIEXC</div><div class="bx22-track" aria-hidden="true"></div><p id="bx22Status">Loading your account…</p><button id="bx22Retry" hidden onclick="location.reload()">Retry</button></div></div>
 <script>document.body.classList.toggle('light',window.__bxTheme!=='dark');(function(){var t=document.querySelector('meta[name="theme-color"]');if(t)t.setAttribute('content',window.__bxTheme==='dark'?'#000000':'#ffffff');})();</script>
 <div id="__diag" style="position:fixed;top:0;left:0;right:0;z-index:99999;background:#400;color:#fff;font:12px monospace;padding:8px;display:none;white-space:pre-wrap;max-height:50vh;overflow:auto"></div>
 <script>
@@ -13079,15 +13079,15 @@ body.light #bxq{--a-bg:#fff;--a-card:#fff;--a-card2:#f3f4f6;--a-inp:#f3f4f6;--a-
 
 <script id="bx22-home-loading">
 (function(){
- var resolved=false,probe=null,authHook=null,lastKey='',shownAt=Date.now(),leaving=null;
+ var resolved=false,probe=null,authHook=null,lastKey='',shownAt=Date.now(),leaving=null,revealed={};
  function state(){var a=window._fb&&window._fb.auth;var u=a&&a.currentUser;var p=window.currentFbUser;var w=window.WalletCore;var id=u&&u.uid||p&&p.firebaseUid||w&&w.uid||null;var h=w&&w.homeLoaded;
  return {id:id,ready:!!(id&&p&&p.firebaseUid===id&&w&&w.uid===id&&w.ready&&h&&h.uid===id&&h.orders&&h.history&&h.earn&&h.prefs),guest:resolved&&!id};}
  window.bx22HomeState=state;
  function sync(){var api=window._fb,a=api&&api.auth;if(a&&a!==authHook&&typeof api.onAuthStateChanged==='function'){authHook=a;api.onAuthStateChanged(a,function(){resolved=true;sync()})}if(a&&a!==probe&&typeof a.authStateReady==='function'){probe=a;a.authStateReady().then(function(){resolved=true;sync()},function(){document.getElementById('bx22Status').textContent='Unable to connect. Please retry.';document.getElementById('bx22Retry').hidden=false;});}
  var t=state(),welcome=document.querySelector('.bx21-welcome'),normal=document.getElementById('bx21LegacyHome'),loader=document.getElementById('bx22Loader');
  if(welcome)welcome.hidden=!!t.id;if(normal)normal.hidden=!t.id;
- var key=t.id||'guest';if(key!==lastKey){lastKey=key;shownAt=Date.now();clearTimeout(leaving);leaving=null;loader.classList.remove('bx22-leaving');loader.hidden=false;}
- if(t.ready||t.guest){if(!loader.hidden&&!leaving){loader.classList.add('bx22-leaving');leaving=setTimeout(function(){var now=state();if(now.ready||now.guest)loader.hidden=true;leaving=null},280);}}
+ var key=t.id||'guest';if(key!==lastKey){lastKey=key;if(!revealed[key]&&!(key==='guest'&&revealed.any)){shownAt=Date.now();clearTimeout(leaving);leaving=null;loader.classList.remove('bx22-leaving');loader.hidden=false;}}if(revealed[key]||(key==='guest'&&revealed.any)){if(!loader.hidden&&!leaving){loader.classList.add('bx22-leaving');leaving=setTimeout(function(){loader.hidden=true;leaving=null},280)}return;}
+ if(t.ready||t.guest){if(!loader.hidden&&!leaving){loader.classList.add('bx22-leaving');leaving=setTimeout(function(){var now=state();if(now.ready||now.guest){loader.hidden=true;revealed[now.id||'guest']=1;if(now.id)revealed.any=1;}leaving=null},280);}}
  else{clearTimeout(leaving);leaving=null;loader.hidden=false;loader.classList.remove('bx22-leaving');document.getElementById('bx22Retry').hidden=Date.now()-shownAt<18000;document.getElementById('bx22Status').textContent=Date.now()-shownAt>18000?'Connection is taking longer than usual.':'Loading your account…';}
  }
  var user=window.onFirebaseUser;window.onFirebaseUser=function(u){resolved=true;sync();var r=user&&user.apply(this,arguments);Promise.resolve(r).then(sync,sync);return r};
@@ -13345,53 +13345,7 @@ body.light #bxq{--a-bg:#fff;--a-card:#fff;--a-card2:#f3f4f6;--a-inp:#f3f4f6;--a-
 @media(max-width:1023px){.bx26-qr{display:none!important}}
 @media(prefers-reduced-motion:reduce){.bx26-qr .bx26-scan{animation:none}}
 </style>
-<script id="biexc-v26-js">
-(function(){
-  var S={id:null,exp:0,busy:false,ref:null};
-  function desk(){try{return matchMedia('(min-width:1024px)').matches}catch(e){return false}}
-  function guest(){return !(window.currentUser||window.currentFbUser)}
-  function card(){
-    var c=document.querySelector('.bx26-qr');if(c)return c;
-    var mk=document.querySelector('.bxd-hero .bxd-mktcard');if(!mk)return null;
-    var col=document.createElement('div');col.className='bxd-hero-r';mk.parentNode.insertBefore(col,mk);col.appendChild(mk);
-    c=document.createElement('div');c.className='bx26-qr';
-    c.innerHTML='<div class="bx26-box"><img alt="BIEXC login QR code"><div class="bx26-logo">'+"<svg viewBox=\"248 112 530 800\" xmlns=\"http://www.w3.org/2000/svg\" aria-hidden=\"true\" focusable=\"false\"><g fill=\"#F3BA12\"><polygon points=\"512,118 669,275 512,432 355,275\"/><polygon points=\"399,365 545,512 399,659 252,512\"/><polygon points=\"627,366 773,512 627,658 537,568 591,512 536,457\"/><polygon points=\"513,592 669,749 513,906 357,749\"/></g></svg>"+'</div><div class="bx26-scan"></div><div class="bx26-done">Logging you in…</div></div>'
-      +'<div><b>Log in with QR</b><p>Open the BIEXC app on your phone, scan this code and tap Confirm — you will be logged in here automatically.</p><small class="bx26-t"></small><button class="bx26-re" type="button">Refresh</button></div>';
-    c.querySelector('.bx26-re').onclick=function(){start(true)};
-    col.insertBefore(c,mk);return c;
-  }
-  function stop(){try{if(S.ref&&window._fb)_fb.off(S.ref)}catch(e){}S.ref=null;}
-  function start(force){
-    var c=card();if(!c||!window._fb||!_fb.db)return;
-    if(!force&&S.id&&Date.now()<S.exp)return;
-    stop();S.busy=false;c.classList.remove('ok');
-    S.id='qr_'+Date.now()+'_'+Math.random().toString(36).slice(2,10);S.exp=Date.now()+180000;
-    var url=location.origin+location.pathname+'?qr='+S.id;
-    c.querySelector('img').src='https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=4&ecc=H&data='+encodeURIComponent(url);
-    try{
-      S.ref=_fb.ref(_fb.db,'qrLogin/'+S.id);var myId=S.id;
-      _fb.set(S.ref,{status:'pending',ts:Date.now()});
-      _fb.onValue(S.ref,function(snap){
-        var v=snap.val();if(!v||myId!==S.id)return;
-        if(v.status==='confirmed'&&v.token&&!S.busy){
-          S.busy=true;c.classList.add('ok');
-          _fb.signInWithCustomToken(_fb.auth,v.token).then(function(){try{_fb.set(_fb.ref(_fb.db,'qrLogin/'+myId),null)}catch(e){}stop();})
-          .catch(function(){c.classList.remove('ok');try{toast('QR login failed, try again')}catch(e){}start(true);});
-        }
-      });
-    }catch(e){}
-  }
-  function tick(){
-    var c=document.querySelector('.bx26-qr')||card();
-    var home=document.getElementById('sc-home');
-    var want=desk()&&guest()&&home&&home.classList.contains('active');
-    if(!want){if(S.ref){stop();S.id=null;}return;}
-    if(!S.id||Date.now()>=S.exp)start(true);
-    var t=c&&c.querySelector('.bx26-t');if(t){var l=Math.max(0,Math.round((S.exp-Date.now())/1000));t.textContent='Refreshes in '+Math.floor(l/60)+':'+String(l%60).padStart(2,'0');}
-  }
-  setInterval(tick,1000);
-})();
-</script>
+
 
 <div id="bxQrConfirm" class="bx-qrc">
   <div class="bx-qrc-card">
@@ -13406,146 +13360,303 @@ body.light #bxq{--a-bg:#fff;--a-card:#fff;--a-card2:#f3f4f6;--a-inp:#f3f4f6;--a-
 </div>
 
 
-<script>
-/* ═══ BIEXC QR LOGIN (desktop shows QR, phone confirms) ═══ */
+
+
+<style id="biexc-v27">
+/* ═══ V27 QR LOGIN (laptop shows code, BIEXC phone app scans & confirms) ═══ */
+.bx27-card,#bx27QrBtn,#bx27Modal{display:none}
+@media(min-width:1024px){
+  .bx27-card{display:block;background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:18px 20px}
+  body:not(.bxd-guest) .bx27-card{display:none}
+  .bx27-row{display:flex;align-items:center;gap:16px}
+  .bx27-ico{width:52px;height:52px;flex:none;border-radius:14px;display:grid;place-items:center;font-size:24px;color:#F3BA12;background:rgba(243,186,18,.12)}
+  .bx27-card b{display:block;font-size:16px;color:var(--text);margin-bottom:4px}
+  .bx27-card p{margin:0;font-size:13px;line-height:1.5;color:var(--text2)}
+  .bx27-show{margin-left:auto;flex:none;height:40px;padding:0 18px;border-radius:10px;border:0;background:#F3BA12;color:#111;font-weight:700;font-size:14px;cursor:pointer;display:flex;align-items:center;gap:8px}
+  .bx27-show:hover{background:#ffcb2f}
+  .bx27-card .bx27-body{display:none;align-items:center;gap:20px;margin-top:16px}
+  .bx27-card.open .bx27-body{display:flex;animation:bx27In .32s cubic-bezier(.22,1,.36,1)}
+  .bx27-card.open .bx27-show{display:none}
+  .bx27-steps{margin:0;padding:0;list-style:none;font-size:13px;line-height:1.5;color:var(--text2);display:grid;gap:6px}
+  .bx27-steps li{display:flex;gap:8px}.bx27-steps li span{flex:none;width:20px;height:20px;border-radius:50%;background:var(--bg);border:1px solid var(--border);font-size:11px;font-weight:700;display:grid;place-items:center;color:var(--text)}
+  .bx27-meta{margin-top:10px;font-size:12px;color:var(--text2);display:flex;gap:10px;align-items:center}
+  .bx27-link{border:0;background:none;color:#F3BA12;font-weight:700;cursor:pointer;padding:0;font-size:12px}
+  #bxqWrap #bx27QrBtn{display:flex}
+  #bx27Modal{position:fixed;inset:0;z-index:2147483200;align-items:center;justify-content:center;background:rgba(0,0,0,.55)}
+  #bx27Modal.show{display:flex}
+  #bx27Modal .bx27-dlg{width:400px;max-width:calc(100vw - 32px);background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:22px;padding:24px 26px 22px;text-align:center;box-shadow:0 30px 80px -20px rgba(0,0,0,.5);animation:bx27In .32s cubic-bezier(.22,1,.36,1)}
+  #bx27Modal .bx27-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+  #bx27Modal .bx27-top b{font-size:19px}
+  #bx27Modal .bx27-x{width:34px;height:34px;border-radius:50%;border:0;background:var(--bg2);color:var(--text);cursor:pointer;font-size:15px}
+  #bx27Modal .bx27-sub{font-size:13px;color:var(--text2);margin:0 0 16px;text-align:left}
+  #bx27Modal .bx27-box{margin:0 auto}
+  #bx27Modal .bx27-steps{text-align:left;margin-top:16px}
+  #bx27Modal .bx27-meta{justify-content:center}
+  #bx27Modal .bx27-back{margin-top:16px;width:100%;height:44px;border-radius:12px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-weight:600;font-size:14px;cursor:pointer}
+}
+.bx27-box{position:relative;width:176px;height:176px;flex:none;background:#fff;border-radius:14px;padding:8px;overflow:hidden;box-shadow:0 0 0 1px rgba(0,0,0,.06)}
+.bx27-box img{width:100%;height:100%;display:block;opacity:0;transition:opacity .25s}
+.bx27-box img.on{opacity:1}
+.bx27-logo{position:absolute;left:50%;top:50%;width:34px;height:34px;margin:-17px 0 0 -17px;background:#fff;border-radius:8px;padding:4px 7px;box-sizing:border-box;display:none}
+.bx27-box.ready .bx27-logo{display:block}
+.bx27-logo svg{width:100%;height:100%;display:block}
+.bx27-corner{position:absolute;inset:4px;pointer-events:none;background:
+ linear-gradient(#F3BA12,#F3BA12) top left/18px 3px no-repeat,linear-gradient(#F3BA12,#F3BA12) top left/3px 18px no-repeat,
+ linear-gradient(#F3BA12,#F3BA12) top right/18px 3px no-repeat,linear-gradient(#F3BA12,#F3BA12) top right/3px 18px no-repeat,
+ linear-gradient(#F3BA12,#F3BA12) bottom left/18px 3px no-repeat,linear-gradient(#F3BA12,#F3BA12) bottom left/3px 18px no-repeat,
+ linear-gradient(#F3BA12,#F3BA12) bottom right/18px 3px no-repeat,linear-gradient(#F3BA12,#F3BA12) bottom right/3px 18px no-repeat;border-radius:10px}
+.bx27-scan{position:absolute;left:10px;right:10px;height:2px;top:10px;background:linear-gradient(90deg,transparent,#F3BA12,transparent);box-shadow:0 0 10px #F3BA12;opacity:.7;display:none;animation:bx27Scan 2.4s ease-in-out infinite}
+.bx27-box.ready .bx27-scan{display:block}
+.bx27-ov{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:rgba(255,255,255,.95);color:#111;font-size:13px;font-weight:700;text-align:center;padding:12px}
+.bx27-ov i{font-size:26px;color:#F3BA12}
+.bx27-ov button{border:0;border-radius:8px;background:#F3BA12;color:#111;font-weight:700;font-size:12px;padding:7px 14px;cursor:pointer}
+.bx27-box[data-s="loading"] .bx27-ov,.bx27-box[data-s="scanned"] .bx27-ov,.bx27-box[data-s="login"] .bx27-ov,.bx27-box[data-s="expired"] .bx27-ov,.bx27-box[data-s="error"] .bx27-ov{display:flex}
+.bx27-spin{width:26px;height:26px;border-radius:50%;border:3px solid rgba(243,186,18,.25);border-top-color:#F3BA12;animation:bx27Rot .8s linear infinite}
+@keyframes bx27Scan{0%,100%{top:10px}50%{top:calc(100% - 12px)}}
+@keyframes bx27Rot{to{transform:rotate(360deg)}}
+@keyframes bx27In{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.bx27-scan,.bx27-spin,.bx27-card.open .bx27-body,#bx27Modal .bx27-dlg{animation:none}}
+</style>
+<div id="bx27Modal" role="dialog" aria-modal="true" aria-label="Log in with QR" onclick="if(event.target===this)bx27CloseModal()">
+  <div class="bx27-dlg">
+    <div class="bx27-top"><b>Log in with QR</b><button class="bx27-x" type="button" onclick="bx27CloseModal()" aria-label="Close"><i class="fas fa-xmark"></i></button></div>
+    <p class="bx27-sub">Scan this code with the BIEXC app on your phone.</p>
+    <div class="bx27-slot"></div>
+    <button class="bx27-back" type="button" onclick="bx27CloseModal()"><i class="fas fa-key" style="margin-right:8px"></i>Log in with password instead</button>
+  </div>
+</div>
+<script id="biexc-v27-js">
 (function(){
-  var QR={id:null,off:null,timer:null,exp:0,busy:false};
-  function desktop(){ try{return matchMedia('(min-width:1024px)').matches}catch(e){return false} }
-  function backend(){ return window.__BACKEND_URL__||'https://p2p-telegram-bot.onrender.com'; }
+  var LOGO=window.__BX_LOGO||'';
+  var STEPS='<ol class="bx27-steps"><li><span>1</span>Open the BIEXC app on your phone and log in</li><li><span>2</span>Tap the scan icon at the top of Home</li><li><span>3</span>Point it at this code and tap Confirm</li></ol>';
+  function desk(){try{return matchMedia('(min-width:1024px)').matches}catch(e){return false}}
+  function guest(){return !(window.currentUser||window.currentFbUser||(window._fb&&_fb.auth&&_fb.auth.currentUser))}
+  function api(){return String(window.__BACKEND_URL__||'https://p2p-telegram-bot.onrender.com').replace(/\/$/,'')}
+  function note(m){try{toast(m)}catch(e){}}
+  function post(path,body,ms){var c=new AbortController(),t=setTimeout(function(){c.abort()},ms||20000);
+    return fetch(api()+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body||{}),signal:c.signal})
+      .then(function(r){return r.json()}).catch(function(){return {ok:false,error:'network'}}).finally(function(){clearTimeout(t)})}
+  function boxHTML(){return '<div class="bx27-box" data-s="loading"><img alt="BIEXC login QR code"><div class="bx27-logo">'+LOGO+'</div><div class="bx27-scan"></div><div class="bx27-corner"></div><div class="bx27-ov"></div></div>'}
+  function metaHTML(){return '<div class="bx27-meta"><span class="bx27-t"></span><button class="bx27-link" type="button" data-act="refresh">Refresh</button></div>'}
 
-  function bxQrStop(){
-    try{ if(QR.off&&window._fb) _fb.off(_fb.ref(_fb.db,'qrLogin/'+QR.id)); }catch(e){}
-    QR.off=null;
-    if(QR.timer){clearInterval(QR.timer);QR.timer=null;}
+  /* ── shared QR session engine ── */
+  var Q={gen:0,id:null,secret:null,mode:null,exp:0,state:'idle',url:'',busy:false,poll:null,ref:null,fails:0};
+  function views(){return Array.prototype.slice.call(document.querySelectorAll('.bx27-box'))}
+  function wanted(){
+    if(!desk()||!guest())return false;
+    var m=document.getElementById('bx27Modal');if(m&&m.classList.contains('show'))return true;
+    var c=document.querySelector('.bx27-card.open'),h=document.getElementById('sc-home');
+    return !!(c&&h&&h.classList.contains('active')&&c.offsetParent!==null);
   }
-  window.bxQrStop=bxQrStop;
-
-  function bxQrEnsure(){
-    var panel=document.getElementById('bxQrPanel');
-    if(panel) return panel;
-    var host=document.body;
-    if(!host) return null;
-    panel=document.createElement('div');
-    panel.className='bx-qr-panel'; panel.id='bxQrPanel';
-    panel.innerHTML='<div class="bx-qr-title"><i class="fas fa-qrcode" style="color:#FF8C2D;margin-right:8px"></i>Log in with QR</div>'
-      +'<div class="bx-qr-box" id="bxQrBox"><img id="bxQrImg" alt="BIEXC login QR"><div class="bx-qr-logo"><svg viewBox="248 112 530 800" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false"><g fill="#F3BA12"><polygon points="512,118 669,275 512,432 355,275"/><polygon points="399,365 545,512 399,659 252,512"/><polygon points="627,366 773,512 627,658 537,568 591,512 536,457"/><polygon points="513,592 669,749 513,906 357,749"/></g></svg></div><div class="bx-qr-scan"></div><div class="bx-qr-corner"></div><div class="bx-qr-success" id="bxQrSuccess"><i class="fas fa-check"></i></div></div>'
-      +'<div class="bx-qr-hint">Open the <b>BIEXC app</b> on your phone and scan this code to log in instantly</div>'
-      +'<div class="bx-qr-timer" id="bxQrTimer"></div>';
-    host.appendChild(panel);
-    return panel;
+  function qrSrc(u,alt){var d=encodeURIComponent(u);return alt?'https://quickchart.io/qr?size=360&margin=2&ecLevel=H&text='+d:'https://api.qrserver.com/v1/create-qr-code/?size=360x360&margin=6&ecc=H&data='+d}
+  function paint(){
+    views().forEach(function(b){
+      b.setAttribute('data-s',Q.state);b.classList.toggle('ready',Q.state==='ready');
+      var img=b.querySelector('img');
+      if(Q.url&&img.getAttribute('data-u')!==Q.url){img.classList.remove('on');img.setAttribute('data-u',Q.url);img.onload=function(){img.classList.add('on')};img.onerror=function(){if(!img.getAttribute('data-alt')){img.setAttribute('data-alt','1');img.src=qrSrc(Q.url,true)}};img.removeAttribute('data-alt');img.src=qrSrc(Q.url,false)}
+      var ov=b.querySelector('.bx27-ov'),s=Q.state,h='';
+      if(s==='loading')h='<div class="bx27-spin"></div>Preparing QR code…';
+      else if(s==='scanned')h='<i class="fas fa-mobile-screen-button"></i>Scanned!<br>Tap Confirm on your phone';
+      else if(s==='login')h='<div class="bx27-spin"></div>Logging you in…';
+      else if(s==='expired')h='<i class="fas fa-rotate"></i>QR code expired<button type="button" data-act="refresh">Get new code</button>';
+      else if(s==='error')h='<i class="fas fa-wifi"></i>Could not load QR code<button type="button" data-act="refresh">Try again</button>';
+      if(ov.getAttribute('data-h')!==s){ov.setAttribute('data-h',s);ov.innerHTML=h}
+    });
+    var left=Math.max(0,Math.round((Q.exp-Date.now())/1000));
+    document.querySelectorAll('.bx27-t').forEach(function(t){t.textContent=Q.state==='ready'||Q.state==='scanned'?'Refreshes in '+Math.floor(left/60)+':'+String(left%60).padStart(2,'0'):''});
   }
-  function bxQrStart(){
-    var panel=bxQrEnsure();
-    if(!panel) return;
-    var ov=document.getElementById('authOverlay');
-    var open=ov&&ov.classList.contains('show');
-    if(!desktop()||!open||window.currentUser||window.currentFbUser){ panel.style.display='none'; bxQrStop(); return; }
-    panel.style.display='flex';
-    panel.style.visibility='visible';
-    bxQrStop();
-    QR.id='qr_'+Date.now()+'_'+Math.random().toString(36).slice(2,10);
-    QR.exp=Date.now()+180000;
-    var url=location.origin+location.pathname+'?qr='+QR.id;
-    var img=document.getElementById('bxQrImg');
-    img.src='https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=6&data='+encodeURIComponent(url);
-    document.getElementById('bxQrSuccess').classList.remove('on');
-    try{
-      _fb.set(_fb.ref(_fb.db,'qrLogin/'+QR.id),{status:'pending',ts:Date.now()});
-      _fb.onValue(_fb.ref(_fb.db,'qrLogin/'+QR.id),function(snap){
-        var v=snap.val();
-        if(!v) return;
-        if(v.status==='confirmed'&&v.token&&!QR.busy){
-          QR.busy=true;
-          document.getElementById('bxQrSuccess').classList.add('on');
-          try{ _fb.remove&&0; }catch(e){}
-          _fb.signInWithCustomToken(_fb.auth,v.token).then(function(){
-            try{ _fb.set(_fb.ref(_fb.db,'qrLogin/'+QR.id),null); }catch(e){}
-            bxQrStop();
-          }).catch(function(e){
-            QR.busy=false;
-            document.getElementById('bxQrSuccess').classList.remove('on');
-            try{ toast&&toast('QR login failed, try again'); }catch(_){}
-            bxQrStart();
-          });
-        }
-      });
-    }catch(e){}
-    var tEl=document.getElementById('bxQrTimer');
-    QR.timer=setInterval(function(){
-      var ov2=document.getElementById('authOverlay');
-      if(!ov2||!ov2.classList.contains('show')||window.currentUser){ panel.style.display='none'; bxQrStop(); return; }
-      var left=Math.max(0,Math.round((QR.exp-Date.now())/1000));
-      if(left<=0){ bxQrStart(); return; }
-      tEl.textContent='Code refreshes in '+Math.floor(left/60)+':'+String(left%60).padStart(2,'0');
-    },1000);
+  function stop(){
+    Q.gen++;clearTimeout(Q.poll);Q.poll=null;
+    try{if(Q.ref&&window._fb)_fb.off(Q.ref)}catch(e){}
+    Q.ref=null;Q.id=null;Q.secret=null;Q.url='';Q.busy=false;Q.state='idle';
   }
-  window.bxQrStart=bxQrStart;
-
-  // hook openAuth/closeAuth
-  if(typeof window.openAuth==='function'){
-    var _oa=window.openAuth;
-    window.openAuth=function(t){ _oa(t); setTimeout(bxQrStart,60); };
+  function legacyCreate(gen){
+    var f=window._fb;if(!f||!f.db||!f.ref||!f.set||!f.onValue)return false;
+    var id='qr_'+Date.now()+'_'+Math.random().toString(36).slice(2,12).replace(/[^a-z0-9]/g,'a');
+    var ref=f.ref(f.db,'qrLogin/'+id);
+    Promise.resolve(f.set(ref,{status:'pending',ts:Date.now()})).catch(function(){if(gen===Q.gen){Q.state='error';paint()}});
+    Q.ref=ref;Q.id=id;Q.mode='v1';Q.exp=Date.now()+180000;
+    f.onValue(ref,function(snap){var v=snap.val();if(!v||gen!==Q.gen)return;
+      if(v.status==='confirmed'&&v.token)signIn(v.token,gen);});
+    return true;
   }
-  if(typeof window.closeAuth==='function'){
-    var _ca=window.closeAuth;
-    window.closeAuth=function(){ _ca(); bxQrStop(); };
+  function create(){
+    stop();var gen=Q.gen;Q.state='loading';paint();
+    post('/api/qr/new',{},65000).then(function(r){
+      if(gen!==Q.gen)return;
+      if(r&&r.ok&&r.qrId&&r.secret){Q.id=r.qrId;Q.secret=r.secret;Q.mode='v2';Q.exp=Date.now()+Math.min(r.ttl||180000,180000);}
+      else if(r&&r.error==='too_many'){Q.state='error';paint();return;}
+      else if(!legacyCreate(gen)){Q.state='error';paint();return;}
+      Q.url=location.origin+location.pathname+'?qr='+Q.id;Q.state='ready';Q.fails=0;paint();
+      if(Q.mode==='v2')schedule(gen,1500);
+    });
   }
-  window.addEventListener('load',function(){
-    setTimeout(bxQrStart,800);
-    var ov=document.getElementById('authOverlay');
-    if(ov&&window.MutationObserver){
-      new MutationObserver(function(){
-        if(ov.classList.contains('show')) setTimeout(bxQrStart,80);
-        else { var pn=document.getElementById('bxQrPanel'); if(pn) pn.style.display='none'; bxQrStop(); }
-      }).observe(ov,{attributes:true,attributeFilter:['class']});
+  function schedule(gen,ms){clearTimeout(Q.poll);Q.poll=setTimeout(function(){pollOnce(gen)},ms)}
+  function pollOnce(gen){
+    if(gen!==Q.gen||Q.busy)return;
+    post('/api/qr/poll',{qrId:Q.id,secret:Q.secret},15000).then(function(r){
+      if(gen!==Q.gen)return;
+      if(!r||!r.ok){Q.fails++;return schedule(gen,Q.fails>3?5000:2500)}
+      Q.fails=0;
+      if(r.status==='confirmed'&&r.token)return signIn(r.token,gen);
+      if(r.status==='expired'||r.status==='cancelled'){Q.state='expired';paint();if(r.status==='cancelled')note('Login was cancelled on the phone');return}
+      if(r.status==='scanned'&&Q.state!=='scanned'){Q.state='scanned';paint()}
+      schedule(gen,2000);
+    });
+  }
+  function signIn(token,gen){
+    if(Q.busy)return;Q.busy=true;Q.state='login';paint();
+    var f=window._fb;
+    Promise.resolve().then(function(){return f.signInWithCustomToken(f.auth,token)}).then(function(){
+      if(Q.ref)try{f.set(Q.ref,null)}catch(e){}
+      stop();window.bx27CloseModal();try{closeAuth()}catch(e){}
+      note('Logged in with QR');
+    }).catch(function(){if(gen!==Q.gen)return;Q.busy=false;Q.state='error';paint();note('QR login failed — please try again')});
+  }
+  function tick(){
+    var w=wanted();
+    if(!w){if(Q.state!=='idle')stop();return}
+    if(Q.state==='idle')return create();
+    if((Q.state==='ready'||Q.state==='scanned')&&Date.now()>=Q.exp){
+      if(Q.state==='scanned'){Q.exp=Date.now()+30000}else return create();
     }
-  });
-
-  /* ── phone side: ?qr= scanned → confirmation popup ── */
-  var qrParam=null;
-  try{ qrParam=new URLSearchParams(location.search).get('qr'); }catch(e){}
-  if(qrParam && /^qr_[0-9]+_[a-z0-9]+$/i.test(qrParam)){
-    window.__bxQrPending=qrParam;
-    try{ history.replaceState(null,'',location.pathname); }catch(e){}
-    var tries=0;
-    var wait=setInterval(function(){
-      tries++;
-      if(window.currentUser||window.currentFbUser){
-        clearInterval(wait);
-        document.getElementById('bxQrConfirm').classList.add('show');
-      }else if(tries>40){
-        clearInterval(wait);
-        try{ toast&&toast('Please log in first, then scan the QR again'); }catch(e){}
-        try{ openAuth('signin'); }catch(e){}
-      }
-    },500);
+    paint();
   }
-  window.bxQrAnswer=async function(yes){
-    var pop=document.getElementById('bxQrConfirm');
-    var id=window.__bxQrPending;
-    if(!yes){ pop.classList.remove('show'); window.__bxQrPending=null; return; }
-    var btn=document.getElementById('bxQrcYes');
-    btn.disabled=true; btn.textContent='Confirming…';
-    try{
-      var u=window.currentFbUser||(_fb&&_fb.auth&&_fb.auth.currentUser);
-      var tok=await u.getIdToken();
-      var r=await fetch(backend()+'/api/qr/approve',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({qrId:id,idToken:tok})});
-      var j=await r.json();
-      if(j&&j.ok){
-        document.getElementById('bxQrcTitle').textContent='Logged in!';
-        document.getElementById('bxQrcSub').textContent='You are now logged in on the other device. You can close this page.';
-        document.querySelector('.bx-qrc-btns').style.display='none';
-        setTimeout(function(){pop.classList.remove('show');},2200);
-      }else{
-        btn.disabled=false; btn.textContent='Confirm Login';
-        try{ toast&&toast(j.error==='expired'?'QR code expired — ask for a new one':'Could not confirm, try again'); }catch(e){}
-      }
-    }catch(e){
-      btn.disabled=false; btn.textContent='Confirm Login';
-      try{ toast&&toast('Network error, try again'); }catch(_){}
-    }
-    window.__bxQrPending=null;
+  document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-act="refresh"]');if(b&&b.closest('.bx27-card,#bx27Modal'))create()});
+  setInterval(tick,1000);
+
+  /* ── Home card: button first, QR after click ── */
+  function card(){
+    var c=document.querySelector('.bx27-card');if(c)return c;
+    var mk=document.querySelector('.bxd-hero .bxd-mktcard');if(!mk)return null;
+    var col=mk.parentNode;
+    if(!col.classList.contains('bxd-hero-r')){col=document.createElement('div');col.className='bxd-hero-r';mk.parentNode.insertBefore(col,mk);col.appendChild(mk);}
+    var old=col.querySelector('.bx26-qr');if(old)old.remove();
+    c=document.createElement('div');c.className='bx27-card';
+    c.innerHTML='<div class="bx27-row"><div class="bx27-ico"><i class="fas fa-qrcode"></i></div><div><b>Log in with QR</b><p>Scan with the BIEXC app on your phone — no password needed.</p></div><button class="bx27-show" type="button"><i class="fas fa-qrcode"></i>Log in with QR</button></div>'
+      +'<div class="bx27-body">'+boxHTML()+'<div>'+STEPS+metaHTML()+'<div class="bx27-meta"><button class="bx27-link" type="button" data-act="hide">Hide QR code</button></div></div></div>';
+    c.querySelector('.bx27-show').onclick=function(){c.classList.add('open');tick()};
+    c.querySelector('[data-act="hide"]').onclick=function(){c.classList.remove('open');tick()};
+    col.insertBefore(c,mk);return c;
+  }
+  setInterval(function(){if(desk())card()},800);
+
+  /* ── Login window: "Log in with QR" option (laptop only) ── */
+  window.bx27OpenModal=function(){
+    var m=document.getElementById('bx27Modal');if(!m||!desk())return;
+    var slot=m.querySelector('.bx27-slot');if(!slot.firstChild)slot.innerHTML=boxHTML()+STEPS+metaHTML();
+    m.classList.add('show');tick();
   };
+  window.bx27CloseModal=function(){var m=document.getElementById('bx27Modal');if(m)m.classList.remove('show');setTimeout(tick,0)};
+  function addAuthBtn(){
+    var w=document.getElementById('bxqWrap');if(!w||document.getElementById('bx27QrBtn'))return;
+    var anchor=document.getElementById('bxqApple')||document.getElementById('bxqG');if(!anchor)return;
+    var b=document.createElement('button');b.type='button';b.className='a-g';b.id='bx27QrBtn';
+    b.innerHTML='<i class="fas fa-qrcode" aria-hidden="true" style="color:#F3BA12"></i>Log in with QR';
+    b.onclick=function(){window.bx27OpenModal()};
+    anchor.after(b);
+  }
+  (function hook(){var w=document.getElementById('bxqWrap');if(!w)return setTimeout(hook,500);addAuthBtn();new MutationObserver(addAuthBtn).observe(w,{childList:true})})();
+  document.addEventListener('keydown',function(e){if(e.key==='Escape')window.bx27CloseModal()});
+
+  /* ── Phone side: confirm a scanned laptop code ── */
+  var pend=null,waitT=null;
+  function idFrom(text){var s=String(text||'').trim(),m=s.match(/[?&#]qr=(qr_[0-9]+_[a-z0-9]+)/i)||s.match(/^(qr_[0-9]+_[a-z0-9]+)$/i);return m?m[1]:null}
+  function fbUser(){return (window._fb&&_fb.auth&&_fb.auth.currentUser)||null}
+  function showConfirm(){
+    var pop=document.getElementById('bxQrConfirm');if(!pop||!pend)return;
+    document.getElementById('bxQrcTitle').textContent='Log in on laptop?';
+    document.getElementById('bxQrcSub').textContent='You scanned a BIEXC login QR code. Confirm to log in to your account on the other device. Never confirm a code you did not scan yourself.';
+    var btns=pop.querySelector('.bx-qrc-btns');if(btns)btns.style.display='';
+    var y=document.getElementById('bxQrcYes');y.disabled=false;y.textContent='Confirm Login';
+    pop.classList.add('show');
+    var u=fbUser();if(u)u.getIdToken().then(function(t){post('/api/qr/scan',{qrId:pend,idToken:t},20000)}).catch(function(){});
+  }
+  window.bxQrHandle=function(id){
+    pend=id;clearInterval(waitT);
+    if(fbUser())return showConfirm();
+    note('Log in on this phone first — the confirmation will open automatically');
+    try{openAuth('signin')}catch(e){}
+    var start=Date.now();
+    waitT=setInterval(function(){if(fbUser()){clearInterval(waitT);setTimeout(showConfirm,600)}else if(Date.now()-start>180000){clearInterval(waitT);pend=null}},700);
+  };
+  window.bxQrAnswer=function(yes){
+    var pop=document.getElementById('bxQrConfirm'),id=pend,u=fbUser();
+    if(!yes){pop.classList.remove('show');pend=null;if(u&&id)u.getIdToken().then(function(t){post('/api/qr/scan',{qrId:id,idToken:t,cancel:true})}).catch(function(){});return}
+    if(!id){pop.classList.remove('show');return}
+    if(!u){pop.classList.remove('show');return window.bxQrHandle(id)}
+    var btn=document.getElementById('bxQrcYes');btn.disabled=true;btn.textContent='Confirming…';
+    u.getIdToken().then(function(t){return post('/api/qr/approve',{qrId:id,idToken:t},65000)}).then(function(j){
+      if(j&&j.ok){
+        pend=null;
+        document.getElementById('bxQrcTitle').textContent='Logged in!';
+        document.getElementById('bxQrcSub').textContent='Your laptop is now logged in to your BIEXC account.';
+        pop.querySelector('.bx-qrc-btns').style.display='none';
+        setTimeout(function(){pop.classList.remove('show')},2200);
+      }else{
+        btn.disabled=false;btn.textContent='Confirm Login';
+        var e=j&&j.error;
+        if(e==='expired'||e==='bad_id'){pop.classList.remove('show');pend=null;note('This QR code expired — refresh it on the laptop and scan again')}
+        else note(e==='auth'?'Please log in again on this phone':e==='network'?'Network problem — try again':'Could not confirm — try again');
+      }
+    }).catch(function(){btn.disabled=false;btn.textContent='Confirm Login';note('Network problem — try again')});
+  };
+  var qp=null;try{qp=new URLSearchParams(location.search).get('qr')}catch(e){}
+  if(qp&&idFrom(qp)){try{history.replaceState(null,'',location.pathname)}catch(e){}
+    var tries=0,boot=setInterval(function(){tries++;if(fbUser()||tries>16){clearInterval(boot);window.bxQrHandle(qp)}},500);}
+
+  /* ── In-app scanner: actually read QR codes (camera + Album) ── */
+  var det=null,loop=null,jsqrP=null,lastMiss=0;
+  function loadJsQR(){
+    if(window.jsQR)return Promise.resolve(window.jsQR);
+    if(jsqrP)return jsqrP;
+    jsqrP=new Promise(function(res,rej){
+      var urls=['https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js','https://unpkg.com/jsqr@1.4.0/dist/jsQR.js'],i=0;
+      (function next(){if(i>=urls.length){jsqrP=null;return rej(new Error('jsqr'))}var s=document.createElement('script');s.src=urls[i++];s.async=true;s.onload=function(){window.jsQR?res(window.jsQR):next()};s.onerror=next;document.head.appendChild(s)})();
+    });
+    return jsqrP;
+  }
+  function detector(){
+    if(det!==null)return Promise.resolve(det);
+    if(!('BarcodeDetector' in window)){det=false;return Promise.resolve(false)}
+    return Promise.resolve(BarcodeDetector.getSupportedFormats?BarcodeDetector.getSupportedFormats():['qr_code']).then(function(f){det=f.indexOf('qr_code')>=0?new BarcodeDetector({formats:['qr_code']}):false;return det}).catch(function(){det=false;return false});
+  }
+  var cv=document.createElement('canvas'),cx=null;
+  function decodeSource(src,w,h){
+    return detector().then(function(d){
+      if(d)return d.detect(src).then(function(r){return r&&r[0]&&r[0].rawValue||null});
+      return loadJsQR().then(function(j){
+        var s=Math.min(1,640/Math.max(w,h));cv.width=Math.round(w*s);cv.height=Math.round(h*s);
+        cx=cx||cv.getContext('2d',{willReadFrequently:true});cx.drawImage(src,0,0,cv.width,cv.height);
+        var r=j(cx.getImageData(0,0,cv.width,cv.height).data,cv.width,cv.height,{inversionAttempts:'attemptBoth'});return r&&r.data||null;
+      });
+    });
+  }
+  function onCode(text){
+    var id=idFrom(text),st=document.querySelector('#scanOv .st');
+    if(id){stopLoop();try{navigator.vibrate&&navigator.vibrate(60)}catch(e){}window.closeScanner();window.bxQrHandle(id);return true}
+    if(st&&Date.now()-lastMiss>2500){lastMiss=Date.now();st.textContent='This is not a BIEXC login QR code'}
+    return false;
+  }
+  function stopLoop(){clearTimeout(loop);loop=null}
+  function startLoop(){
+    stopLoop();
+    var o=document.getElementById('scanOv');if(!o)return;
+    var v=o.querySelector('video');
+    var inp=document.getElementById('scanFile');
+    if(inp&&!inp.__bx27){inp.__bx27=1;inp.onchange=function(){var f=this.files&&this.files[0];this.value='';if(!f)return;
+      var st=o.querySelector('.st');if(st)st.textContent='Reading image…';
+      var im=new Image();im.onload=function(){decodeSource(im,im.naturalWidth,im.naturalHeight).then(function(t){URL.revokeObjectURL(im.src);if(!t){if(st)st.textContent='No QR code found in this image'}else onCode(t)}).catch(function(){if(st)st.textContent='Could not read this image'})};im.src=URL.createObjectURL(f);};}
+    (function step(){
+      if(o.style.display==='none')return stopLoop();
+      if(v&&v.readyState>=2&&v.videoWidth){
+        decodeSource(v,v.videoWidth,v.videoHeight).then(function(t){if(t&&onCode(t))return;loop=setTimeout(step,220)}).catch(function(){loop=setTimeout(step,600)});
+      }else loop=setTimeout(step,250);
+    })();
+  }
+  if(typeof window.openScanner==='function'){var _os=window.openScanner;window.openScanner=function(){var r=_os.apply(this,arguments);detector();if(!('BarcodeDetector' in window))loadJsQR().catch(function(){});startLoop();return r}}
+  if(typeof window.closeScanner==='function'){var _cs=window.closeScanner;window.closeScanner=function(){stopLoop();return _cs.apply(this,arguments)}}
+  window.bx27Debug={state:function(){return {state:Q.state,mode:Q.mode,id:Q.id,url:Q.url}},decodeText:onCode};
 })();
 </script>
 
