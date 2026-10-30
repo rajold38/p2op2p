@@ -9673,7 +9673,7 @@ body.light #biexcPromo{background:#f3f5f7}
       });
     }
     function goTo(i){idx=(i+SLIDES.length)%SLIDES.length;paint()}
-    function play(){stop();timer=setInterval(function(){if(document.hidden||!document.getElementById('sc-home').classList.contains('active')||dragging)return;goTo(idx+1)},4200)}
+    function play(){stop();return;timer=setInterval(function(){if(document.hidden||!document.getElementById('sc-home').classList.contains('active')||dragging)return;goTo(idx+1)},4200)}
     function stop(){if(timer)clearInterval(timer);timer=null}
     wrap.addEventListener('touchstart',function(e){dragging=true;moved=false;startX=e.touches[0].clientX;dx=0;wrap.classList.add('dragging');stop()},{passive:true});
     wrap.addEventListener('touchmove',function(e){if(!dragging)return;dx=e.touches[0].clientX-startX;if(Math.abs(dx)>6)moved=true;track.style.transform='translate3d(calc('+(-idx*100)+'% + '+dx+'px),0,0)'},{passive:true});
