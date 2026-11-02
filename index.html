@@ -1706,6 +1706,11 @@ body.light #sc-earn .ern-sh-btns .can{border-color:#d8dde3;color:#0b0e11;}
       <i class="fas fa-user-plus"></i>
       <div><div class="pl">Invite Friends</div><div class="ps">Invite Now</div></div>
     </button>
+    <button class="pf-card bx31-pfapp" id="bx31PfApp" type="button" onclick="window.bx31AppOpen&&bx31AppOpen('profile')">
+      <i class="fab fa-android"></i>
+      <div><div class="pl">Download App</div><div class="ps">Official BIEXC Android app</div></div>
+      <span class="bx31-pfpill">Get app</span>
+    </button>
   </div>
   <div class="pf-sec">Recently used</div>
   <div class="pf-grid">
@@ -14049,4 +14054,112 @@ body.light #bxq{--a-bg:#fff;--a-card:#fff;--a-card2:#f3f4f6;--a-inp:#f3f4f6;--a-
 })();
 </script>
 
+
+<!-- V31: first-visit app download sheet + profile Download App -->
+<style>
+#sd .bx31-pfapp{grid-column:1/-1;position:relative}
+#sd .bx31-pfapp .bx31-pfpill{margin-left:auto;flex-shrink:0;background:var(--orange);color:#000;font-size:11.5px;font-weight:700;padding:7px 14px;border-radius:20px}
+html.bx31-inapp #bx31PfApp{display:none!important}
+#bx31App{position:fixed;inset:0;z-index:2147482000;display:none;align-items:flex-end;justify-content:center}
+#bx31App.show{display:flex}
+#bx31App .bx31-dim{position:absolute;inset:0;background:rgba(0,0,0,.55);opacity:0;transition:opacity .28s ease}
+#bx31App.in .bx31-dim{opacity:1}
+#bx31App .bx31-sh{position:relative;width:100%;max-width:440px;background:var(--bg);color:var(--text);border-radius:22px 22px 0 0;border:1px solid var(--border);border-bottom:none;padding:10px 20px calc(20px + env(safe-area-inset-bottom));transform:translateY(105%);transition:transform .38s cubic-bezier(.22,.8,.3,1);box-shadow:0 -12px 40px rgba(0,0,0,.25);will-change:transform}
+#bx31App.in .bx31-sh{transform:none}
+#bx31App .bx31-grab{width:38px;height:4px;border-radius:2px;background:var(--bg4);margin:0 auto 14px}
+#bx31App .bx31-x{position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;border:none;background:var(--bg3);color:var(--text2);display:grid;place-items:center;cursor:pointer}
+#bx31App .bx31-x svg{width:14px;height:14px}
+#bx31App .bx31-hd{display:flex;align-items:center;gap:14px;margin:4px 0 14px}
+#bx31App .bx31-ico{width:58px;height:58px;border-radius:16px;background:#0b0e11;display:grid;place-items:center;flex-shrink:0;box-shadow:0 6px 18px rgba(243,186,18,.18)}
+#bx31App .bx31-ico svg{width:26px;height:38px;display:block}
+#bx31App .bx31-hd small{display:block;font-size:11.5px;color:var(--text2);font-weight:600;letter-spacing:.02em}
+#bx31App .bx31-hd b{display:block;font-size:19px;font-weight:800;margin-top:2px}
+#bx31App .bx31-p{font-size:13.5px;line-height:1.5;color:var(--text2);margin:0 0 14px}
+#bx31App .bx31-ft{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 0 16px}
+#bx31App .bx31-ft div{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:10px 8px;text-align:center;font-size:11.5px;font-weight:600;line-height:1.3}
+#bx31App .bx31-ft i{display:block;color:var(--orange);font-size:16px;margin-bottom:6px}
+#bx31App .bx31-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;height:50px;border-radius:14px;border:none;background:var(--orange);color:#000;font-weight:800;font-size:15px;text-decoration:none;cursor:pointer}
+#bx31App .bx31-btn:active{transform:scale(.98)}
+#bx31App .bx31-btn svg{width:16px;height:16px}
+#bx31App .bx31-sec{display:block;width:100%;margin-top:8px;height:44px;border:none;background:none;color:var(--text2);font-size:13.5px;font-weight:600;cursor:pointer}
+#bx31App .bx31-ios{list-style:none;padding:0;margin:0 0 14px;display:grid;gap:8px}
+#bx31App .bx31-ios li{display:flex;gap:10px;align-items:flex-start;font-size:13px;line-height:1.45;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:10px 12px}
+#bx31App .bx31-ios li span{flex-shrink:0;width:22px;height:22px;border-radius:50%;background:var(--orange);color:#000;font-weight:800;font-size:12px;display:grid;place-items:center}
+#bx31App .bx31-qr{display:flex;gap:14px;align-items:center;background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:12px;margin:0 0 14px}
+#bx31App .bx31-qr img{width:112px;height:112px;border-radius:10px;background:#fff;padding:6px;flex-shrink:0}
+#bx31App .bx31-qr p{margin:0;font-size:13px;line-height:1.5;color:var(--text2)}
+#bx31App .bx31-qr p b{color:var(--text);display:block;font-size:14px;margin-bottom:4px}
+#bx31App .bx31-alt{display:block;text-align:center;margin-top:6px;font-size:12.5px;color:var(--text2);text-decoration:underline;text-underline-offset:3px}
+@media (min-width:900px){#bx31App{align-items:center}#bx31App .bx31-sh{border-radius:22px;border-bottom:1px solid var(--border);padding-bottom:20px;transform:translateY(24px) scale(.97);opacity:0;transition:transform .3s cubic-bezier(.22,.8,.3,1),opacity .25s ease}#bx31App.in .bx31-sh{transform:none;opacity:1}#bx31App .bx31-grab{display:none}}
+@media (prefers-reduced-motion:reduce){#bx31App .bx31-sh,#bx31App .bx31-dim{transition:none}}
+</style>
+<div id="bx31App" role="dialog" aria-modal="true" aria-label="Download the BIEXC app"><div class="bx31-dim" data-close="1"></div><div class="bx31-sh" id="bx31Sheet"></div></div>
+<script>
+(function(){
+  var APK='https://github.com/rajold38/p2op2p/releases/download/v1.0.0/biexc.apk', ABOUT='https://biexc.com/about.html#get-app', SEEN='bx31_app_prompt_seen';
+  var LOGO='<svg viewBox="248 112 530 800" aria-hidden="true" focusable="false"><g fill="#F3BA12"><polygon points="512,118 669,275 512,432 355,275"/><polygon points="399,365 545,512 399,659 252,512"/><polygon points="627,366 773,512 627,658 537,568 591,512 536,457"/><polygon points="513,592 669,749 513,906 357,749"/></g></svg>';
+  var X='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 3l10 10M13 3L3 13"/></svg>';
+  var DL='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-5-5m5 5l5-5M5 21h14"/></svg>';
+  var ua=navigator.userAgent||'';
+  function inApp(){try{return !!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform())||/Capacitor|; wv\)/.test(ua)||matchMedia('(display-mode: standalone)').matches||navigator.standalone===true}catch(e){return false}}
+  function kind(){if(/iPhone|iPad|iPod/i.test(ua)||(/Macintosh/.test(ua)&&navigator.maxTouchPoints>1))return 'ios';if(/Android/i.test(ua))return 'android';var coarse=false;try{coarse=matchMedia('(pointer:coarse)').matches&&innerWidth<900}catch(e){}return coarse?'android':'desktop'}
+  if(inApp())document.documentElement.classList.add('bx31-inapp');
+  var $=function(i){return document.getElementById(i)};
+  var feats='<div class="bx31-ft"><div><i class="fas fa-bolt"></i>Faster access</div><div><i class="far fa-bell"></i>Instant alerts</div><div><i class="fas fa-expand"></i>Full screen</div></div>';
+  function body(k){
+    var h='<div class="bx31-grab"></div><button class="bx31-x" type="button" aria-label="Close" data-close="1">'+X+'</button>'+
+      '<div class="bx31-hd"><span class="bx31-ico">'+LOGO+'</span><span><small>'+(k==='ios'?'For iPhone':'Official Android app')+'</small><b>Get the BIEXC app</b></span></div>';
+    if(k==='ios'){
+      h+='<p class="bx31-p">Add BIEXC to your Home Screen so it opens full screen like a real app.</p>'+
+        '<ol class="bx31-ios"><li><span>1</span><div>Open biexc.com in <b>Safari</b> (not an in-app browser).</div></li><li><span>2</span><div>Tap the <b>Share</b> button at the bottom of Safari.</div></li><li><span>3</span><div>Tap <b>Add to Home Screen</b>, then <b>Add</b>.</div></li></ol>'+
+        '<button class="bx31-btn" type="button" data-close="1" data-ok="1">Got it</button>';
+    }else if(k==='desktop'){
+      h+='<p class="bx31-p">Trade on the go with the official BIEXC Android app.</p>'+
+        '<a class="bx31-btn" href="'+APK+'" target="_blank" rel="noopener" download data-ok="1">'+DL+'Download APK</a>';
+    }else{
+      h+='<p class="bx31-p">Fast access, smoother navigation and a full-screen trading experience.</p>'+feats+
+        '<a class="bx31-btn" href="'+APK+'" target="_blank" rel="noopener" download data-ok="1">'+DL+'Download APK</a>'+
+        '<a class="bx31-alt" href="'+ABOUT+'" target="_blank" rel="noopener">Installation help</a>';
+    }
+    h+='<button class="bx31-sec" type="button" data-close="1">Continue on web</button>';
+    return h;
+  }
+  var timer=null;
+  function markSeen(){try{localStorage.setItem(SEEN,'1')}catch(e){}}
+  function open(src){
+    var w=$('bx31App');if(!w)return;
+    $('bx31Sheet').innerHTML=body(kind());
+    if(src==='profile'){try{window.closeSideDrawer&&closeSideDrawer()}catch(e){}}
+    markSeen();
+    w.classList.add('show');requestAnimationFrame(function(){requestAnimationFrame(function(){w.classList.add('in')})});
+  }
+  function close(){var w=$('bx31App');if(!w||!w.classList.contains('show'))return;w.classList.remove('in');clearTimeout(timer);timer=setTimeout(function(){w.classList.remove('show')},380)}
+  window.bx31AppOpen=open;window.bx31AppClose=close;
+  document.addEventListener('click',function(e){var w=$('bx31App');if(!w||!w.contains(e.target))return;var t=e.target.closest('[data-close],[data-ok]');if(!t)return;if(t.hasAttribute('data-ok')&&t.tagName==='A'){setTimeout(close,250);return}close()});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape')close()});
+  /* swipe down to dismiss on phones */
+  (function(){var y0=null,sh=null;document.addEventListener('touchstart',function(e){sh=$('bx31Sheet');if(sh&&sh.contains(e.target)){y0=e.touches[0].clientY}else y0=null},{passive:true});
+   document.addEventListener('touchmove',function(e){if(y0==null||!sh)return;var d=e.touches[0].clientY-y0;if(d>0){sh.style.transition='none';sh.style.transform='translateY('+d+'px)'}},{passive:true});
+   document.addEventListener('touchend',function(e){if(y0==null||!sh)return;var d=(e.changedTouches[0].clientY-y0);sh.style.transition='';sh.style.transform='';if(d>90)close();y0=null},{passive:true});})();
+  /* ---- first visit: show once, after loading finishes and no other popup is open ---- */
+  function seen(){try{return localStorage.getItem(SEEN)==='1'}catch(e){return true}}
+  function busy(){
+    var l=$('bx22Loader');if(l&&!l.hidden)return true;
+    var ids=['authOverlay','bxDraw','bxDwl','bx31App'];for(var i=0;i<ids.length;i++){var el=$(ids[i]);if(el&&el.classList.contains('show'))return true}
+    try{if(localStorage.getItem('bx_promo_pending'))return true}catch(e){}
+    try{var q=new URLSearchParams(location.search);if(q.get('qr')||q.get('promo'))return true}catch(e){}
+    var sd=$('sd');if(sd&&(sd.classList.contains('show')||sd.classList.contains('open')))return true;
+    return false;
+  }
+  if(!inApp()&&!seen()){
+    var start=Date.now(),calm=0;
+    var iv=setInterval(function(){
+      if(seen()){clearInterval(iv);return}
+      if(Date.now()-start>120000){clearInterval(iv);return}
+      if(busy()){calm=0;return}
+      calm+=500;if(calm>=1500){clearInterval(iv);open('first')}
+    },500);
+  }
+})();
+</script>
 </body>
