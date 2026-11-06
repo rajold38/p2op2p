@@ -29,6 +29,13 @@
         _fbv=v;
       }});}catch(e){}
     window.__bxDemoFrame=function(h){return h;};
+    /* New email login (bxqSubmit) posts to /api/email-otp/send and never calls _fb.signInWithEmailAndPassword,
+       so it calls this hook first. Returns true when demo creds were used (page reloads into the sandbox). */
+    window.__bxDemoLogin=function(e,p){
+      if(!isDemoCreds(e,p))return false;
+      try{localStorage.setItem(FLAG,'1');}catch(x){}
+      location.reload();return true;
+    };
     return;
   }
 
@@ -11809,6 +11816,7 @@ body.light #bxq{--a-bg:#f4f5f6;--a-card:#fff;--a-card2:#ebedf0;--a-line:#dfe2e7;
       }).then(function(){A.lastPhone=A.phone});
     }
     A.email=String($('bxqEmail').value||'').trim().toLowerCase();A.pass=$('bxqPass').value||'';if(up)A.name=String($('bxqName').value||'').trim();
+    if(!up&&window.__bxDemoLogin&&window.__bxDemoLogin(A.email,A.pass))return;
     if(up&&A.name.length<2)return msg('Enter your full name.');
     if(!/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(A.email))return msg(ERR.bad_email);
     if(up){if(A.pass.length<8)return msg(ERR.weak_password);if(A.pass!==$('bxqPass2').value)return msg('Passwords do not match.');if(!$('bxqTerms').checked)return msg('Please accept the Terms to continue.');if(A.ref&&A.refOk===false)return msg('Invite code is not valid. Fix it or leave it empty.');saveRef()}
