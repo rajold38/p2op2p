@@ -1,6 +1,266 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script id="bx-demo-sandbox">(function(){
+  /* BIEXC demo account — offline sandbox. Logging in with the demo email/password
+     switches this browser to a local copy of the database. Nothing reaches
+     Firebase, the server or the Telegram bot while it is active. */
+  var DEMO_EMAIL='biexc@gmail.com', DEMO_PASS='biexc';
+  var FLAG='bx_demo_mode', DBKEY='bx_demo_db_v1';
+  var FUID='bxdemo0000000000000000000001', SHOWN_UID='88210945';
+  var V=['10.12.2','10.7.1'];
+  function isDemoCreds(e,p){return String(e||'').trim().toLowerCase()===DEMO_EMAIL&&String(p||'')===DEMO_PASS;}
+  var active=false;try{active=localStorage.getItem(FLAG)==='1';}catch(e){}
+
+  /* Normal mode: only watch for the demo credentials on login. */
+  if(!active){
+    var _fbv;
+    try{Object.defineProperty(window,'_fb',{configurable:true,enumerable:true,
+      get:function(){return _fbv;},
+      set:function(v){
+        if(v&&typeof v.signInWithEmailAndPassword==='function'&&!v.__bxDemoWrapped){
+          var real=v.signInWithEmailAndPassword;
+          v.signInWithEmailAndPassword=function(a,e,p){
+            if(isDemoCreds(e,p)){try{localStorage.setItem(FLAG,'1');}catch(x){}location.reload();return new Promise(function(){});}
+            return real.apply(this,arguments);
+          };
+          v.__bxDemoWrapped=true;
+        }
+        _fbv=v;
+      }});}catch(e){}
+    window.__bxDemoFrame=function(h){return h;};
+    return;
+  }
+
+  /* ---------------- local database ---------------- */
+  var tree={};
+  try{tree=JSON.parse(localStorage.getItem(DBKEY)||'{}')||{};}catch(e){tree={};}
+  function seed(){
+    var now=Date.now();
+    tree.users=tree.users||{};
+    if(!tree.users[FUID]){
+      tree.users[FUID]={uid:SHOWN_UID,email:DEMO_EMAIL,name:'BIEXC Demo',displayName:'BIEXC Demo',
+        createdAt:now,emailVerified:true,kycStatus:'APPROVED',kycRequired:false,kycApprovedAt:now,
+        kycLevels:{level:2,l1status:'APPROVED',l2status:'APPROVED',l2At:now,approvedAt:now},
+        balances:{USDT:5000},balance:5000};
+    }
+  }
+  seed();
+  var saveT=null;function persist(){clearTimeout(saveT);saveT=setTimeout(function(){try{localStorage.setItem(DBKEY,JSON.stringify(tree));}catch(e){}},150);}
+  function parts(p){return String(p||'').split('/').filter(Boolean);}
+  function clone(v){return v==null?null:JSON.parse(JSON.stringify(v));}
+  function readP(p){var n=tree,a=parts(p);for(var i=0;i<a.length;i++){if(n==null||typeof n!=='object')return null;n=n[a[i]];}return n===undefined?null:n;}
+  function fix(v){
+    if(v&&typeof v==='object'){
+      if(v['.sv']==='timestamp')return Date.now();
+      var o=Array.isArray(v)?{}:{},has=false;
+      for(var k in v){var x=fix(v[k]);if(x!==null&&x!==undefined){o[k]=x;has=true;}}
+      return has?o:null;
+    }
+    return v===undefined?null:v;
+  }
+  function writeP(p,v){
+    v=fix(clone(v));var a=parts(p);
+    if(!a.length){tree=v||{};return;}
+    var n=tree;
+    for(var i=0;i<a.length-1;i++){if(n[a[i]]==null||typeof n[a[i]]!=='object')n[a[i]]={};n=n[a[i]];}
+    if(v===null)delete n[a[a.length-1]];else n[a[a.length-1]]=v;
+  }
+  var listeners=[];
+  function related(a,b){a=parts(a).join('/');b=parts(b).join('/');return !a||!b||a===b||a.indexOf(b+'/')===0||b.indexOf(a+'/')===0;}
+  var scheduled={};
+  function watchPending(){
+    var pr=readP('users/'+FUID+'/pendingReqs')||{};
+    ['dep','wit'].forEach(function(t){Object.keys(pr[t]||{}).forEach(function(cb){
+      if(scheduled[cb])return;scheduled[cb]=1;setTimeout(function(){if(window.__BXDEMO_SETTLE)window.__BXDEMO_SETTLE(cb);},4000+Math.floor(Math.random()*2000));});});
+  }
+  function notify(path){
+    persist();setTimeout(watchPending,0);
+    listeners.slice().forEach(function(l){
+      if(!l.alive||!related(l.path,path))return;
+      var j=JSON.stringify(readP(l.path));if(j===l.last)return;l.last=j;
+      try{l.cb(snap(l.path));}catch(e){console.error(e);}
+    });
+  }
+  function mkRef(path){
+    var a=parts(path),p=a.join('/');
+    var r={path:p,key:a.length?a[a.length-1]:null,_bxDemo:true,
+      toString:function(){return 'demo://'+p;},
+      child:function(c){return mkRef(p+'/'+c);}};
+    Object.defineProperty(r,'parent',{get:function(){return a.length?mkRef(a.slice(0,-1).join('/')):null;}});
+    Object.defineProperty(r,'root',{get:function(){return mkRef('');}});
+    return r;
+  }
+  function snap(path){
+    var v=clone(readP(path)),a=parts(path);
+    var s={key:a.length?a[a.length-1]:null,ref:mkRef(path),
+      val:function(){return clone(v);},exportVal:function(){return clone(v);},toJSON:function(){return clone(v);},
+      exists:function(){return v!==null;},
+      child:function(c){return snap(parts(path).concat(parts(c)).join('/'));},
+      hasChild:function(c){return snap(parts(path).concat(parts(c)).join('/')).exists();},
+      hasChildren:function(){return !!v&&typeof v==='object'&&Object.keys(v).length>0;},
+      numChildren:function(){return v&&typeof v==='object'?Object.keys(v).length:0;},
+      forEach:function(cb){if(!v||typeof v!=='object')return false;var ks=Object.keys(v).sort();for(var i=0;i<ks.length;i++){if(cb(snap(parts(path).concat([ks[i]]).join('/')))===true)return true;}return false;}};
+    s.size=s.numChildren();return s;
+  }
+  var pushN=0;
+  function pushKey(){pushN++;return '-Demo'+Date.now().toString(36)+pushN.toString(36)+Math.random().toString(36).slice(2,8);}
+  function tick(){return new Promise(function(r){setTimeout(r,30);});}
+  var db={
+    getDatabase:function(){return {_bxDemo:true,app:{}};},
+    ref:function(_db,p){return mkRef(p||'');},
+    child:function(r,p){return mkRef(r.path+'/'+p);},
+    get:function(r){return tick().then(function(){return snap(r.path);});},
+    set:function(r,v){return tick().then(function(){writeP(r.path,v);notify(r.path);});},
+    remove:function(r){return tick().then(function(){writeP(r.path,null);notify(r.path);});},
+    update:function(r,obj){return tick().then(function(){
+      Object.keys(obj||{}).forEach(function(k){writeP(parts(r.path).concat(parts(k)).join('/'),obj[k]);});notify(r.path);});},
+    push:function(r,v){
+      var c=mkRef(r.path+'/'+pushKey());
+      var pr=v===undefined?Promise.resolve(c):db.set(c,v).then(function(){return c;});
+      c.then=pr.then.bind(pr);c.catch=pr.catch.bind(pr);return c;},
+    onValue:function(r,cb,err){
+      var l={path:r.path,cb:cb,alive:true,last:undefined};listeners.push(l);
+      setTimeout(function(){if(!l.alive)return;l.last=JSON.stringify(readP(l.path));try{cb(snap(l.path));}catch(e){console.error(e);}},20);
+      return function(){l.alive=false;};},
+    off:function(r){listeners.forEach(function(l){if(!r||l.path===r.path)l.alive=false;});},
+    runTransaction:function(r,fn){return tick().then(function(){
+      var res=fn(clone(readP(r.path)));
+      if(res===undefined)return {committed:false,snapshot:snap(r.path)};
+      writeP(r.path,res);notify(r.path);return {committed:true,snapshot:snap(r.path)};});},
+    serverTimestamp:function(){return {'.sv':'timestamp'};},
+    increment:function(n){return n;},
+    goOffline:function(){},goOnline:function(){},
+    query:function(r){return r;},orderByChild:function(){},orderByKey:function(){},limitToLast:function(){},limitToFirst:function(){},equalTo:function(){},startAt:function(){},endAt:function(){},
+    onChildAdded:function(){return function(){};},onChildChanged:function(){return function(){};},onChildRemoved:function(){return function(){};},
+    onDisconnect:function(){return {set:function(){return Promise.resolve();},remove:function(){return Promise.resolve();},update:function(){return Promise.resolve();},cancel:function(){return Promise.resolve();}};},
+    connectDatabaseEmulator:function(){},enableLogging:function(){}
+  };
+
+  /* ---------------- local auth ---------------- */
+  var now=new Date().toUTCString();
+  var user={uid:FUID,email:DEMO_EMAIL,displayName:(readP('users/'+FUID+'/displayName')||'BIEXC Demo'),photoURL:null,
+    emailVerified:true,isAnonymous:false,phoneNumber:null,providerId:'firebase',
+    providerData:[{providerId:'password',uid:DEMO_EMAIL,email:DEMO_EMAIL}],
+    metadata:{creationTime:now,lastSignInTime:now},
+    getIdToken:function(){return Promise.resolve('demo-token');},
+    getIdTokenResult:function(){return Promise.resolve({token:'demo-token',claims:{},signInProvider:'password'});},
+    reload:function(){return Promise.resolve();},toJSON:function(){return {uid:FUID,email:DEMO_EMAIL};}};
+  var authObj={_bxDemo:true,currentUser:user,app:{},languageCode:'en',
+    onAuthStateChanged:function(cb){return au.onAuthStateChanged(authObj,cb);},
+    signOut:function(){return au.signOut();},useDeviceLanguage:function(){}};
+  function stopDemo(){try{localStorage.removeItem(FLAG);}catch(e){}try{top.location.reload();}catch(e){location.reload();}return new Promise(function(){});}
+  function noop(){return Promise.resolve();}
+  function notAllowed(){var e=new Error('Not available in demo account');e.code='auth/operation-not-allowed';return Promise.reject(e);}
+  function Prov(id){this.providerId=id||'demo';this.addScope=function(){return this;};this.setCustomParameters=function(){return this;};}
+  var au={
+    getAuth:function(){return authObj;},initializeAuth:function(){return authObj;},
+    onAuthStateChanged:function(_a,cb){var on=true;setTimeout(function(){if(on)try{(typeof cb==='function'?cb:cb.next)(user);}catch(e){console.error(e);}},10);return function(){on=false;};},
+    onIdTokenChanged:function(_a,cb){return au.onAuthStateChanged(_a,cb);},
+    signOut:function(){return stopDemo();},
+    signInWithEmailAndPassword:function(_a,e,p){return Promise.resolve({user:user});},
+    createUserWithEmailAndPassword:notAllowed,signInWithPopup:notAllowed,signInWithRedirect:notAllowed,getRedirectResult:function(){return Promise.resolve(null);},
+    signInWithCustomToken:function(){return Promise.resolve({user:user});},signInWithPhoneNumber:notAllowed,signInWithCredential:notAllowed,
+    sendPasswordResetEmail:noop,sendEmailVerification:noop,updatePassword:noop,updateEmail:noop,reauthenticateWithCredential:function(){return Promise.resolve({user:user});},
+    updateProfile:function(u,p){p=p||{};if(p.displayName!=null)user.displayName=p.displayName;if(p.photoURL!==undefined)user.photoURL=p.photoURL;return Promise.resolve();},
+    setPersistence:noop,browserLocalPersistence:{type:'LOCAL'},browserSessionPersistence:{type:'SESSION'},inMemoryPersistence:{type:'NONE'},
+    GoogleAuthProvider:function(){Prov.call(this,'google.com');},OAuthProvider:function(id){Prov.call(this,id);},
+    PhoneAuthProvider:function(){Prov.call(this,'phone');},EmailAuthProvider:{credential:function(){return {};}},
+    RecaptchaVerifier:function(){this.render=function(){return Promise.resolve(0);};this.clear=function(){};this.verify=function(){return Promise.resolve('demo');};},
+    connectAuthEmulator:function(){}
+  };
+  au.GoogleAuthProvider.credentialFromResult=function(){return null;};
+  au.PhoneAuthProvider.credential=function(){return {};};
+  var app={initializeApp:function(){return {name:'[DEFAULT]',options:{}};},getApps:function(){return [{name:'[DEFAULT]',options:{}}];},getApp:function(){return {name:'[DEFAULT]',options:{}};},deleteApp:noop,registerVersion:function(){}};
+
+  /* ---------------- server / bot sandbox ---------------- */
+  var tgMsg=1000,tgUpd=1,tgQueue=[],tgChat='-100999000';
+  function jres(o){return Promise.resolve(new Response(JSON.stringify(o),{status:200,headers:{'Content-Type':'application/json'}}));}
+  function queueApprovals(bodyText){
+    try{
+      var found=String(bodyText||'').match(/approve_[A-Za-z0-9_\-:.]+/g)||[];
+      found.forEach(function(d){
+        var due=Date.now()+4000+Math.floor(Math.random()*2000);
+        setTimeout(function(){demoSettle(d.slice(8));},due-Date.now()-500);
+        tgQueue.push({due:due,left:6,upd:{update_id:900000+(tgUpd++),callback_query:{id:'demo'+tgUpd,data:d,from:{id:1,first_name:'Demo'},message:{message_id:tgMsg,chat:{id:Number(tgChat)}}}}});
+      });
+    }catch(e){}
+  }
+
+  /* Plays the server's part: settles approved requests inside the local database only. */
+  function r8(n){return Math.round(n*1e8)/1e8;}
+  function nowIST(){try{return new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'});}catch(e){return new Date().toISOString();}}
+  function demoSettle(cbId){
+    var path='users/'+FUID,cur=clone(readP(path));if(!cur)return;var ts=Date.now();
+    var types=['dep','wit'];
+    for(var i=0;i<types.length;i++){
+      var type=types[i],q=cur.pendingReqs&&cur.pendingReqs[type]&&cur.pendingReqs[type][cbId];if(!q)continue;
+      var coin=String(q.coin||'USDT').toUpperCase(),amt=Number(q.amt)||0;cur.balances=cur.balances||{};
+      var old=Number(cur.balances[coin]!=null?cur.balances[coin]:(coin==='USDT'?cur.balance:0))||0;
+      var next=r8(old+(type==='dep'?amt:0));cur.balances[coin]=next;if(coin==='USDT')cur.balance=next;
+      delete cur.pendingReqs[type][cbId];
+      var h=cur.history||{};Object.keys(h).forEach(function(k){if(k===q.hid||(h[k]&&h[k].hid===q.hid)){h[k].status='COMPLETED';h[k].resolvedAt=ts;}});cur.history=h;
+      cur.walletReceipts=cur.walletReceipts||{};cur.walletReceipts[cbId]={action:'approve',coin:coin,amt:amt,ts:ts};
+      writeP(path,cur);notify(path);return;
+    }
+    var chats=cur.chats||{},orderId=null;
+    Object.keys(chats).forEach(function(k){if(chats[k]&&chats[k].cbId===cbId)orderId=k;});
+    if(!orderId||!cur.orders||!cur.orders[orderId])return;
+    var o=cur.orders[orderId],mode=String(o.mode||'BUY').toUpperCase(),amt2=Number(o.usdt)||0;
+    var key=String(cbId).replace(/[./]/g,'_');if(cur.tradeDone&&(cur.tradeDone[key]||cur.tradeDone[orderId]))return;
+    cur.balances=cur.balances||{};var old2=Number(cur.balances.USDT!=null?cur.balances.USDT:cur.balance)||0;
+    cur.balances.USDT=r8(old2+(mode==='BUY'?amt2:0));cur.balance=cur.balances.USDT;
+    delete cur.orders[orderId];delete chats[orderId];
+    cur.tradeDone=cur.tradeDone||{};cur.tradeDone[key]={action:'approve',by:'server',ts:ts};cur.tradeDone[orderId]={action:'approve',by:'server',ts:ts};
+    cur.history=cur.history||{};cur.history['h_p2p_'+orderId]={hid:'h_p2p_'+orderId,ts:ts,date:nowIST(),type:mode,status:'COMPLETED',coin:'USDT',amt:amt2,orderId:orderId,merchant:o.merchant||'',rate:o.rate||0,inr:o.inr||0,paymentMethod:o.payMethod||'UPI',network:'BEP20',reason:''};
+    writeP(path,cur);notify(path);
+  }
+  window.__BXDEMO_SETTLE=demoSettle;
+  function patchFetch(w){
+    if(!w||w.__bxDemoFetch)return;var real=w.fetch.bind(w);w.__bxDemoFetch=true;
+    w.fetch=function(input,init){
+      var url=typeof input==='string'?input:(input&&input.url)||String(input);
+      var u;try{u=new URL(url,w.location.href==='about:srcdoc'?location.href:w.location.href);}catch(e){return real(input,init);}
+      var ours=u.origin===location.origin||/onrender\.com$/.test(u.hostname)||/biexc\./.test(u.hostname);
+      if(!ours||u.pathname.indexOf('/api/')!==0&&u.pathname.indexOf('/send-mail')<0)return real(input,init);
+      var p=u.pathname,method=((init&&init.method)||'GET').toUpperCase();
+      if(method==='GET'&&/^\/api\/(p2p\/config|bybit|icon\/|draw\/info|promo\/info|v3\/)/.test(p)){
+        u.searchParams.delete('fuid');return real(u.toString(),init);
+      }
+      if(p==='/api/tg/config')return jres({ok:true,chat_id:tgChat});
+      if(p==='/api/tg/getUpdates'){
+        var t=Date.now(),out=[];
+        tgQueue.forEach(function(q){if(q.due<=t&&q.left>0){q.left--;out.push(q.upd);}});
+        tgQueue=tgQueue.filter(function(q){return q.left>0;});
+        return jres({ok:true,result:out});
+      }
+      var body=init&&typeof init.body==='string'?init.body:'';
+      if(p.indexOf('/api/tg/')===0){queueApprovals(body);tgMsg++;return jres({ok:true,result:{message_id:tgMsg,chat:{id:Number(tgChat)}},message_id:tgMsg});}
+      if(p==='/api/p2p/config')return jres({ok:true});
+      return jres({ok:true,success:true,demo:true,status:'ok'});
+    };
+  }
+  patchFetch(window);
+
+  /* ---------------- module map ---------------- */
+  var PICK="(function(){var w=window;try{if(!w.__BXDEMO&&w.parent&&w.parent.__BXDEMO)return w.parent.__BXDEMO}catch(e){}return w.__BXDEMO})()";
+  function mod(group,names){return 'data:text/javascript,'+encodeURIComponent('const G='+PICK+'.'+group+';export const {'+names.join(',')+'}=G;export default G;');}
+  var imports={};
+  V.forEach(function(v){
+    var b='https://www.gstatic.com/firebasejs/'+v+'/';
+    imports[b+'firebase-app.js']=mod('app',Object.keys(app));
+    imports[b+'firebase-auth.js']=mod('auth',Object.keys(au));
+    imports[b+'firebase-database.js']=mod('db',Object.keys(db));
+  });
+  var mapTag='<script type="importmap">'+JSON.stringify({imports:imports})+'<\/script>';
+  window.__BXDEMO={active:true,app:app,auth:au,db:db,patchFetch:patchFetch,stop:stopDemo,fuid:FUID};
+  window.__bxDemoFrame=function(h){
+    var inj=mapTag+'<script>try{parent.__BXDEMO.patchFetch(window)}catch(e){}<\/script>';
+    var i=h.indexOf('<head>');return i<0?inj+h:h.slice(0,i+6)+inj+h.slice(i+6);
+  };
+  document.write(mapTag);
+})();
+</script>
 <script id="bx-num-tx">window.__bxNumTx=function(api,path,d){d=Number(d)||0;return api.runTransaction(api.ref(api.db,path),function(cur){if(cur===null&&d<0)return null;var n=Math.round(((parseFloat(cur)||0)+d)*1e8)/1e8;if(n<0)return;return n;}).then(function(r){if(r&&r.committed&&d<0&&r.snapshot.val()===null)return {committed:false,snapshot:r.snapshot};return r;});};</script>
 <script id="bx-theme-boot">(function(){var m=(function(){var m='light';try{var p=localStorage.getItem('bx_pref_theme'),l=localStorage.getItem('app_theme');if(p==='dark'||p==='light')m=p;else if(localStorage.getItem('bx_theme_explicit')==='1'&&(l==='dark'||l==='light'))m=l;}catch(e){}return m;})();window.__bxTheme=m;var d=document.documentElement;d.classList.add('bx-no-anim');d.style.colorScheme=m;d.style.background=m==='light'?'#ffffff':'#000000';window.addEventListener('load',function(){requestAnimationFrame(function(){requestAnimationFrame(function(){d.classList.remove('bx-no-anim')})})});})();</script>
 <style id="bx-theme-boot-css">html.bx-no-anim *,html.bx-no-anim *::before,html.bx-no-anim *::after{transition:none!important}</style>
@@ -2462,7 +2722,7 @@ function ensureP2PFrameLoaded(forceReload) {
   fr.addEventListener('load',()=>{syncP2PThemeToFrame();_broadcastAuthToP2P();},{once:true});
   if(typeof window.__P2P_HTML__==='string'&&window.__P2P_HTML__.trim()){
     const mode=document.body.classList.contains('light')?'light':'dark';
-    fr.srcdoc=window.__P2P_HTML__.replace('<html lang="en">','<html lang="en"'+(mode==='light'?' class="p2p-light"':'')+'>');
+    fr.srcdoc=(window.__bxDemoFrame||function(h){return h})(window.__P2P_HTML__.replace('<html lang="en">','<html lang="en"'+(mode==='light'?' class="p2p-light"':'')+'>'));
   }else if(fr.dataset.src){fr.src=fr.dataset.src;}
 }
 window.addEventListener('message',function(e){
